@@ -625,18 +625,18 @@ function OrderForm({ onClose, initialCustomer, editData }) {
   }
 
   return (
-    <div className="p-8">
-      <div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-[100vw] mx-auto p-4 md:p-6 lg:p-8">
         <button onClick={onClose} className="btn-secondary mb-4">
           ← חזרה לרשימת הזמנות
         </button>
 
-        <div className="card shadow-lg border-t-4 border-blue-600">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center bg-gray-50 py-4 rounded-lg">
+        <div className="bg-white rounded-xl shadow-lg border-t-4 border-blue-600 p-4 md:p-6 lg:p-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 md:mb-8 text-center bg-gray-50 py-4 rounded-lg">
             {editData ? `✏️ עריכת הזמנה ${editData.order_number}` : '📋 פתיחת הזמנה חדשה'}
           </h1>
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col xl:flex-row gap-6 lg:gap-8">
             {/* צד ימין - פרטי הזמנה ולקוח */}
             <div className="flex-1">
               <div className="bg-gray-50 p-6 rounded-xl mb-8">
@@ -768,8 +768,8 @@ function OrderForm({ onClose, initialCustomer, editData }) {
             </div>
 
             {/* צד שמאל - סיכום ופעולות */}
-            <div className="w-full lg:w-80">
-              <div className="sticky top-8 space-y-4">
+            <div className="w-full xl:w-96">
+              <div className="xl:sticky xl:top-8 space-y-4">
                 <div className="bg-blue-600 text-white rounded-2xl p-6 shadow-xl">
                   <h2 className="text-xl font-bold mb-6 border-b border-blue-400 pb-2">סיכום הזמנה</h2>
 

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Calendar, TrendingUp, DollarSign, Package, Users } from 'lucide-react'
+import { BarChart3, Download, Calendar, DollarSign, TrendingUp } from 'lucide-react'
 import Layout from '@/components/Layout'
+
+export const dynamic = 'force-dynamic'
 
 export default function Reports() {
   const [reportType, setReportType] = useState('daily') // daily, monthly, yearly, custom

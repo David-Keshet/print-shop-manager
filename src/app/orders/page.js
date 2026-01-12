@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Search, FileText, Trash2 } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, FileText, Download } from 'lucide-react'
 import Layout from '@/components/Layout'
 import OrderPDF from '@/components/OrderPDF'
+
+export const dynamic = 'force-dynamic'
 
 export default function Orders() {
   const [orders, setOrders] = useState([])

@@ -8,6 +8,8 @@ import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
+export const dynamic = 'force-dynamic'
+
 export default function TasksBoard() {
   const [tasks, setTasks] = useState([])
   const [departments, setDepartments] = useState([])

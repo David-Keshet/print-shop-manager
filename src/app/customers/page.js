@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react'
 import Layout from '@/components/Layout'
 
+export const dynamic = 'force-dynamic'
+
 export default function Customers() {
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import Link from "next/link"
-import { Menu, X } from 'lucide-react'
+import { BarChart3, Users, Package, DollarSign, TrendingUp, Calendar } from 'lucide-react'
+import Layout from '@/components/Layout'
+
+export const dynamic = 'force-dynamic'
 
 export default function Home() {
   const [stats, setStats] = useState({

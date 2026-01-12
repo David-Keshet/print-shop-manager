@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Save, Settings as SettingsIcon } from 'lucide-react'
+import { Settings, Database, Users, Bell, Palette, Globe } from 'lucide-react'
 import Layout from '@/components/Layout'
+
+export const dynamic = 'force-dynamic'
 
 export default function Settings() {
   const [settings, setSettings] = useState({

@@ -606,15 +606,10 @@ function OrderForm({ onClose, initialCustomer, editData }) {
       // שליחת הודעת WhatsApp
       await sendWhatsAppNotification(order.order_number, customerName, customerPhone)
 
-      // שמירת ההזמנה האחרונה להצגת PDF
-      setLastOrder({ ...order, items: orderItems })
-
       alert(`הזמנה ${order.order_number} נשמרה בהצלחה!`)
 
-      // איפוס הטופס
-      setCustomerName('')
-      setCustomerPhone('')
-      setItems([{ description: '', quantity: '', price: '' }])
+      // חזרה לרשימת הזמנות
+      onClose()
 
     } catch (error) {
       console.error('שגיאה בשמירת הזמנה:', error)

@@ -119,18 +119,25 @@ export default function Orders() {
     order.order_number.toString().includes(searchTerm)
   )
 
-  const statusColors = {
-    new: 'bg-blue-100 text-blue-700',
-    in_progress: 'bg-yellow-100 text-yellow-700',
-    completed: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700'
-  }
+  // Function to get status color based on keywords in status text
+  const getStatusColor = (status) => {
+    if (!status) return 'bg-gray-100 text-gray-700'
 
-  const statusText = {
-    new: 'חדשה',
-    in_progress: 'בתהליך',
-    completed: 'הושלמה',
-    cancelled: 'בוטלה'
+    const statusLower = status.toLowerCase()
+
+    // Keywords for different colors
+    if (statusLower.includes('ממתין') || statusLower.includes('חדש') || statusLower === 'new') {
+      return 'bg-blue-100 text-blue-700'
+    }
+    if (statusLower.includes('בוטל') || statusLower.includes('ביטול') || statusLower === 'cancelled') {
+      return 'bg-red-100 text-red-700'
+    }
+    if (statusLower.includes('מוכן') || statusLower.includes('הושלם') || statusLower.includes('נמסר') || statusLower === 'completed') {
+      return 'bg-green-100 text-green-700'
+    }
+
+    // Default for any in-progress status
+    return 'bg-yellow-100 text-yellow-700'
   }
 
   if (showNewOrder) {
@@ -280,8 +287,8 @@ export default function Orders() {
                           className="px-4 py-3"
                           onClick={() => viewOrder(order)}
                         >
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${statusColors[order.status]}`}>
-                            {statusText[order.status]}
+                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
+                            {order.status}
                           </span>
                         </td>
                         <td
@@ -352,6 +359,27 @@ function OrderForm({ onClose, initialCustomer, editData }) {
     ])
   const [loading, setLoading] = useState(false)
   const [lastOrder, setLastOrder] = useState(null)
+
+  // Function to get status color based on keywords in status text
+  const getStatusColor = (status) => {
+    if (!status) return 'bg-gray-100 text-gray-700'
+
+    const statusLower = status.toLowerCase()
+
+    // Keywords for different colors
+    if (statusLower.includes('ממתין') || statusLower.includes('חדש') || statusLower === 'new') {
+      return 'bg-blue-100 text-blue-700'
+    }
+    if (statusLower.includes('בוטל') || statusLower.includes('ביטול') || statusLower === 'cancelled') {
+      return 'bg-red-100 text-red-700'
+    }
+    if (statusLower.includes('מוכן') || statusLower.includes('הושלם') || statusLower.includes('נמסר') || statusLower === 'completed') {
+      return 'bg-green-100 text-green-700'
+    }
+
+    // Default for any in-progress status
+    return 'bg-yellow-100 text-yellow-700'
+  }
 
   // State למחלקות ועמודות
   const [departments, setDepartments] = useState([])
@@ -653,9 +681,23 @@ function OrderForm({ onClose, initialCustomer, editData }) {
         </button>
 
         <div className="bg-white rounded-xl shadow-lg border-t-4 border-blue-600 p-4 md:p-6 lg:p-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 md:mb-8 text-center bg-gray-50 py-4 rounded-lg">
-            {editData ? `✏️ עריכת הזמנה ${editData.order_number}` : '📋 פתיחת הזמנה חדשה'}
-          </h1>
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center bg-gray-50 py-4 rounded-lg">
+              {editData ? `✏️ עריכת הזמנה ${editData.order_number}` : '📋 פתיחת הזמנה חדשה'}
+            </h1>
+
+            {/* תצוגת סטטוס נוכחי */}
+            {editData && editData.status && (
+              <div className="flex justify-center mt-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600 font-semibold">סטטוס נוכחי:</span>
+                  <span className={`px-4 py-2 rounded-full text-sm font-bold ${getStatusColor(editData.status)}`}>
+                    {editData.status}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="flex flex-col xl:flex-row gap-6 lg:gap-8">
             {/* צד ימין - פרטי הזמנה ולקוח */}

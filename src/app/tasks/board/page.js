@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import Layout from '@/components/Layout'
-import { Plus, Edit2, Trash2, X, Save, Calendar, Tag, CheckSquare, Square, ArrowRight } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Save, Calendar, Tag, CheckSquare, Square, ArrowRight, Search } from 'lucide-react'
 import { DndContext, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -51,6 +51,8 @@ export default function TasksBoard() {
   const [orders, setOrders] = useState([])
   const [activeId, setActiveId] = useState(null)
   const [draggedTask, setDraggedTask] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+
 
 
 
@@ -413,34 +415,10 @@ export default function TasksBoard() {
 
         if (error) throw error
 
-        // Update order status based on column's order_status field
+        // Update order status to match column name
         if (task.order_id && targetColumn) {
-          // Use column's order_status if available, otherwise use fallback mapping
-          let newStatus = targetColumn.order_status || 'in_progress'
-
-          // Fallback: If no order_status field, try to infer from column name
-          if (!targetColumn.order_status) {
-            const statusMapping = {
-              'ממתין': 'new',
-              'בביצוע': 'in_progress',
-              'בגרפיקה': 'in_progress',
-              'בדפוס': 'in_progress',
-              'בגימור': 'in_progress',
-              'מחכה לאישור': 'in_progress',
-              'מוכן': 'completed',
-              'הושלם': 'completed',
-              'נמסר': 'completed',
-              'בוטל': 'cancelled'
-            }
-
-            const columnName = targetColumn.name.trim()
-            for (const [key, value] of Object.entries(statusMapping)) {
-              if (columnName.includes(key)) {
-                newStatus = value
-                break
-              }
-            }
-          }
+          // Use column name directly as the status
+          const newStatus = targetColumn.name.trim()
 
           // Update order status
           await supabase
@@ -560,6 +538,25 @@ export default function TasksBoard() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50" size={16} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="חיפוש משימות..."
+                  className="pl-3 pr-10 py-1.5 bg-white/10 hover:bg-white/15 focus:bg-white/20 text-white placeholder-white/50 rounded text-sm transition-colors backdrop-blur-sm border border-white/10 focus:border-white/30 focus:outline-none w-64"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
               <button
                 onClick={() => setShowColumnManagementModal(true)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition-colors backdrop-blur-sm"
@@ -574,75 +571,181 @@ export default function TasksBoard() {
           <div className="flex-1 overflow-x-auto overflow-y-hidden">
             <div className="h-full flex items-start p-6 gap-6 min-w-max">
               {selectedDepartment && (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCorners}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={columns.filter(col => col.department_id === selectedDepartment).map(col => col.id)}
-                  >
-                    {columns
-                      .filter(col => col.department_id === selectedDepartment)
-                      .map(column => {
-                        const columnTasks = tasks.filter(task => task.column_id === column.id)
+                <>
+                  {/* Show search results if there's a search query */}
+                  {searchQuery.trim() ? (
+                    <div className="w-full">
+                      <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4">
+                        <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                          <Search size={20} />
+                          תוצאות חיפוש עבור: "{searchQuery}"
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                          {tasks.filter(task => {
+                            const query = searchQuery.toLowerCase()
 
-                        return (
-                          <DroppableColumn
-                            key={column.id}
-                            column={column}
-                            tasksCount={tasks.filter(t => t.column_id === column.id).length}
-                            onAddTask={handleAddTask}
-                          >
-                            <SortableContext
-                              items={columnTasks.map(task => task.id)}
-                              strategy={verticalListSortingStrategy}
-                            >
-                              <div className="min-h-[100px] flex flex-col gap-2">
-                                {columnTasks.map(task => (
-                                  <TaskCard
-                                    key={task.id}
-                                    task={task}
-                                    onViewDetails={handleViewTaskDetails}
-                                  />
-                                ))}
+                            // Search in task title
+                            if (task.title?.toLowerCase().includes(query)) return true
+
+                            // Search in task description
+                            if (task.description?.toLowerCase().includes(query)) return true
+
+                            // Search in order number
+                            if (task.orders?.order_number?.toString().includes(query)) return true
+
+                            // Search in customer name
+                            if (task.orders?.customer_name?.toLowerCase().includes(query)) return true
+
+                            // Search in customer phone
+                            if (task.orders?.customer_phone?.includes(query)) return true
+
+                            return false
+                          }).map(task => {
+                            const taskColumn = columns.find(c => c.id === task.column_id)
+                            const taskDepartment = departments.find(d => d.id === task.department_id)
+
+                            return (
+                              <div
+                                key={task.id}
+                                onClick={() => handleViewTaskDetails(task)}
+                                className="bg-[#22272B] hover:bg-[#2C333A] rounded-lg p-3 shadow-sm border border-transparent hover:border-gray-600 cursor-pointer transition-all"
+                              >
+                                {/* Department and Column Info */}
+                                <div className="flex gap-1.5 mb-2 flex-wrap">
+                                  <span className="bg-purple-600/80 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {taskDepartment?.name}
+                                  </span>
+                                  <span className="bg-blue-600/80 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {taskColumn?.name}
+                                  </span>
+                                </div>
+
+                                {/* Task Title */}
+                                <h4 className="font-medium text-sm text-gray-100 mb-2">
+                                  {task.title || 'משימה ללא כותרת'}
+                                </h4>
+
+                                {/* Labels */}
+                                {task.labels && task.labels.length > 0 && (
+                                  <div className="flex gap-1.5 mb-2 flex-wrap">
+                                    {task.labels.map((label, idx) => {
+                                      const labelConfig = availableLabels.find(l => l.name === label) || availableLabels[2]
+                                      return (
+                                        <span key={idx} className={`${labelConfig.color} h-2 w-8 rounded-full`} title={label}></span>
+                                      )
+                                    })}
+                                  </div>
+                                )}
+
+                                {/* Order Info and Description */}
+                                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 mt-2">
+                                  {task.orders && (
+                                    <span className="flex items-center gap-1 bg-blue-900/30 text-blue-300 px-1.5 py-0.5 rounded">
+                                      <span className="opacity-70">#</span>{task.orders.order_number}
+                                    </span>
+                                  )}
+                                  {task.orders?.customer_name && (
+                                    <span className="text-gray-400">
+                                      {task.orders.customer_name}
+                                    </span>
+                                  )}
+                                  {task.description && (
+                                    <span title="יש תיאור" className="flex items-center">
+                                      <span className="text-lg leading-none">≡</span>
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            </SortableContext>
-                          </DroppableColumn>
-                        )
-                      })}
-                  </SortableContext>
-
-                  {/* Add Column Button inside the board flow */}
-                  <div className="w-80 flex-shrink-0">
-                    <button
-                      onClick={() => {
-                        if (!selectedDepartment) return;
-                        setEditingColumn(null)
-                        setColumnForm({ name: '', color: 'gray' })
-                        setShowColumnModal(true)
-                      }}
-                      className="w-full h-12 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center gap-2 px-4 transition-colors backdrop-blur-sm"
-                    >
-                      <Plus size={20} />
-                      <span>הוסף עמודה אחרת</span>
-                    </button>
-                  </div>
-
-                  <DragOverlay>
-                    {activeId && draggedTask ? (
-                      <div className="bg-gray-800 rounded-lg p-3 shadow-2xl border border-gray-600 w-72 rotate-3">
-                        <h4 className="font-medium text-sm text-white">
-                          {draggedTask.title || 'משימה ללא כותרת'}
-                        </h4>
-                        {draggedTask.description && (
-                          <p className="text-xs text-gray-400 mt-1">{draggedTask.description}</p>
-                        )}
+                            )
+                          })}
+                        </div>
+                        {tasks.filter(task => {
+                          const query = searchQuery.toLowerCase()
+                          return task.title?.toLowerCase().includes(query) ||
+                            task.description?.toLowerCase().includes(query) ||
+                            task.orders?.order_number?.toString().includes(query) ||
+                            task.orders?.customer_name?.toLowerCase().includes(query) ||
+                            task.orders?.customer_phone?.includes(query)
+                        }).length === 0 && (
+                            <div className="text-center py-8 text-white/50">
+                              <p>לא נמצאו תוצאות</p>
+                            </div>
+                          )}
                       </div>
-                    ) : null}
-                  </DragOverlay>
-                </DndContext>
+                    </div>
+                  ) : (
+                    /* Normal column view when no search */
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCorners}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={columns.filter(col => col.department_id === selectedDepartment).map(col => col.id)}
+                      >
+                        {columns
+                          .filter(col => col.department_id === selectedDepartment)
+                          .map(column => {
+                            const columnTasks = tasks.filter(task => task.column_id === column.id)
+
+                            return (
+                              <DroppableColumn
+                                key={column.id}
+                                column={column}
+                                tasksCount={tasks.filter(t => t.column_id === column.id).length}
+                                onAddTask={handleAddTask}
+                              >
+                                <SortableContext
+                                  items={columnTasks.map(task => task.id)}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  <div className="min-h-[100px] flex flex-col gap-2">
+                                    {columnTasks.map(task => (
+                                      <TaskCard
+                                        key={task.id}
+                                        task={task}
+                                        onViewDetails={handleViewTaskDetails}
+                                      />
+                                    ))}
+                                  </div>
+                                </SortableContext>
+                              </DroppableColumn>
+                            )
+                          })}
+                      </SortableContext>
+
+                      {/* Add Column Button inside the board flow */}
+                      <div className="w-80 flex-shrink-0">
+                        <button
+                          onClick={() => {
+                            if (!selectedDepartment) return;
+                            setEditingColumn(null)
+                            setColumnForm({ name: '', color: 'gray' })
+                            setShowColumnModal(true)
+                          }}
+                          className="w-full h-12 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center gap-2 px-4 transition-colors backdrop-blur-sm"
+                        >
+                          <Plus size={20} />
+                          <span>הוסף עמודה אחרת</span>
+                        </button>
+                      </div>
+
+                      <DragOverlay>
+                        {activeId && draggedTask ? (
+                          <div className="bg-gray-800 rounded-lg p-3 shadow-2xl border border-gray-600 w-72 rotate-3">
+                            <h4 className="font-medium text-sm text-white">
+                              {draggedTask.title || 'משימה ללא כותרת'}
+                            </h4>
+                            {draggedTask.description && (
+                              <p className="text-xs text-gray-400 mt-1">{draggedTask.description}</p>
+                            )}
+                          </div>
+                        ) : null}
+                      </DragOverlay>
+                    </DndContext>
+                  )}
+                </>
               )}
             </div>
           </div>

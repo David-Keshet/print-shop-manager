@@ -402,6 +402,9 @@ export default function TasksBoard() {
       }
 
       try {
+        // Get target column info to map status
+        const targetColumn = columns.find(c => c.id === overId)
+
         // Update task column
         const { error } = await supabase
           .from('tasks')
@@ -409,6 +412,39 @@ export default function TasksBoard() {
           .eq('id', taskId)
 
         if (error) throw error
+
+        // Update order status based on column name mapping
+        if (task.order_id && targetColumn) {
+          const statusMapping = {
+            'ממתין': 'new',
+            'בביצוע': 'in_progress',
+            'בגרפיקה': 'in_progress',
+            'בדפוס': 'in_progress',
+            'בגימור': 'in_progress',
+            'מחכה לאישור': 'in_progress',
+            'מוכן': 'completed',
+            'הושלם': 'completed',
+            'נמסר': 'completed',
+            'בוטל': 'cancelled'
+          }
+
+          // Try to match column name to status
+          let newStatus = 'in_progress' // default
+          const columnName = targetColumn.name.trim()
+
+          for (const [key, value] of Object.entries(statusMapping)) {
+            if (columnName.includes(key)) {
+              newStatus = value
+              break
+            }
+          }
+
+          // Update order status
+          await supabase
+            .from('orders')
+            .update({ status: newStatus })
+            .eq('id', task.order_id)
+        }
 
         fetchBoardData()
       } catch (error) {

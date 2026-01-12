@@ -517,22 +517,24 @@ export default function TasksBoard() {
       isOver,
     } = useSortable({ id: column.id })
 
+    const columnColor = availableColors.find(c => c.name === (column.color || 'gray')) || availableColors[0]
+
     return (
       <div
         ref={setNodeRef}
-        className={`bg-gray-100 rounded-xl p-4 transition-all ${
-          isOver ? 'ring-2 ring-blue-400 bg-blue-50' : ''
+        className={`${columnColor.bgClass} rounded-xl p-4 transition-all border-2 ${columnColor.borderClass} ${
+          isOver ? 'ring-2 ring-blue-400 shadow-lg' : ''
         }`}
       >
         <div className="flex justify-between items-center mb-4">
-          <h4 className="font-bold text-lg text-gray-700">{column.name}</h4>
+          <h4 className={`font-bold text-lg ${columnColor.textClass}`}>{column.name}</h4>
           <div className="flex items-center gap-2">
-            <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded-full text-xs">
+            <span className={`${columnColor.bgClass.replace('50', '200')} ${columnColor.textClass} px-2 py-1 rounded-full text-xs font-medium`}>
               {tasks.filter(t => t.column_id === column.id).length}
             </span>
             <button
               onClick={() => handleAddTask(column.id)}
-              className="text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-200 rounded"
+              className={`${columnColor.textClass} hover:opacity-80 p-1 hover:bg-white/50 rounded transition-all`}
               title="הוסף משימה"
             >
               <Plus size={16} />
@@ -875,15 +877,47 @@ export default function TasksBoard() {
                   <X size={24} />
                 </button>
               </div>
-              <input
-                type="text"
-                value={columnForm.name}
-                onChange={(e) => setColumnForm({ name: e.target.value })}
-                placeholder="שם העמודה"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
-              <div className="flex justify-end gap-2 mt-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    שם העמודה
+                  </label>
+                  <input
+                    type="text"
+                    value={columnForm.name}
+                    onChange={(e) => setColumnForm({ ...columnForm, name: e.target.value })}
+                    placeholder="שם העמודה"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    צבע העמודה
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {availableColors.map(color => (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => setColumnForm({ ...columnForm, color: color.name })}
+                        className={`${color.bgClass} ${color.borderClass} border-2 p-3 rounded-lg transition-all ${
+                          columnForm.color === color.name ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+                        }`}
+                        title={color.label}
+                      >
+                        <div className="text-center">
+                          <div className={`w-6 h-6 mx-auto mb-1 rounded-full ${color.bgClass.replace('50', '200')}`}></div>
+                          <span className="text-xs text-gray-600">{color.label}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
                 <button
                   onClick={() => setShowColumnModal(false)}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"

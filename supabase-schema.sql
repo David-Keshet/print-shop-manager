@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS columns (
   department_id UUID REFERENCES departments(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   position INTEGER NOT NULL DEFAULT 0,
+  color TEXT DEFAULT 'gray',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   title TEXT,
   description TEXT,
   notes TEXT,
+  labels TEXT[],
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -1087,11 +1087,22 @@ export default function TasksBoard() {
         {/* Task Detail Modal */}
         {showTaskDetailModal && selectedTask && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-xl w-full max-w-7xl max-h-[95vh] overflow-y-auto">
               {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-start">
+              <div className="sticky top-0 bg-white border-b border-gray-200 p-8 flex justify-between items-start">
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  {orderDetails && (
+                    <div className="flex items-center gap-4 mb-3">
+                      <span className="text-3xl font-extrabold text-blue-600">
+                        הזמנה #{orderDetails.order_number}
+                      </span>
+                      <span className="text-2xl text-gray-700">|</span>
+                      <span className="text-2xl font-bold text-gray-800">
+                        {orderDetails.customer_name}
+                      </span>
+                    </div>
+                  )}
+                  <h2 className="text-3xl font-bold text-gray-800 mb-3">
                     {selectedTask.title}
                   </h2>
                   {selectedTask.labels && selectedTask.labels.length > 0 && (
@@ -1099,7 +1110,7 @@ export default function TasksBoard() {
                       {selectedTask.labels.map((label, idx) => {
                         const labelConfig = availableLabels.find(l => l.name === label) || availableLabels[2]
                         return (
-                          <span key={idx} className={`${labelConfig.color} text-white text-xs px-3 py-1 rounded-full`}>
+                          <span key={idx} className={`${labelConfig.color} text-white text-sm px-4 py-1.5 rounded-full`}>
                             {label}
                           </span>
                         )
@@ -1107,16 +1118,28 @@ export default function TasksBoard() {
                     </div>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => alert('פיצ\'ר הערות בקרוב')}
+                    className="relative bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white p-3 rounded-full transition-all shadow-lg hover:shadow-xl"
+                    title="הערות"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      0
+                    </span>
+                  </button>
                   <button
                     onClick={() => {
                       setShowTaskDetailModal(false)
                       handleEditTask(selectedTask)
                     }}
-                    className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors"
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg transition-colors"
                     title="ערוך משימה"
                   >
-                    <Edit2 size={20} />
+                    <Edit2 size={24} />
                   </button>
                   <button
                     onClick={() => {
@@ -1128,10 +1151,10 @@ export default function TasksBoard() {
                         setTaskItems([])
                       }
                     }}
-                    className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
+                    className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg transition-colors"
                     title="מחק משימה"
                   >
-                    <Trash2 size={20} />
+                    <Trash2 size={24} />
                   </button>
                   <button
                     onClick={() => {
@@ -1142,60 +1165,14 @@ export default function TasksBoard() {
                     }}
                     className="text-gray-500 hover:text-gray-700"
                   >
-                    <X size={28} />
+                    <X size={32} />
                   </button>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Right Side - Task Details */}
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">תיאור המשימה</h3>
-                    <p className="text-gray-600 whitespace-pre-wrap">
-                      {selectedTask.description || 'אין תיאור'}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">פרטים נוספים</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Calendar size={16} className="text-gray-400" />
-                        <span className="text-gray-600">
-                          נוצר: {new Date(selectedTask.created_at).toLocaleString('he-IL')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Move to Department */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                      <ArrowRight size={18} />
-                      העבר למחלקה אחרת
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {departments
-                        .filter(dept => dept.id !== selectedTask.department_id)
-                        .map(dept => (
-                          <button
-                            key={dept.id}
-                            onClick={() => {
-                              handleMoveTaskToDepartment(selectedTask, dept.id)
-                              setShowTaskDetailModal(false)
-                            }}
-                            className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-sm transition-colors"
-                          >
-                            {dept.name}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Left Side - Order Details */}
+              <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Right Side - Order Items */}
                 {orderDetails && (
                   <div className="space-y-4">
                     <div className="bg-blue-50 rounded-lg p-4">
@@ -1294,6 +1271,62 @@ export default function TasksBoard() {
                     <p>משימה זו אינה מקושרת להזמנה</p>
                   </div>
                 )}
+
+                {/* Left Side - Additional Details */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-2xl font-semibold text-gray-700 mb-4">פרטים נוספים</h3>
+                    <div className="space-y-3 text-base">
+                      <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
+                        <Calendar size={20} className="text-gray-400" />
+                        <div>
+                          <span className="text-gray-600 font-medium">תאריך יצירה: </span>
+                          <span className="text-gray-800">
+                            {new Date(selectedTask.created_at).toLocaleString('he-IL')}
+                          </span>
+                        </div>
+                      </div>
+                      {selectedTask.updated_at && (
+                        <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
+                          <Calendar size={20} className="text-gray-400" />
+                          <div>
+                            <span className="text-gray-600 font-medium">עדכון אחרון: </span>
+                            <span className="text-gray-800">
+                              {new Date(selectedTask.updated_at).toLocaleString('he-IL')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Move to Department */}
+                  <div>
+                    <h3 className="text-2xl font-semibold text-gray-700 mb-4 flex items-center gap-3">
+                      <ArrowRight size={24} />
+                      העבר למחלקה אחרת
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                      {departments
+                        .filter(dept => dept.id !== selectedTask.department_id)
+                        .map(dept => (
+                          <button
+                            key={dept.id}
+                            onClick={() => {
+                              handleMoveTaskToDepartment(selectedTask, dept.id)
+                              setShowTaskDetailModal(false)
+                            }}
+                            className="bg-purple-500 hover:bg-purple-600 text-white px-5 py-3 rounded-lg text-base font-medium transition-colors shadow-md hover:shadow-lg"
+                          >
+                            {dept.name}
+                          </button>
+                        ))}
+                    </div>
+                    {departments.filter(dept => dept.id !== selectedTask.department_id).length === 0 && (
+                      <p className="text-gray-500 text-sm">אין מחלקות נוספות להעברה</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

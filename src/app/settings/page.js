@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Settings, Database, Users, Bell, Palette, Globe } from 'lucide-react'
+import { Settings as SettingsIcon, Database, Users, Bell, Palette, Globe } from 'lucide-react'
 import Layout from '@/components/Layout'
 
 export const dynamic = 'force-dynamic'

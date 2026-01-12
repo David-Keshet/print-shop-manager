@@ -464,128 +464,156 @@ export default function TasksBoard() {
 
   return (
     <Layout>
-      <div className="p-8">
-        <div className="card mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-                <span>📌</span>
-                לוח משימות
-              </h1>
-              <p className="text-gray-600">ניהול משימות לפי מחלקות וסטטוס</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowColumnManagementModal(true)}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <Edit2 size={20} />
-                ניהול עמודות
-              </button>
-              <button
-                onClick={() => setShowDepartmentManagementModal(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <Edit2 size={20} />
-                ניהול מחלקות
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Main Container - Full Height, Dark Theme */}
+      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white" style={{ direction: 'rtl' }}>
 
-        {/* Department Tabs */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2 items-center">
+        {/* Sidebar - Departments */}
+        <div className="w-64 bg-black/20 backdrop-blur-sm border-l border-white/10 flex flex-col flex-shrink-0 transition-all duration-300">
+          <div className="p-4 border-b border-white/10 flex justify-between items-center">
+            <h2 className="font-bold text-lg text-white/90">מחלקות</h2>
+            <button
+              onClick={() => setShowDepartmentManagementModal(true)}
+              className="text-white/70 hover:text-white p-1 hover:bg-white/10 rounded transition-colors"
+              title="ניהול מחלקות"
+            >
+              <Edit2 size={16} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {departments.map(department => (
               <button
                 key={department.id}
                 onClick={() => setSelectedDepartment(department.id)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedDepartment === department.id
-                    ? 'bg-blue-500 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                className={`w-full text-right px-4 py-2 rounded-lg font-medium transition-all flex justify-between items-center group ${selectedDepartment === department.id
+                  ? 'bg-blue-600/80 text-white shadow-lg backdrop-blur-md'
+                  : 'text-white/70 hover:bg-white/10 hover:text-white'
                   }`}
               >
-                {department.name}
+                <span>{department.name}</span>
+                {selectedDepartment === department.id && (
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                )}
               </button>
             ))}
+            <button
+              onClick={() => {
+                setEditingDepartment(null)
+                setDepartmentForm({ name: '' })
+                setShowDepartmentModal(true)
+              }}
+              className="w-full mt-4 text-right px-4 py-2 rounded-lg text-sm text-white/50 hover:bg-white/5 hover:text-white border border-dashed border-white/20 hover:border-white/40 flex items-center gap-2 transition-all"
+            >
+              <Plus size={16} />
+              <span>הוסף מחלקה</span>
+            </button>
           </div>
         </div>
 
-        {/* Kanban Board with Drag and Drop */}
-        {selectedDepartment && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              <SortableContext
-                items={columns.filter(col => col.department_id === selectedDepartment).map(col => col.id)}
-              >
-                {columns
-                  .filter(col => col.department_id === selectedDepartment)
-                  .map(column => {
-                    const columnTasks = tasks.filter(task => task.column_id === column.id)
-
-                    return (
-                      <DroppableColumn
-                        key={column.id}
-                        column={column}
-                        tasksCount={tasks.filter(t => t.column_id === column.id).length}
-                        onAddTask={handleAddTask}
-                      >
-                        <SortableContext
-                          items={columnTasks.map(task => task.id)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <div className="min-h-[200px] space-y-2">
-                            {columnTasks.map(task => (
-                              <TaskCard
-                                key={task.id}
-                                task={task}
-                                onViewDetails={handleViewTaskDetails}
-                              />
-                            ))}
-                          </div>
-                        </SortableContext>
-
-                        {columnTasks.length === 0 && (
-                          <div className="text-center py-8 text-gray-400">
-                            <p className="text-sm">אין משימות בעמודה זו</p>
-                            <button
-                              onClick={() => handleAddTask(column.id)}
-                              className="mt-2 text-blue-500 hover:text-blue-700 text-sm"
-                            >
-                              + הוסף משימה
-                            </button>
-                          </div>
-                        )}
-                      </DroppableColumn>
-                    )
-                  })}
-              </SortableContext>
+        {/* Board Area */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+          {/* Board Header */}
+          <div className="h-14 bg-black/10 backdrop-blur-sm border-b border-white/10 flex items-center justify-between px-6 flex-shrink-0">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                <span>{departments.find(d => d.id === selectedDepartment)?.name || 'לוח משימות'}</span>
+              </h1>
             </div>
 
-            <DragOverlay>
-              {activeId && draggedTask ? (
-                <div className="bg-white rounded-lg p-3 shadow-xl border-2 border-blue-400">
-                  <h4 className="font-medium text-sm text-gray-800">
-                    {draggedTask.title || 'משימה ללא כותרת'}
-                  </h4>
-                  {draggedTask.description && (
-                    <p className="text-xs text-gray-600 mt-1">{draggedTask.description}</p>
-                  )}
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowColumnManagementModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition-colors backdrop-blur-sm"
+              >
+                <Edit2 size={14} />
+                <span>ניהול עמודות</span>
+              </button>
+            </div>
+          </div>
 
+          {/* Columns Container - Horizontal Scroll */}
+          <div className="flex-1 overflow-x-auto overflow-y-hidden">
+            <div className="h-full flex items-start p-6 gap-6 min-w-max">
+              {selectedDepartment && (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCorners}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={columns.filter(col => col.department_id === selectedDepartment).map(col => col.id)}
+                  >
+                    {columns
+                      .filter(col => col.department_id === selectedDepartment)
+                      .map(column => {
+                        const columnTasks = tasks.filter(task => task.column_id === column.id)
+
+                        return (
+                          <DroppableColumn
+                            key={column.id}
+                            column={column}
+                            tasksCount={tasks.filter(t => t.column_id === column.id).length}
+                            onAddTask={handleAddTask}
+                          >
+                            <SortableContext
+                              items={columnTasks.map(task => task.id)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div className="min-h-[100px] flex flex-col gap-2">
+                                {columnTasks.map(task => (
+                                  <TaskCard
+                                    key={task.id}
+                                    task={task}
+                                    onViewDetails={handleViewTaskDetails}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DroppableColumn>
+                        )
+                      })}
+                  </SortableContext>
+
+                  {/* Add Column Button inside the board flow */}
+                  <div className="w-80 flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        if (!selectedDepartment) return;
+                        setEditingColumn(null)
+                        setColumnForm({ name: '', color: 'gray' })
+                        setShowColumnModal(true)
+                      }}
+                      className="w-full h-12 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center gap-2 px-4 transition-colors backdrop-blur-sm"
+                    >
+                      <Plus size={20} />
+                      <span>הוסף עמודה אחרת</span>
+                    </button>
+                  </div>
+
+                  <DragOverlay>
+                    {activeId && draggedTask ? (
+                      <div className="bg-gray-800 rounded-lg p-3 shadow-2xl border border-gray-600 w-72 rotate-3">
+                        <h4 className="font-medium text-sm text-white">
+                          {draggedTask.title || 'משימה ללא כותרת'}
+                        </h4>
+                        {draggedTask.description && (
+                          <p className="text-xs text-gray-400 mt-1">{draggedTask.description}</p>
+                        )}
+                      </div>
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Modals - Keeping existing logic but updating styles slightly if needed, or just keeping them generic */}
         {/* Department Management Modal */}
         {showDepartmentManagementModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto shadow-2xl">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold text-gray-800">ניהול מחלקות</h3>
                 <button
@@ -603,7 +631,7 @@ export default function TasksBoard() {
                     setDepartmentForm({ name: '' })
                     setShowDepartmentModal(true)
                   }}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <Plus size={20} />
                   הוסף מחלקה חדשה
@@ -629,14 +657,14 @@ export default function TasksBoard() {
                           setDepartmentForm({ name: department.name })
                           setShowDepartmentModal(true)
                         }}
-                        className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors"
+                        className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"
                         title="ערוך"
                       >
                         <Edit2 size={18} />
                       </button>
                       <button
                         onClick={() => handleDeleteDepartment(department.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
+                        className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
                         title="מחק"
                       >
                         <Trash2 size={18} />
@@ -644,11 +672,6 @@ export default function TasksBoard() {
                     </div>
                   </div>
                 ))}
-                {departments.length === 0 && (
-                  <div className="text-center py-8 text-gray-400">
-                    <p>אין מחלקות במערכת</p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -656,8 +679,8 @@ export default function TasksBoard() {
 
         {/* Column Management Modal */}
         {showColumnManagementModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto shadow-2xl">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold text-gray-800">ניהול עמודות</h3>
                 <button
@@ -677,7 +700,7 @@ export default function TasksBoard() {
                         setColumnForm({ name: '' })
                         setShowColumnModal(true)
                       }}
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                     >
                       <Plus size={20} />
                       הוסף עמודה חדשה
@@ -687,9 +710,6 @@ export default function TasksBoard() {
                   <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-sm text-blue-800">
                       מציג עמודות עבור מחלקה: <strong>{departments.find(d => d.id === selectedDepartment)?.name}</strong>
-                    </p>
-                    <p className="text-xs text-blue-600 mt-1">
-                      החלף מחלקה דרך הטאבים למעלה כדי לנהל עמודות אחרות
                     </p>
                   </div>
 
@@ -714,14 +734,14 @@ export default function TasksBoard() {
                                 setColumnForm({ name: column.name })
                                 setShowColumnModal(true)
                               }}
-                              className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors"
+                              className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"
                               title="ערוך"
                             >
                               <Edit2 size={18} />
                             </button>
                             <button
                               onClick={() => handleDeleteColumn(column.id)}
-                              className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
+                              className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
                               title="מחק"
                             >
                               <Trash2 size={18} />
@@ -729,11 +749,6 @@ export default function TasksBoard() {
                           </div>
                         </div>
                       ))}
-                    {columns.filter(col => col.department_id === selectedDepartment).length === 0 && (
-                      <div className="text-center py-8 text-gray-400">
-                        <p>אין עמודות במחלקה זו</p>
-                      </div>
-                    )}
                   </div>
                 </>
               ) : (
@@ -745,10 +760,10 @@ export default function TasksBoard() {
           </div>
         )}
 
-        {/* Column Modal */}
+        {/* Column Modal - Add/Edit */}
         {showColumnModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-96">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-96 shadow-2xl">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">
                   {editingColumn ? 'ערוך עמודה' : 'הוסף עמודה חדשה'}
@@ -785,43 +800,31 @@ export default function TasksBoard() {
                         key={color.name}
                         type="button"
                         onClick={() => setColumnForm({ ...columnForm, color: color.name })}
-                        className={`${color.bgClass} ${color.borderClass} border-2 p-3 rounded-lg transition-all ${columnForm.color === color.name ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+                        className={`w-full aspect-square rounded-lg transition-all ${columnForm.color === color.name ? 'ring-2 ring-blue-500 ring-offset-2' : ''
                           }`}
                         title={color.label}
                       >
-                        <div className="text-center">
-                          <div className={`w-6 h-6 mx-auto mb-1 rounded-full ${color.bgClass.replace('50', '200')}`}></div>
-                          <span className="text-xs text-gray-600">{color.label}</span>
-                        </div>
+                        <div className={`w-full h-full rounded-lg ${color.bgClass.replace('50', '200')}`}></div>
                       </button>
                     ))}
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end gap-2 mt-6">
-                <button
-                  onClick={() => setShowColumnModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  ביטול
-                </button>
                 <button
                   onClick={handleSaveColumn}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
                 >
-                  <Save size={16} />
-                  שמור
+                  שמור עמודה
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Department Modal */}
+        {/* Department Form Modal */}
         {showDepartmentModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-96">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-96 shadow-2xl">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">
                   {editingDepartment ? 'ערוך מחלקה' : 'הוסף מחלקה חדשה'}
@@ -833,26 +836,24 @@ export default function TasksBoard() {
                   <X size={24} />
                 </button>
               </div>
-              <input
-                type="text"
-                value={departmentForm.name}
-                onChange={(e) => setDepartmentForm({ name: e.target.value })}
-                placeholder="שם המחלקה"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  onClick={() => setShowDepartmentModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  ביטול
-                </button>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    שם המחלקה
+                  </label>
+                  <input
+                    type="text"
+                    value={departmentForm.name}
+                    onChange={(e) => setDepartmentForm({ ...departmentForm, name: e.target.value })}
+                    placeholder="שם המחלקה"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                </div>
                 <button
                   onClick={handleSaveDepartment}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
                 >
-                  <Save size={16} />
                   שמור
                 </button>
               </div>
@@ -860,17 +861,22 @@ export default function TasksBoard() {
           </div>
         )}
 
-        {/* Task Modal */}
+        {/* Task Modal - Create/Edit */}
         {showTaskModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-96 max-h-[80vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">
-                  {editingTask ? 'ערוך משימה' : 'הוסף משימה חדשה'}
-                </h3>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+            <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-2xl">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {editingTask ? 'עריכת משימה' : 'משימה חדשה'}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    בעמודה: {columns.find(c => c.id === taskForm.column_id)?.name}
+                  </p>
+                </div>
                 <button
                   onClick={() => setShowTaskModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-600 p-1 bg-gray-50 rounded-lg"
                 >
                   <X size={24} />
                 </button>
@@ -885,326 +891,193 @@ export default function TasksBoard() {
                     type="text"
                     value={taskForm.title}
                     onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                    placeholder="כותרת המשימה"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="מה צריך לעשות?"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                     autoFocus
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    תיאור המשימה
+                    תיאור / הערות
                   </label>
                   <textarea
                     value={taskForm.description}
                     onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-                    placeholder="תיאור המשימה"
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="פרטים נוספים..."
+                    rows={4}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    הזמנה (לא חובה)
-                  </label>
-                  <select
-                    value={taskForm.order_id || ''}
-                    onChange={(e) => setTaskForm({ ...taskForm, order_id: e.target.value || null })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">בחר הזמנה</option>
-                    {orders.map(order => (
-                      <option key={order.id} value={order.id}>
-                        הזמנה #{order.order_number} - {order.customer_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <Tag size={16} />
-                    תוויות
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    תגיות
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {availableLabels.map(label => {
-                      const isSelected = (taskForm.labels || []).includes(label.name)
-                      return (
-                        <button
-                          key={label.name}
-                          type="button"
-                          onClick={() => toggleLabel(label.name)}
-                          className={`${label.color} text-white text-xs px-3 py-1.5 rounded-full transition-all ${isSelected ? 'ring-2 ring-offset-2 ring-blue-500' : 'opacity-50'
-                            }`}
-                        >
-                          {label.name}
-                        </button>
-                      )
-                    })}
+                    {availableLabels.map(label => (
+                      <button
+                        key={label.name}
+                        onClick={() => toggleLabel(label.name)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-all flex items-center gap-1 ${(taskForm.labels || []).includes(label.name)
+                          ? `${label.color} text-white border-transparent`
+                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300'
+                          }`}
+                      >
+                        {(taskForm.labels || []).includes(label.name) && <CheckSquare size={12} />}
+                        {label.name}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end gap-2 mt-6">
-                <button
-                  onClick={() => setShowTaskModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  ביטול
-                </button>
-                <button
-                  onClick={handleSaveTask}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
-                  <Save size={16} />
-                  שמור
-                </button>
+                <div className="pt-2 border-t mt-6 flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowTaskModal(false)}
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    ביטול
+                  </button>
+                  <button
+                    onClick={handleSaveTask}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all"
+                  >
+                    {editingTask ? 'שמור שינויים' : 'צור משימה'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Task Detail Modal */}
+        {/* View Task Detail Modal */}
         {showTaskDetailModal && selectedTask && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl w-full max-w-7xl max-h-[95vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
+            <div className="bg-white rounded-xl p-0 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-8 flex justify-between items-start">
+              <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-gray-50">
                 <div className="flex-1">
-                  {orderDetails && (
-                    <div className="flex items-center gap-4 mb-3">
-                      <span className="text-3xl font-extrabold text-blue-600">
-                        הזמנה #{orderDetails.order_number}
-                      </span>
-                      <span className="text-2xl text-gray-700">|</span>
-                      <span className="text-2xl font-bold text-gray-800">
-                        {orderDetails.customer_name}
-                      </span>
-                    </div>
-                  )}
-                  <h2 className="text-3xl font-bold text-gray-800 mb-3">
-                    {selectedTask.title}
-                  </h2>
-                  {selectedTask.labels && selectedTask.labels.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
-                      {selectedTask.labels.map((label, idx) => {
-                        const labelConfig = availableLabels.find(l => l.name === label) || availableLabels[2]
-                        return (
-                          <span key={idx} className={`${labelConfig.color} text-white text-sm px-4 py-1.5 rounded-full`}>
-                            {label}
-                          </span>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => alert('פיצ\'ר הערות בקרוב')}
-                    className="relative bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white p-3 rounded-full transition-all shadow-lg hover:shadow-xl"
-                    title="הערות"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      0
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                      {columns.find(c => c.id === selectedTask.column_id)?.name}
                     </span>
-                  </button>
+                    {selectedTask.labels?.map((label, idx) => {
+                      const labelConfig = availableLabels.find(l => l.name === label)
+                      return (
+                        <span key={idx} className={`${labelConfig?.color || 'bg-gray-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
+                          {label}
+                        </span>
+                      )
+                    })}
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800">{selectedTask.title}</h2>
+                </div>
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
                       setShowTaskDetailModal(false)
                       handleEditTask(selectedTask)
                     }}
-                    className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg transition-colors"
-                    title="ערוך משימה"
+                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="ערוך"
                   >
-                    <Edit2 size={24} />
+                    <Edit2 size={20} />
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm('האם אתה בטוח שברצונך למחוק משימה זו?')) {
+                      if (confirm('למחוק את המשימה?')) {
                         handleDeleteTask(selectedTask.id)
                         setShowTaskDetailModal(false)
-                        setSelectedTask(null)
-                        setOrderDetails(null)
-                        setTaskItems([])
                       }
                     }}
-                    className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg transition-colors"
-                    title="מחק משימה"
+                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="מחק"
                   >
-                    <Trash2 size={24} />
+                    <Trash2 size={20} />
                   </button>
                   <button
-                    onClick={() => {
-                      setShowTaskDetailModal(false)
-                      setSelectedTask(null)
-                      setOrderDetails(null)
-                      setTaskItems([])
-                    }}
-                    className="text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowTaskDetailModal(false)}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <X size={32} />
+                    <X size={24} />
                   </button>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Right Side - Order Items */}
-                {orderDetails && (
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 rounded-lg p-4">
-                      <h3 className="text-lg font-semibold text-blue-800 mb-3">
-                        פרטי הזמנה #{orderDetails.order_number}
-                      </h3>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="text-gray-600">לקוח: </span>
-                          <span className="font-medium">{orderDetails.customer_name}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">טלפון: </span>
-                          <span className="font-medium">{orderDetails.customer_phone}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">סטטוס: </span>
-                          <span className="font-medium">{orderDetails.status}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">סה"כ: </span>
-                          <span className="font-medium">₪{orderDetails.total_with_vat?.toFixed(2)}</span>
-                        </div>
-                        {orderDetails.notes && (
-                          <div className="mt-2">
-                            <span className="text-gray-600">הערות: </span>
-                            <p className="text-gray-800 mt-1">{orderDetails.notes}</p>
-                          </div>
-                        )}
-                      </div>
+              <div className="p-6 overflow-y-auto custom-scrollbar">
+                {selectedTask.description && (
+                  <div className="mb-6">
+                    <h4 className="flex items-center gap-2 font-semibold text-gray-700 mb-2">
+                      <span>📝</span> תיאור
+                    </h4>
+                    <div className="bg-gray-50 p-4 rounded-lg text-gray-600 whitespace-pre-wrap leading-relaxed">
+                      {selectedTask.description}
                     </div>
+                  </div>
+                )}
 
-                    {/* Order Items Checklist */}
-                    {taskItems.length > 0 && (
+                {orderDetails && (
+                  <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <h4 className="flex items-center gap-2 font-semibold text-blue-800 mb-3">
+                      <span>📦</span> פרטי הזמנה #{orderDetails.order_number}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-700 mb-3">
-                          פריטים להדפסה
-                        </h3>
-                        <div className="space-y-2">
-                          {taskItems.map(item => (
-                            <div
-                              key={item.id}
-                              className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${item.completed
-                                  ? 'bg-green-50 border-green-300'
-                                  : 'bg-white border-gray-200 hover:border-gray-300'
-                                }`}
-                              onClick={() => toggleTaskItem(item.id)}
-                            >
-                              <div className="flex-shrink-0">
-                                {item.completed ? (
-                                  <CheckSquare size={20} className="text-green-600" />
-                                ) : (
-                                  <Square size={20} className="text-gray-400" />
-                                )}
-                              </div>
-                              <div className="flex-1">
-                                <p className={`font-medium ${item.completed ? 'line-through text-gray-500' : 'text-gray-800'
-                                  }`}>
-                                  {item.description}
-                                </p>
-                                <div className="flex gap-4 text-xs text-gray-500 mt-1">
-                                  <span>כמות: {item.quantity}</span>
-                                  <span>מחיר: ₪{item.price?.toFixed(2)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Progress */}
-                        <div className="mt-4">
-                          <div className="flex justify-between text-sm text-gray-600 mb-1">
-                            <span>התקדמות</span>
-                            <span>
-                              {taskItems.filter(i => i.completed).length} / {taskItems.length}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-green-500 h-2 rounded-full transition-all"
-                              style={{
-                                width: `${(taskItems.filter(i => i.completed).length / taskItems.length) * 100}%`
-                              }}
-                            />
-                          </div>
-                        </div>
+                        <span className="text-blue-600 block text-xs">לקוח</span>
+                        <span className="font-medium text-gray-800">{orderDetails.customer_name}</span>
                       </div>
-                    )}
-                  </div>
-                )}
-
-                {!orderDetails && (
-                  <div className="flex items-center justify-center text-gray-400">
-                    <p>משימה זו אינה מקושרת להזמנה</p>
-                  </div>
-                )}
-
-                {/* Left Side - Additional Details */}
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-2xl font-semibold text-gray-700 mb-4">פרטים נוספים</h3>
-                    <div className="space-y-3 text-base">
-                      <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
-                        <Calendar size={20} className="text-gray-400" />
+                      {orderDetails.customer_phone && (
                         <div>
-                          <span className="text-gray-600 font-medium">תאריך יצירה: </span>
-                          <span className="text-gray-800">
-                            {new Date(selectedTask.created_at).toLocaleString('he-IL')}
-                          </span>
-                        </div>
-                      </div>
-                      {selectedTask.updated_at && (
-                        <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
-                          <Calendar size={20} className="text-gray-400" />
-                          <div>
-                            <span className="text-gray-600 font-medium">עדכון אחרון: </span>
-                            <span className="text-gray-800">
-                              {new Date(selectedTask.updated_at).toLocaleString('he-IL')}
-                            </span>
-                          </div>
+                          <span className="text-blue-600 block text-xs">טלפון</span>
+                          <span className="font-medium text-gray-800">{orderDetails.customer_phone}</span>
                         </div>
                       )}
                     </div>
                   </div>
+                )}
 
-                  {/* Move to Department */}
-                  <div>
-                    <h3 className="text-2xl font-semibold text-gray-700 mb-4 flex items-center gap-3">
-                      <ArrowRight size={24} />
-                      העבר למחלקה אחרת
-                    </h3>
-                    <div className="flex flex-wrap gap-3">
-                      {departments
-                        .filter(dept => dept.id !== selectedTask.department_id)
-                        .map(dept => (
-                          <button
-                            key={dept.id}
-                            onClick={() => {
-                              handleMoveTaskToDepartment(selectedTask, dept.id)
-                              setShowTaskDetailModal(false)
-                            }}
-                            className="bg-purple-500 hover:bg-purple-600 text-white px-5 py-3 rounded-lg text-base font-medium transition-colors shadow-md hover:shadow-lg"
-                          >
-                            {dept.name}
-                          </button>
-                        ))}
+                {taskItems.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="flex items-center gap-2 font-semibold text-gray-700 mb-3">
+                      <span>📋</span> פריטים בהזמנה
+                      <span className="text-sm font-normal text-gray-400">
+                        ({taskItems.filter(i => i.completed).length}/{taskItems.length})
+                      </span>
+                    </h4>
+                    <div className="space-y-2">
+                      {taskItems.map(item => (
+                        <div
+                          key={item.id}
+                          onClick={() => toggleTaskItem(item.id)}
+                          className={`flex items-center p-3 rounded-lg cursor-pointer border transition-all ${item.completed
+                            ? 'bg-green-50 border-green-200'
+                            : 'bg-white border-gray-200 hover:border-blue-300'
+                            }`}
+                        >
+                          <div className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors ${item.completed
+                            ? 'bg-green-500 border-green-500 text-white'
+                            : 'border-gray-300 text-transparent'
+                            }`}>
+                            <CheckSquare size={14} />
+                          </div>
+                          <div className="flex-1">
+                            <p className={`font-medium ${item.completed ? 'text-green-800 line-through' : 'text-gray-800'}`}>
+                              {item.description || `פריט #${item.id}`}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              כמות: {item.quantity} | {item.width}x{item.height} ס"מ
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    {departments.filter(dept => dept.id !== selectedTask.department_id).length === 0 && (
-                      <p className="text-gray-500 text-sm">אין מחלקות נוספות להעברה</p>
-                    )}
                   </div>
+                )}
+
+                <div className="mt-8 pt-6 border-t border-gray-100 text-xs text-gray-400 flex justify-between items-center">
+                  <span>נוצר בתאריך: {new Date(selectedTask.created_at).toLocaleDateString('he-IL')} בשעה {new Date(selectedTask.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span>ID: {selectedTask.id}</span>
                 </div>
               </div>
             </div>
@@ -1214,3 +1087,4 @@ export default function TasksBoard() {
     </Layout>
   )
 }
+

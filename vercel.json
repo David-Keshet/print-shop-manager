@@ -5,7 +5,6 @@
     "outputDirectory": ".next",
     "installCommand": "npm install",
     "framework": "nextjs",
-    "rootDirectory": "print-shop-manager",
     "regions": [
         "iad1"
     ]

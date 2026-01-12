@@ -1,7 +1,7 @@
 {
   "name": "מערכת ניהול בית דפוס",
   "short_name": "בית דפוס",
-  "description": "מערכת לניהול הזמנות, לקוחות ומשימות לבית דפוס",
+  "description": "מערכת מתקדמת לניהול הזמנות, לקוחות ולוח משימות לבית דפוס",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

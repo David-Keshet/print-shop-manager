@@ -1,4 +1,4 @@
-const CACHE_NAME = 'print-shop-v1';
+const CACHE_NAME = 'print-shop-v2';
 const urlsToCache = [
   '/',
   '/orders',

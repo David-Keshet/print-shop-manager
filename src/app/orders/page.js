@@ -73,7 +73,19 @@ export default function Orders() {
 
       if (error) throw error
 
-      setEditingOrder({ ...order, items: items || [] })
+      // שליפת המשימה הקשורה להזמנה כדי לקבל את העמודה והמחלקה הנוכחיים
+      const { data: task } = await supabase
+        .from('tasks')
+        .select('column_id, department_id')
+        .eq('order_id', order.id)
+        .single()
+
+      setEditingOrder({
+        ...order,
+        items: items || [],
+        current_column_id: task?.column_id,
+        current_department_id: task?.department_id
+      })
       setShowNewOrder(true)
     } catch (error) {
       console.error('שגיאה בטעינת פרטי הזמנה לעריכה:', error)
@@ -372,8 +384,13 @@ function OrderForm({ onClose, initialCustomer, editData }) {
       if (colsError) throw colsError
       setColumns(cols || [])
 
-      // בחירה אוטומטית של העמודה הראשונה כברירת מחדל
-      if (cols && cols.length > 0) {
+      // אם זו עריכה - טען את העמודה והמחלקה הנוכחיים
+      if (editData?.current_column_id && editData?.current_department_id) {
+        setSelectedColumn(editData.current_column_id)
+        setSelectedDepartment(editData.current_department_id)
+      }
+      // אחרת - בחירה אוטומטית של העמודה הראשונה כברירת מחדל
+      else if (cols && cols.length > 0) {
         setSelectedColumn(cols[0].id)
         setSelectedDepartment(cols[0].department_id)
       }
@@ -474,8 +491,8 @@ function OrderForm({ onClose, initialCustomer, editData }) {
       return
     }
 
-    // ולידציה למחלקה ועמודה (רק להזמנה חדשה)
-    if (!editData && (!selectedDepartment || !selectedColumn)) {
+    // ולידציה למחלקה ועמודה (גם בעריכה וגם בהזמנה חדשה)
+    if (!selectedDepartment || !selectedColumn) {
       alert('אנא בחר מחלקה ועמודה לניתוב ההזמנה')
       return
     }
@@ -550,6 +567,15 @@ function OrderForm({ onClose, initialCustomer, editData }) {
           .insert(orderItems)
 
         if (itemsError) throw itemsError
+
+        // עדכון המשימה - העברה לעמודה ומחלקה חדשים אם נבחרו
+        await supabase
+          .from('tasks')
+          .update({
+            column_id: selectedColumn,
+            department_id: selectedDepartment
+          })
+          .eq('order_id', editData.id)
 
         alert(`הזמנה ${editData.order_number} עודכנה בהצלחה!`)
         onClose()
@@ -789,48 +815,46 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                 </div>
 
                 {/* בחירת מחלקה ועמודה */}
-                {!editData && (
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
-                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                      🎯 ניתוב הזמנה
-                    </h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-gray-600 text-xs font-bold mb-1">מחלקה *</label>
-                        <select
-                          className="input-field text-sm bg-white border-gray-300"
-                          value={selectedDepartment}
-                          onChange={(e) => handleDepartmentChange(e.target.value)}
-                        >
-                          <option value="">בחר מחלקה</option>
-                          {departments.map(dept => (
-                            <option key={dept.id} value={dept.id}>
-                              {dept.name}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
+                  <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    🎯 ניתוב הזמנה
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-gray-600 text-xs font-bold mb-1">מחלקה *</label>
+                      <select
+                        className="input-field text-sm bg-white border-gray-300"
+                        value={selectedDepartment}
+                        onChange={(e) => handleDepartmentChange(e.target.value)}
+                      >
+                        <option value="">בחר מחלקה</option>
+                        {departments.map(dept => (
+                          <option key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-gray-600 text-xs font-bold mb-1">עמודה *</label>
+                      <select
+                        className="input-field text-sm bg-white border-gray-300"
+                        value={selectedColumn}
+                        onChange={(e) => setSelectedColumn(e.target.value)}
+                        disabled={!selectedDepartment}
+                      >
+                        <option value="">בחר עמודה</option>
+                        {columns
+                          .filter(col => col.department_id === selectedDepartment)
+                          .map(col => (
+                            <option key={col.id} value={col.id}>
+                              {col.name}
                             </option>
                           ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-gray-600 text-xs font-bold mb-1">עמודה *</label>
-                        <select
-                          className="input-field text-sm bg-white border-gray-300"
-                          value={selectedColumn}
-                          onChange={(e) => setSelectedColumn(e.target.value)}
-                          disabled={!selectedDepartment}
-                        >
-                          <option value="">בחר עמודה</option>
-                          {columns
-                            .filter(col => col.department_id === selectedDepartment)
-                            .map(col => (
-                              <option key={col.id} value={col.id}>
-                                {col.name}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
+                      </select>
                     </div>
                   </div>
-                )}
+                </div>
 
                 <div className="flex flex-col gap-3">
                   <button

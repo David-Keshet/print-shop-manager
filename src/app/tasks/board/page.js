@@ -413,29 +413,32 @@ export default function TasksBoard() {
 
         if (error) throw error
 
-        // Update order status based on column name mapping
+        // Update order status based on column's order_status field
         if (task.order_id && targetColumn) {
-          const statusMapping = {
-            'ממתין': 'new',
-            'בביצוע': 'in_progress',
-            'בגרפיקה': 'in_progress',
-            'בדפוס': 'in_progress',
-            'בגימור': 'in_progress',
-            'מחכה לאישור': 'in_progress',
-            'מוכן': 'completed',
-            'הושלם': 'completed',
-            'נמסר': 'completed',
-            'בוטל': 'cancelled'
-          }
+          // Use column's order_status if available, otherwise use fallback mapping
+          let newStatus = targetColumn.order_status || 'in_progress'
 
-          // Try to match column name to status
-          let newStatus = 'in_progress' // default
-          const columnName = targetColumn.name.trim()
+          // Fallback: If no order_status field, try to infer from column name
+          if (!targetColumn.order_status) {
+            const statusMapping = {
+              'ממתין': 'new',
+              'בביצוע': 'in_progress',
+              'בגרפיקה': 'in_progress',
+              'בדפוס': 'in_progress',
+              'בגימור': 'in_progress',
+              'מחכה לאישור': 'in_progress',
+              'מוכן': 'completed',
+              'הושלם': 'completed',
+              'נמסר': 'completed',
+              'בוטל': 'cancelled'
+            }
 
-          for (const [key, value] of Object.entries(statusMapping)) {
-            if (columnName.includes(key)) {
-              newStatus = value
-              break
+            const columnName = targetColumn.name.trim()
+            for (const [key, value] of Object.entries(statusMapping)) {
+              if (columnName.includes(key)) {
+                newStatus = value
+                break
+              }
             }
           }
 

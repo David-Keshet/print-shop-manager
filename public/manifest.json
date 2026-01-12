@@ -1,0 +1,44 @@
+{
+  "name": "מערכת ניהול בית דפוס",
+  "short_name": "בית דפוס",
+  "description": "מערכת לניהול הזמנות, לקוחות ומשימות לבית דפוס",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "הזמנה חדשה",
+      "short_name": "הזמנה",
+      "description": "פתיחת הזמנה חדשה",
+      "url": "/orders",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "לוח משימות",
+      "short_name": "משימות",
+      "description": "צפייה בלוח המשימות",
+      "url": "/tasks/board",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

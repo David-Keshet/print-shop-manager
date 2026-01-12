@@ -341,6 +341,58 @@ function OrderForm({ onClose, initialCustomer, editData }) {
   const [loading, setLoading] = useState(false)
   const [lastOrder, setLastOrder] = useState(null)
 
+  // State למחלקות ועמודות
+  const [departments, setDepartments] = useState([])
+  const [columns, setColumns] = useState([])
+  const [selectedDepartment, setSelectedDepartment] = useState('')
+  const [selectedColumn, setSelectedColumn] = useState('')
+
+  // טעינת מחלקות ועמודות בעת טעינת הקומפוננטה
+  useEffect(() => {
+    fetchDepartmentsAndColumns()
+  }, [])
+
+  const fetchDepartmentsAndColumns = async () => {
+    try {
+      // טעינת מחלקות
+      const { data: depts, error: deptsError } = await supabase
+        .from('departments')
+        .select('*')
+        .order('name')
+
+      if (deptsError) throw deptsError
+      setDepartments(depts || [])
+
+      // טעינת עמודות
+      const { data: cols, error: colsError } = await supabase
+        .from('columns')
+        .select('id, name, department_id, position')
+        .order('position')
+
+      if (colsError) throw colsError
+      setColumns(cols || [])
+
+      // בחירה אוטומטית של העמודה הראשונה כברירת מחדל
+      if (cols && cols.length > 0) {
+        setSelectedColumn(cols[0].id)
+        setSelectedDepartment(cols[0].department_id)
+      }
+    } catch (error) {
+      console.error('שגיאה בטעינת מחלקות ועמודות:', error)
+    }
+  }
+
+  // עדכון עמודות זמינות כאשר משנים מחלקה
+  const handleDepartmentChange = (deptId) => {
+    setSelectedDepartment(deptId)
+    const deptColumns = columns.filter(col => col.department_id === deptId)
+    if (deptColumns.length > 0) {
+      setSelectedColumn(deptColumns[0].id)
+    } else {
+      setSelectedColumn('')
+    }
+  }
+
   const addItem = () => {
     setItems([...items, { description: '', quantity: '', price: '' }])
   }
@@ -422,6 +474,12 @@ function OrderForm({ onClose, initialCustomer, editData }) {
       return
     }
 
+    // ולידציה למחלקה ועמודה (רק להזמנה חדשה)
+    if (!editData && (!selectedDepartment || !selectedColumn)) {
+      alert('אנא בחר מחלקה ועמודה לניתוב ההזמנה')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -464,8 +522,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
             customer_phone: customerPhone,
             total: total,
             vat: vat,
-            total_with_vat: totalWithVat,
-            updated_at: new Date()
+            total_with_vat: totalWithVat
           })
           .eq('id', editData.id)
 
@@ -534,21 +591,14 @@ function OrderForm({ onClose, initialCustomer, editData }) {
 
       if (itemsError) throw itemsError
 
-      // יצירת משימה במחלקת מזכירות (רק להזמנה חדשה)
-      const { data: firstColumn } = await supabase
-        .from('columns')
-        .select('id, department_id')
-        .order('position')
-        .limit(1)
-        .single()
-
-      if (firstColumn) {
+      // יצירת משימה במחלקה והעמודה שנבחרו
+      if (selectedColumn && selectedDepartment) {
         await supabase
           .from('tasks')
           .insert([{
             order_id: order.id,
-            column_id: firstColumn.id,
-            department_id: firstColumn.department_id,
+            column_id: selectedColumn,
+            department_id: selectedDepartment,
             position: 0
           }])
       }
@@ -742,6 +792,50 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                     </div>
                   </div>
                 </div>
+
+                {/* בחירת מחלקה ועמודה */}
+                {!editData && (
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
+                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                      🎯 ניתוב הזמנה
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-gray-600 text-xs font-bold mb-1">מחלקה *</label>
+                        <select
+                          className="input-field text-sm bg-white border-gray-300"
+                          value={selectedDepartment}
+                          onChange={(e) => handleDepartmentChange(e.target.value)}
+                        >
+                          <option value="">בחר מחלקה</option>
+                          {departments.map(dept => (
+                            <option key={dept.id} value={dept.id}>
+                              {dept.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-gray-600 text-xs font-bold mb-1">עמודה *</label>
+                        <select
+                          className="input-field text-sm bg-white border-gray-300"
+                          value={selectedColumn}
+                          onChange={(e) => setSelectedColumn(e.target.value)}
+                          disabled={!selectedDepartment}
+                        >
+                          <option value="">בחר עמודה</option>
+                          {columns
+                            .filter(col => col.department_id === selectedDepartment)
+                            .map(col => (
+                              <option key={col.id} value={col.id}>
+                                {col.name}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex flex-col gap-3">
                   <button

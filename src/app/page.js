@@ -144,49 +144,49 @@ export default function Home() {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
-        <div className="w-[90%] mx-auto p-8">
+        <div className="w-[95%] mx-auto p-4">
           {/* Welcome Card */}
-          <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 mb-8 border border-white/20">
-            <h2 className="text-4xl font-extrabold text-gray-800 mb-3">ברוכים הבאים למערכת!</h2>
-            <p className="text-lg text-gray-600">בחר פעולה מהתפריט הצדדי כדי להתחיל</p>
+          <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-4 mb-4 border border-white/20">
+            <h2 className="text-2xl font-extrabold text-gray-800 mb-2">ברוכים הבאים למערכת!</h2>
+            <p className="text-sm text-gray-600">בחר פעולה מהתפריט הצדדי כדי להתחיל</p>
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border-2 border-blue-200 hover:shadow-xl transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-4xl">📦</span>
-                <span className="text-xs text-blue-600 font-semibold bg-blue-200 px-3 py-1 rounded-full">LIVE</span>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-200 hover:shadow-xl transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-2xl">📦</span>
+                <span className="text-xs text-blue-600 font-semibold bg-blue-200 px-2 py-0.5 rounded-full">LIVE</span>
               </div>
-              <p className="text-5xl font-extrabold text-blue-700 mb-2">
+              <p className="text-3xl font-extrabold text-blue-700 mb-1">
                 {loading ? '...' : stats.activeOrders}
               </p>
-              <p className="text-gray-700 font-bold text-lg">הזמנות פעילות</p>
-              <p className="text-gray-500 text-sm mt-1">בתהליך עיבוד</p>
+              <p className="text-gray-700 font-bold text-sm">הזמנות פעילות</p>
+              <p className="text-gray-500 text-xs mt-0.5">בתהליך עיבוד</p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 border-2 border-green-200 hover:shadow-xl transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-4xl">👥</span>
-                <span className="text-xs text-green-600 font-semibold bg-green-200 px-3 py-1 rounded-full">TOTAL</span>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-2 border-green-200 hover:shadow-xl transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-2xl">👥</span>
+                <span className="text-xs text-green-600 font-semibold bg-green-200 px-2 py-0.5 rounded-full">TOTAL</span>
               </div>
-              <p className="text-5xl font-extrabold text-green-700 mb-2">
+              <p className="text-3xl font-extrabold text-green-700 mb-1">
                 {loading ? '...' : stats.totalCustomers}
               </p>
-              <p className="text-gray-700 font-bold text-lg">לקוחות במערכת</p>
-              <p className="text-gray-500 text-sm mt-1">סה"כ לקוחות</p>
+              <p className="text-gray-700 font-bold text-sm">לקוחות במערכת</p>
+              <p className="text-gray-500 text-xs mt-0.5">סה"כ לקוחות</p>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-2xl p-6 border-2 border-indigo-200 hover:shadow-xl transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-4xl">💰</span>
-                <span className="text-xs text-indigo-600 font-semibold bg-indigo-200 px-3 py-1 rounded-full">MONTH</span>
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl p-4 border-2 border-indigo-200 hover:shadow-xl transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-2xl">💰</span>
+                <span className="text-xs text-indigo-600 font-semibold bg-indigo-200 px-2 py-0.5 rounded-full">MONTH</span>
               </div>
-              <p className="text-5xl font-extrabold text-indigo-700 mb-2">
+              <p className="text-3xl font-extrabold text-indigo-700 mb-1">
                 {loading ? '...' : `₪${stats.monthlyRevenue.toFixed(0)}`}
               </p>
-              <p className="text-gray-700 font-bold text-lg">הכנסות החודש</p>
-              <p className="text-gray-500 text-sm mt-1">עד כה</p>
+              <p className="text-gray-700 font-bold text-sm">הכנסות החודש</p>
+              <p className="text-gray-500 text-xs mt-0.5">עד כה</p>
             </div>
           </div>
         </div>

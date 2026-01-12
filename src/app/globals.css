@@ -13,22 +13,23 @@ body {
   direction: rtl;
   background: linear-gradient(135deg, #020617 0%, #0c1e4a 50%, #030712 100%);
   min-height: 100vh;
+  font-size: 14px;
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl;
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-4 rounded-lg transition-all shadow-lg hover:shadow-xl text-sm;
   }
 
   .btn-secondary {
-    @apply bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-all;
+    @apply bg-gray-500 hover:bg-gray-600 text-white font-bold py-1.5 px-3 rounded-lg transition-all text-sm;
   }
 
   .input-field {
-    @apply w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-all;
+    @apply w-full p-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-all text-sm;
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-lg p-6;
+    @apply bg-white rounded-xl shadow-lg p-4;
   }
 }

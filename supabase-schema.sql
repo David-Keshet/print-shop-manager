@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS order_items (
   description TEXT NOT NULL,
   quantity INTEGER NOT NULL DEFAULT 1,
   price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  unit_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -107,9 +109,9 @@ CREATE INDEX IF NOT EXISTS idx_columns_department_id ON columns(department_id);
 -- Insert initial departments
 INSERT INTO departments (name, position) VALUES
   ('מזכירות', 0),
-  ('עיצוב', 1),
-  ('הדפסה', 2),
-  ('גימור', 3),
+  ('גרפיקה', 1),
+  ('דפוס', 2),
+  ('הנהלת חשבונות', 3),
   ('משלוחים', 4)
 ON CONFLICT DO NOTHING;
 
@@ -137,20 +139,53 @@ INSERT INTO settings (key, value, description) VALUES
   ('company_email', 'info@printshop.co.il', 'אימייל החברה')
 ON CONFLICT (key) DO NOTHING;
 
--- Enable Row Level Security (RLS) - Optional but recommended for production
--- ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE columns ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+-- Enable Row Level Security (RLS) - Recommended for production
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE columns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
--- Create simple policies (allows all operations for now - adjust for production)
--- CREATE POLICY "Allow all operations" ON customers FOR ALL USING (true);
--- CREATE POLICY "Allow all operations" ON orders FOR ALL USING (true);
--- CREATE POLICY "Allow all operations" ON order_items FOR ALL USING (true);
--- CREATE POLICY "Allow all operations" ON departments FOR ALL USING (true);
--- CREATE POLICY "Allow all operations" ON columns FOR ALL USING (true);
--- CREATE POLICY "Allow all operations" ON tasks FOR ALL USING (true);
--- CREATE POLICY "Allow all operations" ON users FOR ALL USING (true);
+-- Create policies for public access (adjust for production as needed)
+CREATE POLICY "Allow read access to customers" ON customers FOR SELECT USING (true);
+CREATE POLICY "Allow insert access to customers" ON customers FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update access to customers" ON customers FOR UPDATE USING (true);
+CREATE POLICY "Allow delete access to customers" ON customers FOR DELETE USING (true);
+
+CREATE POLICY "Allow read access to orders" ON orders FOR SELECT USING (true);
+CREATE POLICY "Allow insert access to orders" ON orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update access to orders" ON orders FOR UPDATE USING (true);
+CREATE POLICY "Allow delete access to orders" ON orders FOR DELETE USING (true);
+
+CREATE POLICY "Allow read access to order_items" ON order_items FOR SELECT USING (true);
+CREATE POLICY "Allow insert access to order_items" ON order_items FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update access to order_items" ON order_items FOR UPDATE USING (true);
+CREATE POLICY "Allow delete access to order_items" ON order_items FOR DELETE USING (true);
+
+CREATE POLICY "Allow read access to departments" ON departments FOR SELECT USING (true);
+CREATE POLICY "Allow insert access to departments" ON departments FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update access to departments" ON departments FOR UPDATE USING (true);
+CREATE POLICY "Allow delete access to departments" ON departments FOR DELETE USING (true);
+
+CREATE POLICY "Allow read access to columns" ON columns FOR SELECT USING (true);
+CREATE POLICY "Allow insert access to columns" ON columns FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update access to columns" ON columns FOR UPDATE USING (true);
+CREATE POLICY "Allow delete access to columns" ON columns FOR DELETE USING (true);
+
+CREATE POLICY "Allow read access to tasks" ON tasks FOR SELECT USING (true);
+CREATE POLICY "Allow insert access to tasks" ON tasks FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update access to tasks" ON tasks FOR UPDATE USING (true);
+CREATE POLICY "Allow delete access to tasks" ON tasks FOR DELETE USING (true);
+
+CREATE POLICY "Allow read access to users" ON users FOR SELECT USING (true);
+CREATE POLICY "Allow insert access to users" ON users FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update access to users" ON users FOR UPDATE USING (true);
+CREATE POLICY "Allow delete access to users" ON users FOR DELETE USING (true);
+
+CREATE POLICY "Allow read access to settings" ON settings FOR SELECT USING (true);
+CREATE POLICY "Allow insert access to settings" ON settings FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update access to settings" ON settings FOR UPDATE USING (true);
+CREATE POLICY "Allow delete access to settings" ON settings FOR DELETE USING (true);

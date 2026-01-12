@@ -151,10 +151,13 @@ export default function OrderPDF({ order, items, standalone = false }) {
           <tbody>
             ${items.map(item => `
               <tr>
-                <td>${item.description}</td>
+                <td>
+                  <div style="font-weight: bold;">${item.description}</div>
+                  ${item.notes ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">📂 מיקום קובץ: ${item.notes}</div>` : ''}
+                </td>
                 <td>${item.quantity}</td>
-                <td>₪${item.price.toFixed(2)}</td>
-                <td>₪${(item.quantity * item.price).toFixed(2)}</td>
+                <td>₪${(item.unit_price || (item.price / item.quantity) || 0).toFixed(2)}</td>
+                <td>₪${(item.price || 0).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>

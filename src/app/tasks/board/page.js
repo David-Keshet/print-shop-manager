@@ -5,8 +5,11 @@ import { supabase } from '@/lib/supabase'
 import Layout from '@/components/Layout'
 import { Plus, Edit2, Trash2, X, Save, Calendar, Tag, CheckSquare, Square, ArrowRight } from 'lucide-react'
 import { DndContext, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import TaskCard from '@/components/TaskCard'
+import DroppableColumn from '@/components/DroppableColumn'
+import { availableLabels, availableColors } from './constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,25 +52,7 @@ export default function TasksBoard() {
   const [activeId, setActiveId] = useState(null)
   const [draggedTask, setDraggedTask] = useState(null)
 
-  // Labels for tasks
-  const availableLabels = [
-    { name: 'דחוף', color: 'bg-red-500' },
-    { name: 'חשוב', color: 'bg-orange-500' },
-    { name: 'רגיל', color: 'bg-blue-500' },
-    { name: 'נמוך', color: 'bg-gray-500' }
-  ]
 
-  // Colors for columns
-  const availableColors = [
-    { name: 'gray', label: 'אפור', bgClass: 'bg-gray-100', borderClass: 'border-gray-300', textClass: 'text-gray-700' },
-    { name: 'red', label: 'אדום', bgClass: 'bg-red-50', borderClass: 'border-red-300', textClass: 'text-red-700' },
-    { name: 'orange', label: 'כתום', bgClass: 'bg-orange-50', borderClass: 'border-orange-300', textClass: 'text-orange-700' },
-    { name: 'yellow', label: 'צהוב', bgClass: 'bg-yellow-50', borderClass: 'border-yellow-300', textClass: 'text-yellow-700' },
-    { name: 'green', label: 'ירוק', bgClass: 'bg-green-50', borderClass: 'border-green-300', textClass: 'text-green-700' },
-    { name: 'blue', label: 'כחול', bgClass: 'bg-blue-50', borderClass: 'border-blue-300', textClass: 'text-blue-700' },
-    { name: 'purple', label: 'סגול', bgClass: 'bg-purple-50', borderClass: 'border-purple-300', textClass: 'text-purple-700' },
-    { name: 'pink', label: 'ורוד', bgClass: 'bg-pink-50', borderClass: 'border-pink-300', textClass: 'text-pink-700' }
-  ]
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -435,117 +420,7 @@ export default function TasksBoard() {
     setDraggedTask(null)
   }
 
-  // TaskCard component for drag and drop
-  const TaskCard = ({ task }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id: task.id })
 
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
-    }
-
-    const taskLabels = task.labels || []
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        onClick={(e) => {
-          // Only open if not dragging
-          if (!isDragging) {
-            handleViewTaskDetails(task)
-          }
-        }}
-        className="bg-white rounded-lg p-3 mb-2 cursor-pointer border border-gray-200 hover:shadow-lg hover:border-blue-300 transition-all"
-      >
-        <div className="mb-2">
-          <h4 className="font-medium text-sm text-gray-800">
-            {task.title || 'משימה ללא כותרת'}
-          </h4>
-        </div>
-
-        {taskLabels.length > 0 && (
-          <div className="flex gap-1 mb-2 flex-wrap">
-            {taskLabels.map((label, idx) => {
-              const labelConfig = availableLabels.find(l => l.name === label) || availableLabels[2]
-              return (
-                <span key={idx} className={`${labelConfig.color} text-white text-xs px-2 py-0.5 rounded-full`}>
-                  {label}
-                </span>
-              )
-            })}
-          </div>
-        )}
-
-        {task.description && (
-          <p className="text-xs text-gray-600 mb-2 line-clamp-2">{task.description}</p>
-        )}
-
-        {task.orders && (
-          <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
-              הזמנה #{task.orders.order_number}
-            </span>
-            <span>{task.orders.customer_name}</span>
-          </div>
-        )}
-
-        {task.created_at && (
-          <div className="flex items-center gap-1 text-xs text-gray-400">
-            <Calendar size={12} />
-            <span>{new Date(task.created_at).toLocaleDateString('he-IL')}</span>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // Droppable column component
-  const DroppableColumn = ({ column, children }) => {
-    const {
-      setNodeRef,
-      isOver,
-    } = useSortable({ id: column.id })
-
-    const columnColor = availableColors.find(c => c.name === (column.color || 'gray')) || availableColors[0]
-
-    return (
-      <div
-        ref={setNodeRef}
-        className={`${columnColor.bgClass} rounded-xl p-4 transition-all border-2 ${columnColor.borderClass} ${
-          isOver ? 'ring-2 ring-blue-400 shadow-lg' : ''
-        }`}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h4 className={`font-bold text-lg ${columnColor.textClass}`}>{column.name}</h4>
-          <div className="flex items-center gap-2">
-            <span className={`${columnColor.bgClass.replace('50', '200')} ${columnColor.textClass} px-2 py-1 rounded-full text-xs font-medium`}>
-              {tasks.filter(t => t.column_id === column.id).length}
-            </span>
-            <button
-              onClick={() => handleAddTask(column.id)}
-              className={`${columnColor.textClass} hover:opacity-80 p-1 hover:bg-white/50 rounded transition-all`}
-              title="הוסף משימה"
-            >
-              <Plus size={16} />
-            </button>
-          </div>
-        </div>
-
-        {children}
-      </div>
-    )
-  }
 
   const handleDeleteDepartment = async (departmentId) => {
     if (!confirm('האם אתה בטוח שברצונך למחוק מחלקה זו?')) return
@@ -625,11 +500,10 @@ export default function TasksBoard() {
               <button
                 key={department.id}
                 onClick={() => setSelectedDepartment(department.id)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  selectedDepartment === department.id
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedDepartment === department.id
                     ? 'bg-blue-500 text-white shadow-lg'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
+                  }`}
               >
                 {department.name}
               </button>
@@ -655,14 +529,23 @@ export default function TasksBoard() {
                     const columnTasks = tasks.filter(task => task.column_id === column.id)
 
                     return (
-                      <DroppableColumn key={column.id} column={column}>
+                      <DroppableColumn
+                        key={column.id}
+                        column={column}
+                        tasksCount={tasks.filter(t => t.column_id === column.id).length}
+                        onAddTask={handleAddTask}
+                      >
                         <SortableContext
                           items={columnTasks.map(task => task.id)}
                           strategy={verticalListSortingStrategy}
                         >
                           <div className="min-h-[200px] space-y-2">
                             {columnTasks.map(task => (
-                              <TaskCard key={task.id} task={task} />
+                              <TaskCard
+                                key={task.id}
+                                task={task}
+                                onViewDetails={handleViewTaskDetails}
+                              />
                             ))}
                           </div>
                         </SortableContext>
@@ -902,9 +785,8 @@ export default function TasksBoard() {
                         key={color.name}
                         type="button"
                         onClick={() => setColumnForm({ ...columnForm, color: color.name })}
-                        className={`${color.bgClass} ${color.borderClass} border-2 p-3 rounded-lg transition-all ${
-                          columnForm.color === color.name ? 'ring-2 ring-blue-500 ring-offset-2' : ''
-                        }`}
+                        className={`${color.bgClass} ${color.borderClass} border-2 p-3 rounded-lg transition-all ${columnForm.color === color.name ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+                          }`}
                         title={color.label}
                       >
                         <div className="text-center">
@@ -1053,9 +935,8 @@ export default function TasksBoard() {
                           key={label.name}
                           type="button"
                           onClick={() => toggleLabel(label.name)}
-                          className={`${label.color} text-white text-xs px-3 py-1.5 rounded-full transition-all ${
-                            isSelected ? 'ring-2 ring-offset-2 ring-blue-500' : 'opacity-50'
-                          }`}
+                          className={`${label.color} text-white text-xs px-3 py-1.5 rounded-full transition-all ${isSelected ? 'ring-2 ring-offset-2 ring-blue-500' : 'opacity-50'
+                            }`}
                         >
                           {label.name}
                         </button>
@@ -1215,11 +1096,10 @@ export default function TasksBoard() {
                           {taskItems.map(item => (
                             <div
                               key={item.id}
-                              className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                                item.completed
+                              className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all cursor-pointer ${item.completed
                                   ? 'bg-green-50 border-green-300'
                                   : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
+                                }`}
                               onClick={() => toggleTaskItem(item.id)}
                             >
                               <div className="flex-shrink-0">
@@ -1230,9 +1110,8 @@ export default function TasksBoard() {
                                 )}
                               </div>
                               <div className="flex-1">
-                                <p className={`font-medium ${
-                                  item.completed ? 'line-through text-gray-500' : 'text-gray-800'
-                                }`}>
+                                <p className={`font-medium ${item.completed ? 'line-through text-gray-500' : 'text-gray-800'
+                                  }`}>
                                   {item.description}
                                 </p>
                                 <div className="flex gap-4 text-xs text-gray-500 mt-1">

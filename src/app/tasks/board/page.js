@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import Layout from '@/components/Layout'
 import { Plus, Edit2, Trash2, X, Save, Calendar, Tag, CheckSquare, Square, ArrowRight, Search } from 'lucide-react'
@@ -53,6 +53,9 @@ export default function TasksBoard() {
   const [draggedTask, setDraggedTask] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Ref for horizontal scroll container
+  const scrollContainerRef = useRef(null)
+
 
 
 
@@ -66,6 +69,28 @@ export default function TasksBoard() {
 
   useEffect(() => {
     fetchBoardData()
+  }, [])
+
+  // Add horizontal scroll with mouse wheel
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current
+    if (!scrollContainer) return
+
+    const handleWheel = (e) => {
+      // Check if scrolling vertically
+      if (Math.abs(e.deltaY) > 0) {
+        // Prevent default vertical scroll
+        e.preventDefault()
+        // Scroll horizontally instead
+        scrollContainer.scrollLeft += e.deltaY
+      }
+    }
+
+    scrollContainer.addEventListener('wheel', handleWheel, { passive: false })
+
+    return () => {
+      scrollContainer.removeEventListener('wheel', handleWheel)
+    }
   }, [])
 
   const fetchBoardData = async () => {
@@ -568,7 +593,7 @@ export default function TasksBoard() {
           </div>
 
           {/* Columns Container - Horizontal Scroll */}
-          <div className="flex-1 overflow-x-auto overflow-y-hidden">
+          <div ref={scrollContainerRef} className="flex-1 overflow-x-auto overflow-y-hidden">
             <div className="h-full flex items-start p-6 gap-6 min-w-max">
               {selectedDepartment && (
                 <>

@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Users, Plus, Edit2, Trash2, Shield, UserCheck } from 'lucide-react'
+import { Users as UsersIcon, Plus, Edit2, Trash2, Shield, UserCheck } from 'lucide-react'
 import Layout from '@/components/Layout'
 
 export const dynamic = 'force-dynamic'
 
-export default function Users() {
+export default function UsersPage() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)

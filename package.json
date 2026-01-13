@@ -11,6 +11,8 @@
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
+    "@realfavicongenerator/generate-favicon": "^0.6.0",
+    "@realfavicongenerator/image-adapter-node": "^0.6.1",
     "@supabase/supabase-js": "^2.90.1",
     "jspdf": "^4.0.0",
     "lucide-react": "^0.562.0",

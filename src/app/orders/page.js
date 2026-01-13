@@ -349,6 +349,8 @@ function OrderForm({ onClose, initialCustomer, editData }) {
   const [customerName, setCustomerName] = useState(editData?.customer_name || initialCustomer?.name || '')
   const [customerPhone, setCustomerPhone] = useState(editData?.customer_phone || initialCustomer?.phone || '')
   const [customerId, setCustomerId] = useState(editData?.customer_id || initialCustomer?.id || null)
+  const [contactPerson, setContactPerson] = useState(editData?.contact_person || '')
+  const [idNumber, setIdNumber] = useState(editData?.id_number || '')
   const [items, setItems] = useState(editData?.items?.map(item => ({
     ...item,
     unitPrice: item.unit_price || (item.price / item.quantity) || 0,
@@ -565,6 +567,8 @@ function OrderForm({ onClose, initialCustomer, editData }) {
           .update({
             customer_name: customerName,
             customer_phone: customerPhone,
+            contact_person: contactPerson,
+            id_number: idNumber,
             total: total,
             vat: vat,
             total_with_vat: totalWithVat
@@ -617,6 +621,8 @@ function OrderForm({ onClose, initialCustomer, editData }) {
           customer_id: finalCustomerId,
           customer_name: customerName,
           customer_phone: customerPhone,
+          contact_person: contactPerson,
+          id_number: idNumber,
           total: total,
           vat: vat,
           total_with_vat: totalWithVat,
@@ -708,7 +714,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-600 text-sm font-bold mb-1">שם לקוח *</label>
+                    <label className="block text-gray-600 text-sm font-bold mb-1">שם לקוח לחשבונית *</label>
                     <input
                       type="text"
                       className="input-field bg-white border-gray-300"
@@ -725,6 +731,26 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="050-1234567"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-bold mb-1">איש קשר</label>
+                    <input
+                      type="text"
+                      className="input-field bg-white border-gray-300"
+                      value={contactPerson}
+                      onChange={(e) => setContactPerson(e.target.value)}
+                      placeholder="שם איש קשר (אופציונלי)"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-bold mb-1">ת"ז / ח.פ</label>
+                    <input
+                      type="text"
+                      className="input-field bg-white border-gray-300"
+                      value={idNumber}
+                      onChange={(e) => setIdNumber(e.target.value)}
+                      placeholder="תעודת זהות או מספר חברה"
                     />
                   </div>
                 </div>

@@ -126,13 +126,25 @@ export default function OrderPDF({ order, items, standalone = false }) {
         <div class="customer-info">
           <h2>פרטי לקוח</h2>
           <div class="info-row">
-            <span class="info-label">שם לקוח:</span>
+            <span class="info-label">שם לקוח לחשבונית:</span>
             <span class="info-value">${order.customer_name}</span>
           </div>
           <div class="info-row">
             <span class="info-label">טלפון:</span>
             <span class="info-value">${order.customer_phone}</span>
           </div>
+          ${order.contact_person ? `
+          <div class="info-row">
+            <span class="info-label">איש קשר:</span>
+            <span class="info-value">${order.contact_person}</span>
+          </div>
+          ` : ''}
+          ${order.id_number ? `
+          <div class="info-row">
+            <span class="info-label">ת"ז / ח.פ:</span>
+            <span class="info-value">${order.id_number}</span>
+          </div>
+          ` : ''}
           <div class="info-row">
             <span class="info-label">תאריך:</span>
             <span class="info-value">${new Date(order.created_at).toLocaleDateString('he-IL')}</span>
@@ -229,6 +241,16 @@ export default function OrderPDF({ order, items, standalone = false }) {
             <p className="text-gray-600">
               לקוח: {order.customer_name} | טלפון: {order.customer_phone}
             </p>
+            {order.contact_person && (
+              <p className="text-gray-600">
+                איש קשר: {order.contact_person}
+              </p>
+            )}
+            {order.id_number && (
+              <p className="text-gray-600">
+                ת"ז / ח.פ: {order.id_number}
+              </p>
+            )}
             <p className="text-gray-600 mt-1">
               תאריך: {new Date(order.created_at).toLocaleDateString('he-IL')}
             </p>

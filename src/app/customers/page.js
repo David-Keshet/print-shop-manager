@@ -22,6 +22,7 @@ export default function Customers() {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
+        .or('archived.is.null,archived.eq.false')
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -33,17 +34,15 @@ export default function Customers() {
     }
   }
 
-  const deleteCustomer = async (customerId, customerName) => {
-    if (!confirm(`האם אתה בטוח שברצונך למחוק את הלקוח "${customerName}"?\n\nשים לב: כל ההזמנות של הלקוח יישארו במערכת.`)) {
+  const archiveCustomer = async (customerId, customerName) => {
+    if (!confirm(`האם אתה בטוח שברצונך לארכב את הלקוח "${customerName}"?\n\nשים לב: הלקוח יועבר לארכיון ולא יוצג ברשימה.`)) {
       return
     }
 
     try {
-      console.log('Attempting to delete customer:', customerId)
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('customers')
-        .delete()
+        .update({ archived: true })
         .eq('id', customerId)
 
       if (error) {
@@ -51,12 +50,11 @@ export default function Customers() {
         throw error
       }
 
-      console.log('Customer deleted successfully:', data)
-      alert('הלקוח נמחק בהצלחה')
+      alert('הלקוח הועבר לארכיון בהצלחה')
       await fetchCustomers()
     } catch (error) {
-      console.error('שגיאה במחיקת לקוח:', error)
-      alert(`שגיאה במחיקת הלקוח: ${error.message || 'שגיאה לא ידועה'}`)
+      console.error('שגיאה בארכוב לקוח:', error)
+      alert(`שגיאה בארכוב הלקוח: ${error.message || 'שגיאה לא ידועה'}`)
     }
   }
 
@@ -158,9 +156,9 @@ export default function Customers() {
                             <Edit2 size={18} />
                           </button>
                           <button
-                            onClick={() => deleteCustomer(customer.id, customer.name)}
-                            className="text-red-600 hover:text-red-800"
-                            title="מחק לקוח"
+                            onClick={() => archiveCustomer(customer.id, customer.name)}
+                            className="text-orange-600 hover:text-orange-800"
+                            title="העבר לארכיון"
                           >
                             <Trash2 size={18} />
                           </button>

@@ -10,6 +10,8 @@ import { CSS } from '@dnd-kit/utilities'
 import TaskCard from '@/components/TaskCard'
 import DroppableColumn from '@/components/DroppableColumn'
 import { availableLabels, availableColors } from './constants'
+import { formatWhatsAppUrl, formatTemplate } from '@/lib/utils'
+import { MessageSquare } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,6 +87,18 @@ export default function TasksBoard() {
   const [labelSearchQuery, setLabelSearchQuery] = useState('')
   const [taskLabelSearchQuery, setTaskLabelSearchQuery] = useState('')
 
+  // WhatsApp Modal State
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
+  const [whatsAppMessage, setWhatsAppMessage] = useState('')
+  const [whatsAppPhone, setWhatsAppPhone] = useState('')
+  const [whatsAppTargetUrl, setWhatsAppTargetUrl] = useState('')
+  const [whatsAppCustomerName, setWhatsAppCustomerName] = useState('')
+
+  // WhatsApp Rules State
+  const [whatsAppRules, setWhatsAppRules] = useState([])
+  const [showWhatsAppRulesModal, setShowWhatsAppRulesModal] = useState(false)
+  const [ruleForm, setRuleForm] = useState({ departmentId: '', columnId: '', templateKey: '' })
+
   // Ref for horizontal scroll container
   const scrollContainerRef = useRef(null)
 
@@ -103,7 +117,60 @@ export default function TasksBoard() {
     fetchBoardData()
     fetchCustomLabels()
     fetchAutoTransferRules()
+    fetchWhatsAppRules()
   }, [])
+
+  // ... scroll logic ...
+
+  const fetchWhatsAppRules = async () => {
+    try {
+      const { data } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'whatsapp_column_rules')
+        .single()
+
+      if (data && data.value) {
+        try {
+          setWhatsAppRules(JSON.parse(data.value))
+        } catch (e) {
+          console.error('Error parsing whatsapp rules', e)
+          setWhatsAppRules([])
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching whatsapp rules:', error)
+    }
+  }
+
+  const saveWhatsAppRules = async (newRules) => {
+    try {
+      // Check if setting exists first
+      const { data: existing } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'whatsapp_column_rules')
+        .single()
+
+      if (existing) {
+        await supabase
+          .from('settings')
+          .update({ value: JSON.stringify(newRules) })
+          .eq('key', 'whatsapp_column_rules')
+      } else {
+        await supabase
+          .from('settings')
+          .insert({
+            key: 'whatsapp_column_rules',
+            value: JSON.stringify(newRules)
+          })
+      }
+      setWhatsAppRules(newRules)
+    } catch (error) {
+      console.error('Error saving whatsapp rules:', error)
+      alert('שגיאה בשמירת כללי WhatsApp')
+    }
+  }
 
   // Add horizontal scroll with mouse wheel
   useEffect(() => {
@@ -511,6 +578,9 @@ export default function TasksBoard() {
         // Check for auto-transfer rules
         await checkAndApplyAutoTransfer(taskId, overId)
 
+        // Check for WhatsApp trigger
+        await checkAndTriggerWhatsApp(task, targetColumn.name, targetColumn.id)
+
         fetchBoardData()
       } catch (error) {
         console.error('שגיאה בהעברת משימה:', error)
@@ -580,6 +650,75 @@ export default function TasksBoard() {
     }
   }
 
+  // WhatsApp Trigger Logic
+  const checkAndTriggerWhatsApp = async (task, targetColumnName, targetColumnId) => {
+    if (!task.order_id) return // Only for tasks linked to orders
+
+    try {
+      // Check for specific rule for this column
+      const rule = whatsAppRules.find(r => r.column_id === targetColumnId)
+      let templateKey = ''
+
+      if (rule) {
+        templateKey = rule.template_key
+      } else {
+        // Fallback to legacy "Ready" check if no rule exists
+        if (targetColumnName.includes('מוכן') || targetColumnName.includes('Ready')) {
+          templateKey = 'whatsapp_order_ready'
+        } else {
+          return // No trigger configuration found
+        }
+      }
+
+      // Get order details for phone number
+      const { data: order } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', task.order_id)
+        .single()
+
+      if (!order || !order.customer_phone) return
+
+      // Get WhatsApp template from settings
+      const { data: settingsData } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', templateKey)
+        .single()
+
+      let template = settingsData?.value
+
+      // Default templates fallback
+      if (!template) {
+        if (templateKey === 'whatsapp_order_ready') template = 'שלום {customer_name}, הזמנה מספר {order_number} מוכנה לאיסוף!'
+        else if (templateKey === 'whatsapp_payment_reminder') template = 'שלום {customer_name}, נא להסדיר תשלום עבור הזמנה {order_number}.'
+        else if (templateKey === 'whatsapp_new_order') template = 'שלום {customer_name}, נפתחה עבורך הזמנה מספר {order_number}'
+        else return
+      }
+
+      const message = formatTemplate(template, {
+        customer_name: order.customer_name || 'לקוח יקר',
+        order_number: order.order_number
+      })
+
+      const url = formatWhatsAppUrl(order.customer_phone, message)
+
+      // Directly open the WhatsApp URL, bypassing the modal
+      // Using window.open with _self to try and trigger the protocol handler directly without a new tab if possible,
+      // or _blank if that fails. standard behavior for custom protocols usually works best with window.location or anchor click.
+      // let's try window.open which is safer for not navigating away if it fails.
+      window.open(url, '_self')
+
+      console.log('Opening WhatsApp logic triggered:', url)
+
+      // We don't show the modal anymore
+      // setShowWhatsAppModal(true)
+
+    } catch (error) {
+      console.error('Error preparing WhatsApp trigger:', error)
+    }
+  }
+
   // Auto-transfer management functions
   const fetchAutoTransferRules = async () => {
     try {
@@ -590,7 +729,7 @@ export default function TasksBoard() {
           trigger_column:columns!auto_transfer_rules_trigger_column_id_fkey(name, departments(name)),
           target_column:columns!auto_transfer_rules_target_column_id_fkey(name, departments(name))
         `)
-      
+
       if (error) throw error
       setAutoTransferRules(data || [])
     } catch (error) {
@@ -638,7 +777,7 @@ export default function TasksBoard() {
 
   const handleDeleteAutoTransfer = async (ruleId) => {
     if (!confirm('האם אתה בטוח שברצונך למחוק כלל העברה זה?')) return
-    
+
     try {
       const { error } = await supabase
         .from('auto_transfer_rules')
@@ -710,7 +849,7 @@ export default function TasksBoard() {
       } else {
         // Add new label
         const maxPosition = customLabels.reduce((max, label) => Math.max(max, label.position || 0), 0)
-        
+
         const { error } = await supabase
           .from('custom_labels')
           .insert({
@@ -761,10 +900,10 @@ export default function TasksBoard() {
   return (
     <Layout>
       {/* Main Container - Full Height, Modern Dark Theme */}
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#0B1437] text-slate-100" style={{ direction: 'rtl' }}>
+      <div className="flex flex-row-reverse h-[calc(100vh-64px)] overflow-hidden bg-[#0B1437] text-slate-100" style={{ direction: 'rtl' }}>
 
         {/* Sidebar - Departments */}
-        <div className="w-64 bg-[#0F1A3D] border-l border-slate-800/50 flex flex-col flex-shrink-0 transition-all duration-300">
+        <div className="w-64 bg-[#0F1A3D] border-r border-slate-800/50 flex flex-col flex-shrink-0 transition-all duration-300">
           <div className="p-4 border-b border-white/10 flex justify-between items-center">
             <h2 className="font-bold text-lg text-white/90">מחלקות</h2>
             <button
@@ -782,7 +921,7 @@ export default function TasksBoard() {
                 key={department.id}
                 onClick={() => setSelectedDepartment(department.id)}
                 className={`w-full text-right px-4 py-2 rounded-lg font-medium transition-colors flex justify-between items-center group ${selectedDepartment === department.id
-                  ? 'bg-blue-600/20 text-blue-400 border-l-2 border-blue-500'
+                  ? 'bg-blue-600/20 text-blue-400 border-r-2 border-blue-500'
                   : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                   }`}
               >
@@ -836,6 +975,13 @@ export default function TasksBoard() {
                   </button>
                 )}
               </div>
+              <button
+                onClick={() => setShowWhatsAppRulesModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm transition-colors shadow-sm shadow-green-500/20"
+              >
+                <MessageSquare size={14} />
+                <span>כללי WhatsApp</span>
+              </button>
               <button
                 onClick={() => setShowLabelManagementModal(true)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm transition-colors shadow-sm shadow-purple-500/20"
@@ -1558,125 +1704,124 @@ export default function TasksBoard() {
                 {/* Right Sidebar - Labels, Date, Description */}
                 <div className="w-64 p-6 bg-gray-50 border-r border-gray-200 overflow-y-auto space-y-4 flex-shrink-0">
 
-                    {/* Labels - תוויות */}
-                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
-                      <h4 className="text-purple-800 mb-3 text-sm font-bold flex items-center gap-1">
-                        <Tag size={14} /> תוויות
-                      </h4>
+                  {/* Labels - תוויות */}
+                  <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                    <h4 className="text-purple-800 mb-3 text-sm font-bold flex items-center gap-1">
+                      <Tag size={14} /> תוויות
+                    </h4>
 
-                      {/* Search and Quick Add Labels */}
-                      <div className="space-y-3">
-                        <div className="relative">
-                          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400" size={12} />
-                          <input
-                            type="text"
-                            value={taskLabelSearchQuery}
-                            onChange={(e) => setTaskLabelSearchQuery(e.target.value)}
-                            placeholder="חיפוש תווית..."
-                            className="pl-3 pr-10 py-1.5 border border-purple-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs w-full"
-                          />
-                          {taskLabelSearchQuery && (
-                            <button
-                              onClick={() => setTaskLabelSearchQuery('')}
-                              className="absolute left-2 top-1/2 transform -translate-y-1/2 text-purple-400 hover:text-purple-600"
-                            >
-                              <X size={10} />
-                            </button>
-                          )}
-                        </div>
+                    {/* Search and Quick Add Labels */}
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400" size={12} />
+                        <input
+                          type="text"
+                          value={taskLabelSearchQuery}
+                          onChange={(e) => setTaskLabelSearchQuery(e.target.value)}
+                          placeholder="חיפוש תווית..."
+                          className="pl-3 pr-10 py-1.5 border border-purple-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs w-full"
+                        />
+                        {taskLabelSearchQuery && (
+                          <button
+                            onClick={() => setTaskLabelSearchQuery('')}
+                            className="absolute left-2 top-1/2 transform -translate-y-1/2 text-purple-400 hover:text-purple-600"
+                          >
+                            <X size={10} />
+                          </button>
+                        )}
+                      </div>
 
-                        {/* Filtered Labels for Quick Selection */}
-                        <div className="max-h-32 overflow-y-auto">
-                          {customLabels
-                            .filter(label => {
-                              if (!taskLabelSearchQuery.trim()) return true
-                              return label.name.toLowerCase().includes(taskLabelSearchQuery.toLowerCase())
-                            })
-                            .map(label => {
-                              const isLabelOnTask = selectedTask.labels && selectedTask.labels.includes(label.name)
-                              return (
-                                <button
-                                  key={label.id}
-                                  onClick={() => {
-                                    const currentLabels = selectedTask.labels || []
-                                    let newLabels
-                                    if (isLabelOnTask) {
-                                      // Remove label
-                                      newLabels = currentLabels.filter(l => l !== label.name)
-                                    } else {
-                                      // Add label
-                                      newLabels = [...currentLabels, label.name]
-                                    }
-                                    
-                                    supabase
-                                      .from('tasks')
-                                      .update({ labels: newLabels })
-                                      .eq('id', selectedTask.id)
-                                      .then(() => {
-                                        setSelectedTask({ ...selectedTask, labels: newLabels })
-                                        fetchBoardData()
-                                      })
-                                  }}
-                                  className={`w-full text-right px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 ${
-                                    isLabelOnTask
-                                      ? `${label.color} text-white`
-                                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                      {/* Filtered Labels for Quick Selection */}
+                      <div className="max-h-32 overflow-y-auto">
+                        {customLabels
+                          .filter(label => {
+                            if (!taskLabelSearchQuery.trim()) return true
+                            return label.name.toLowerCase().includes(taskLabelSearchQuery.toLowerCase())
+                          })
+                          .map(label => {
+                            const isLabelOnTask = selectedTask.labels && selectedTask.labels.includes(label.name)
+                            return (
+                              <button
+                                key={label.id}
+                                onClick={() => {
+                                  const currentLabels = selectedTask.labels || []
+                                  let newLabels
+                                  if (isLabelOnTask) {
+                                    // Remove label
+                                    newLabels = currentLabels.filter(l => l !== label.name)
+                                  } else {
+                                    // Add label
+                                    newLabels = [...currentLabels, label.name]
+                                  }
+
+                                  supabase
+                                    .from('tasks')
+                                    .update({ labels: newLabels })
+                                    .eq('id', selectedTask.id)
+                                    .then(() => {
+                                      setSelectedTask({ ...selectedTask, labels: newLabels })
+                                      fetchBoardData()
+                                    })
+                                }}
+                                className={`w-full text-right px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 ${isLabelOnTask
+                                  ? `${label.color} text-white`
+                                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                                   }`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 rounded-full ${isLabelOnTask ? 'bg-white/30' : label.color}`}></div>
-                                    <span>{label.name}</span>
-                                  </div>
-                                  {isLabelOnTask && <CheckSquare size={12} />}
-                                </button>
-                              )
-                            })}
-                        </div>
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-3 h-3 rounded-full ${isLabelOnTask ? 'bg-white/30' : label.color}`}></div>
+                                  <span>{label.name}</span>
+                                </div>
+                                {isLabelOnTask && <CheckSquare size={12} />}
+                              </button>
+                            )
+                          })}
+                      </div>
 
-                        {/* Show "no labels found" message */}
-                        {taskLabelSearchQuery.trim() && customLabels.filter(label => 
-                          label.name.toLowerCase().includes(taskLabelSearchQuery.toLowerCase())
-                        ).length === 0 && (
+                      {/* Show "no labels found" message */}
+                      {taskLabelSearchQuery.trim() && customLabels.filter(label =>
+                        label.name.toLowerCase().includes(taskLabelSearchQuery.toLowerCase())
+                      ).length === 0 && (
                           <div className="text-center py-2 text-purple-600 text-xs">
                             לא נמצאו תוויות התואמות את "{taskLabelSearchQuery}"
                           </div>
                         )}
+                    </div>
+                  </div>
+
+                  {/* Date - תאריך */}
+                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                    <h4 className="text-blue-800 mb-2 text-sm font-bold flex items-center gap-1">
+                      <Calendar size={14} /> תאריך
+                    </h4>
+                    <div className="text-gray-700 text-sm space-y-1">
+                      <div>
+                        {new Date(selectedTask.created_at).toLocaleDateString('he-IL', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
+                      </div>
+                      <div className="text-xs text-blue-600 font-semibold">
+                        {(() => {
+                          const daysPassed = Math.floor((new Date() - new Date(selectedTask.created_at)) / (1000 * 60 * 60 * 24))
+                          return daysPassed === 0 ? 'היום' : daysPassed === 1 ? 'אתמול' : `לפני ${daysPassed} ימים`
+                        })()}
                       </div>
                     </div>
+                  </div>
 
-                    {/* Date - תאריך */}
-                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                      <h4 className="text-blue-800 mb-2 text-sm font-bold flex items-center gap-1">
-                        <Calendar size={14} /> תאריך
+                  {/* Description - פרטים */}
+                  {selectedTask.description && (
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                      <h4 className="text-gray-800 mb-2 text-sm font-bold flex items-center gap-1">
+                        <span className="text-base">≡</span> פרטים
                       </h4>
-                      <div className="text-gray-700 text-sm space-y-1">
-                        <div>
-                          {new Date(selectedTask.created_at).toLocaleDateString('he-IL', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          })}
-                        </div>
-                        <div className="text-xs text-blue-600 font-semibold">
-                          {(() => {
-                            const daysPassed = Math.floor((new Date() - new Date(selectedTask.created_at)) / (1000 * 60 * 60 * 24))
-                            return daysPassed === 0 ? 'היום' : daysPassed === 1 ? 'אתמול' : `לפני ${daysPassed} ימים`
-                          })()}
-                        </div>
+                      <div className="text-gray-600 text-xs whitespace-pre-wrap leading-relaxed">
+                        {selectedTask.description}
                       </div>
                     </div>
-
-                    {/* Description - פרטים */}
-                    {selectedTask.description && (
-                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                        <h4 className="text-gray-800 mb-2 text-sm font-bold flex items-center gap-1">
-                          <span className="text-base">≡</span> פרטים
-                        </h4>
-                        <div className="text-gray-600 text-xs whitespace-pre-wrap leading-relaxed">
-                          {selectedTask.description}
-                        </div>
-                      </div>
-                    )}
+                  )}
 
                 </div>
 
@@ -1759,11 +1904,10 @@ export default function TasksBoard() {
                                         }
                                       }}
                                       disabled={isCurrentColumn}
-                                      className={`w-full text-right px-4 py-3 rounded-lg font-medium transition-all ${
-                                        isCurrentColumn
-                                          ? 'bg-green-100 text-green-700 border-2 border-green-500 cursor-default shadow-sm'
-                                          : 'bg-white hover:bg-amber-50 text-gray-700 hover:text-amber-900 border-2 border-gray-200 hover:border-amber-400 hover:shadow-md'
-                                      }`}
+                                      className={`w-full text-right px-4 py-3 rounded-lg font-medium transition-all ${isCurrentColumn
+                                        ? 'bg-green-100 text-green-700 border-2 border-green-500 cursor-default shadow-sm'
+                                        : 'bg-white hover:bg-amber-50 text-gray-700 hover:text-amber-900 border-2 border-gray-200 hover:border-amber-400 hover:shadow-md'
+                                        }`}
                                     >
                                       <div className="flex items-center justify-between">
                                         <span className="text-sm">{col.name}</span>
@@ -1814,7 +1958,7 @@ export default function TasksBoard() {
                     <Plus size={20} />
                     הוסף תווית חדשה
                   </button>
-                  
+
                   {/* Search Bar */}
                   <div className="relative">
                     <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
@@ -1879,15 +2023,15 @@ export default function TasksBoard() {
                       </div>
                     </div>
                   ))}
-                
+
                 {/* Show "no results" message when search has no matches */}
-                {labelSearchQuery.trim() && customLabels.filter(label => 
+                {labelSearchQuery.trim() && customLabels.filter(label =>
                   label.name.toLowerCase().includes(labelSearchQuery.toLowerCase())
                 ).length === 0 && (
-                  <div className="text-center py-8 text-gray-400">
-                    <p>לא נמצאו תוויות התואמות את "{labelSearchQuery}"</p>
-                  </div>
-                )}
+                    <div className="text-center py-8 text-gray-400">
+                      <p>לא נמצאו תוויות התואמות את "{labelSearchQuery}"</p>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -2013,11 +2157,10 @@ export default function TasksBoard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          rule.is_active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${rule.is_active
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
                           {rule.is_active ? 'פעיל' : 'לא פעיל'}
                         </span>
                         <button
@@ -2093,8 +2236,8 @@ export default function TasksBoard() {
                   <select
                     value={autoTransferForm.target_department_id}
                     onChange={(e) => {
-                      setAutoTransferForm(prev => ({ 
-                        ...prev, 
+                      setAutoTransferForm(prev => ({
+                        ...prev,
                         target_department_id: e.target.value,
                         target_column_id: '' // Reset target column when department changes
                       }))
@@ -2162,8 +2305,294 @@ export default function TasksBoard() {
             </div>
           </div>
         )}
+
+        {/* WhatsApp Rules Management Modal */}
+        {showWhatsAppRulesModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <MessageSquare className="text-green-600" size={24} />
+                  הגדרת כללי WhatsApp
+                </h3>
+                <button
+                  onClick={() => setShowWhatsAppRulesModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800">
+                  כאן ניתן להגדיר איזו הודעת WhatsApp תישלח אוטומטית כאשר כרטיס מועבר לעמודה מסוימת.
+                </div>
+
+                <div className="space-y-4">
+                  {columns.map(column => {
+                    const rule = whatsAppRules.find(r => r.column_id === column.id)
+                    const department = departments.find(d => d.id === column.department_id)
+
+                    return (
+                      <div key={column.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div className="flex-1">
+                          <span className="text-xs text-gray-500 block">{department?.name}</span>
+                          <span className="font-semibold text-gray-800">{column.name}</span>
+                        </div>
+                        <select
+                          value={rule?.template_key || ''}
+                          onChange={(e) => {
+                            const newKey = e.target.value
+                            let newRules = [...whatsAppRules]
+                            if (newKey) {
+                              // Update or add rule
+                              const existingIndex = newRules.findIndex(r => r.column_id === column.id)
+                              if (existingIndex >= 0) {
+                                newRules[existingIndex] = { ...newRules[existingIndex], template_key: newKey }
+                              } else {
+                                newRules.push({ column_id: column.id, template_key: newKey })
+                              }
+                            } else {
+                              // Remove rule
+                              newRules = newRules.filter(r => r.column_id !== column.id)
+                            }
+                            saveWhatsAppRules(newRules)
+                          }}
+                          className="p-2 border rounded-md min-w-[200px]"
+                        >
+                          <option value="">ללא שליחה אוטומטית</option>
+                          <option value="whatsapp_order_ready">הזמנה מוכנה</option>
+                          <option value="whatsapp_payment_reminder">תזכורת תשלום</option>
+                          <option value="whatsapp_new_order">הזמנה חדשה</option>
+                        </select>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={() => setShowWhatsAppRulesModal(false)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-bold"
+                  >
+                    סגור
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* WhatsApp Rules Management Modal */}
+        {/* WhatsApp Rules Management Modal - New Design */}
+        {showWhatsAppRulesModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-[#1E293B] rounded-xl p-6 w-full max-w-lg shadow-2xl border border-slate-700">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <MessageSquare className="text-green-500" size={24} />
+                  הגדרת כללי WhatsApp
+                </h3>
+                <button
+                  onClick={() => setShowWhatsAppRulesModal(false)}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Rule Creation Form */}
+                <div className="space-y-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                  <h4 className="text-sm font-semibold text-slate-300 mb-2">הוספת כלל חדש</h4>
+
+                  {/* Department Select */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      1. בחר מחלקה
+                    </label>
+                    <select
+                      value={ruleForm.departmentId}
+                      onChange={(e) => setRuleForm(prev => ({ ...prev, departmentId: e.target.value, columnId: '' }))}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="">בחר מחלקה...</option>
+                      {departments.map(dept => (
+                        <option key={dept.id} value={dept.id}>{dept.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Column Select */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      2. בחר עמודה
+                    </label>
+                    <select
+                      value={ruleForm.columnId}
+                      onChange={(e) => setRuleForm(prev => ({ ...prev, columnId: e.target.value }))}
+                      disabled={!ruleForm.departmentId}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">בחר עמודה...</option>
+                      {columns
+                        .filter(col => col.department_id === ruleForm.departmentId)
+                        .map(col => (
+                          <option key={col.id} value={col.id}>{col.name}</option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {/* Template Select */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                      3. בחר הודעה לשליחה
+                    </label>
+                    <select
+                      value={ruleForm.templateKey}
+                      onChange={(e) => setRuleForm(prev => ({ ...prev, templateKey: e.target.value }))}
+                      disabled={!ruleForm.columnId}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">בחר סוג הודעה...</option>
+                      <option value="whatsapp_order_ready">הזמנה מוכנה</option>
+                      <option value="whatsapp_payment_reminder">תזכורת תשלום</option>
+                      <option value="whatsapp_new_order">הזמנה חדשה</option>
+                    </select>
+                  </div>
+
+                  <button
+                    disabled={!ruleForm.columnId || !ruleForm.templateKey}
+                    onClick={() => {
+                      const newRules = [...whatsAppRules]
+                      const existingIndex = newRules.findIndex(r => r.column_id === ruleForm.columnId)
+
+                      if (existingIndex >= 0) {
+                        newRules[existingIndex] = { ...newRules[existingIndex], template_key: ruleForm.templateKey }
+                      } else {
+                        newRules.push({ column_id: ruleForm.columnId, template_key: ruleForm.templateKey })
+                      }
+
+                      saveWhatsAppRules(newRules)
+                      setRuleForm({ departmentId: '', columnId: '', templateKey: '' }) // Reset form
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Save size={16} />
+                    שמור כלל
+                  </button>
+                </div>
+
+                {/* Active Rules List */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-300">כללים פעילים ({whatsAppRules.length})</h4>
+                  <div className="max-h-[200px] overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                    {whatsAppRules.length === 0 ? (
+                      <p className="text-xs text-slate-500 text-center py-4">לא הוגדרו כללים עדיין...</p>
+                    ) : (
+                      whatsAppRules.map((rule, idx) => {
+                        const col = columns.find(c => c.id === rule.column_id)
+                        const dept = col ? departments.find(d => d.id === col.department_id) : null
+                        const templateName = {
+                          'whatsapp_order_ready': 'הזמנה מוכנה',
+                          'whatsapp_payment_reminder': 'תזכורת תשלום',
+                          'whatsapp_new_order': 'הזמנה חדשה'
+                        }[rule.template_key] || rule.template_key
+
+                        if (!col) return null
+
+                        return (
+                          <div key={idx} className="bg-slate-800 rounded-lg p-3 flex justify-between items-center border border-slate-700">
+                            <div>
+                              <div className="text-xs text-slate-400">{dept?.name} &gt; {col.name}</div>
+                              <div className="text-sm font-medium text-green-400">{templateName}</div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const newRules = whatsAppRules.filter(r => r.column_id !== rule.column_id)
+                                saveWhatsAppRules(newRules)
+                              }}
+                              className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                              title="מחק כלל"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2 border-t border-slate-700/50">
+                  <button
+                    onClick={() => setShowWhatsAppRulesModal(false)}
+                    className="text-slate-400 hover:text-white text-sm font-medium px-4 py-2 hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    סגור
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* WhatsApp Preview Modal */}
+        {showWhatsAppModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <MessageSquare className="text-green-500" size={24} />
+                  שליחת הודעת WhatsApp
+                </h3>
+                <button
+                  onClick={() => setShowWhatsAppModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                  <p className="font-semibold text-green-800 mb-1">שולח ל:</p>
+                  <p className="text-lg">{whatsAppCustomerName} ({whatsAppPhone})</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    תוכן ההודעה:
+                  </label>
+                  <div className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 whitespace-pre-wrap min-h-[100px]">
+                    {whatsAppMessage}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <a
+                    href={whatsAppTargetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setShowWhatsAppModal(false)}
+                    className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform hover:scale-[1.02] shadow-lg shadow-green-500/20"
+                  >
+                    <MessageSquare size={20} />
+                    שק ל-WhatsApp
+                  </a>
+                  <button
+                    onClick={() => setShowWhatsAppModal(false)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-xl font-bold transition-colors"
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </Layout>
+    </Layout >
   )
 }
 

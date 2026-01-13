@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Search, Edit2, Trash2, FileText, Download } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, FileText, Download, MessageSquare } from 'lucide-react'
 import Layout from '@/components/Layout'
 import OrderPDF from '@/components/OrderPDF'
+import { formatWhatsAppUrl, formatTemplate } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,8 +17,15 @@ export default function Orders() {
   const [showSearchModal, setShowSearchModal] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [orderItems, setOrderItems] = useState([])
-  const [prefilledCustomer, setPrefilledCustomer] = useState(null)
   const [editingOrder, setEditingOrder] = useState(null)
+
+  // WhatsApp Modal State
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
+  const [whatsAppMessage, setWhatsAppMessage] = useState('')
+  const [whatsAppPhone, setWhatsAppPhone] = useState('')
+  const [whatsAppTargetUrl, setWhatsAppTargetUrl] = useState('')
+  const [whatsAppCustomerName, setWhatsAppCustomerName] = useState('')
+  const [whatsAppTemplateType, setWhatsAppTemplateType] = useState('new_order') // new_order, order_ready, payment
 
   // טעינת הזמנות
   useEffect(() => {
@@ -118,6 +126,59 @@ export default function Orders() {
     order.customer_phone.includes(searchTerm) ||
     order.order_number.toString().includes(searchTerm)
   )
+
+
+  const handleWhatsAppClick = async (order, type = 'new_order') => {
+    if (!order.customer_phone) {
+      alert('לא ניתן לשלוח הודעה: חסר מספר טלפון')
+      return
+    }
+
+    try {
+      // Fetch settings
+      const { data: settingsData } = await supabase
+        .from('settings')
+        .select('*')
+        .in('key', ['whatsapp_new_order', 'whatsapp_order_ready', 'whatsapp_payment_reminder'])
+
+      const settingsMap = settingsData?.reduce((acc, curr) => {
+        acc[curr.key] = curr.value
+        return acc
+      }, {}) || {}
+
+      let template = ''
+      switch (type) {
+        case 'new_order':
+          template = settingsMap.whatsapp_new_order || 'שלום {customer_name}, נפתחה עבורך הזמנה מספר {order_number}'
+          break
+        case 'order_ready':
+          template = settingsMap.whatsapp_order_ready || 'שלום {customer_name}, הזמנה מספר {order_number} מוכנה לאיסוף!'
+          break
+        case 'payment':
+          template = settingsMap.whatsapp_payment_reminder || 'שלום {customer_name}, נא להסדיר תשלום עבור הזמנה {order_number}.'
+          break
+        default:
+          template = ''
+      }
+
+      const message = formatTemplate(template, {
+        customer_name: order.customer_name || 'לקוח יקר',
+        order_number: order.order_number
+      })
+
+      const url = formatWhatsAppUrl(order.customer_phone, message)
+
+      setWhatsAppMessage(message)
+      setWhatsAppPhone(order.customer_phone)
+      setWhatsAppTargetUrl(url)
+      setWhatsAppCustomerName(order.customer_name)
+      setWhatsAppTemplateType(type)
+      setShowWhatsAppModal(true)
+
+    } catch (error) {
+      console.error('Error handling WhatsApp click:', error)
+    }
+  }
 
   // Function to get status color based on keywords in status text
   const getStatusColor = (status) => {
@@ -302,6 +363,16 @@ export default function Orders() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
+                                handleWhatsAppClick(order, 'new_order')
+                              }}
+                              className="text-green-600 hover:text-green-800"
+                              title="שלח WhatsApp"
+                            >
+                              <MessageSquare size={20} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
                                 viewOrder(order)
                               }}
                               className="text-blue-600 hover:text-blue-800"
@@ -339,6 +410,89 @@ export default function Orders() {
             )}
           </div>
         </div>
+        {showWhatsAppModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <MessageSquare className="text-green-500" size={24} />
+                  שליחת הודעת WhatsApp
+                </h3>
+                <button
+                  onClick={() => setShowWhatsAppModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <Search size={24} />
+                  {/* Reuse Search icon as X or replace with X if imported, assuming X not imported in this file yet based on imports list above? Actually Trash2, Edit2, Plus etc are there. Let me check imports. X is not imported. I will use a simple X character or button */}
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                  <p className="font-semibold text-green-800 mb-1">שולח ל:</p>
+                  <p className="text-lg">{whatsAppCustomerName} ({whatsAppPhone})</p>
+                </div>
+
+                {/* Template Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    בחר תבנית:
+                  </label>
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    <button
+                      onClick={() => handleWhatsAppClick({ customer_name: whatsAppCustomerName, order_number: whatsAppMessage.match(/\d+/)?.[0] || '', customer_phone: whatsAppPhone }, 'new_order')}
+                      className={`px-2 py-1 text-xs rounded border ${whatsAppTemplateType === 'new_order' ? 'bg-blue-100 border-blue-500' : 'bg-white'}`}
+                    >
+                      הזמנה חדשה
+                    </button>
+                    <button
+                      onClick={() => handleWhatsAppClick({ customer_name: whatsAppCustomerName, order_number: whatsAppMessage.match(/\d+/)?.[0] || '', customer_phone: whatsAppPhone }, 'order_ready')}
+                      className={`px-2 py-1 text-xs rounded border ${whatsAppTemplateType === 'order_ready' ? 'bg-blue-100 border-blue-500' : 'bg-white'}`}
+                    >
+                      מוכן לאיסוף
+                    </button>
+                    <button
+                      onClick={() => handleWhatsAppClick({ customer_name: whatsAppCustomerName, order_number: whatsAppMessage.match(/\d+/)?.[0] || '', customer_phone: whatsAppPhone }, 'payment')}
+                      className={`px-2 py-1 text-xs rounded border ${whatsAppTemplateType === 'payment' ? 'bg-blue-100 border-blue-500' : 'bg-white'}`}
+                    >
+                      תשלום
+                    </button>
+                  </div>
+                </div>
+
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    תוכן ההודעה:
+                  </label>
+                  <div className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 whitespace-pre-wrap min-h-[100px]">
+                    {whatsAppMessage}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <a
+                    href={whatsAppTargetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setShowWhatsAppModal(false)}
+                    className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform hover:scale-[1.02] shadow-lg shadow-green-500/20"
+                  >
+                    <MessageSquare size={20} />
+                    שק ל-WhatsApp
+                  </a>
+                  <button
+                    onClick={() => setShowWhatsAppModal(false)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-xl font-bold transition-colors"
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   )

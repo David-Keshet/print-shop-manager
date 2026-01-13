@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu } from 'lucide-react'
+import { Menu, Home } from 'lucide-react'
 
 export default function Layout({ children }) {
   const pathname = usePathname()
@@ -113,7 +113,15 @@ export default function Layout({ children }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto relative">
+        {/* Home Button - Only show if not on home page */}
+        {pathname !== '/' && (
+          <Link href="/">
+            <button className="fixed top-6 right-6 z-40 p-3 bg-indigo-600 hover:bg-indigo-700 backdrop-blur-lg rounded-full text-white transition-all shadow-xl hover:shadow-indigo-500/50 hover:scale-110 group">
+              <Home size={20} className="group-hover:scale-110 transition-transform" />
+            </button>
+          </Link>
+        )}
         {children}
       </main>
     </div>

@@ -77,7 +77,7 @@ export default function Home() {
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-5xl font-black text-white mb-3">
+              <h1 className="text-5xl font-black text-gray-200 mb-3">
                 דפוס קשת 🖨️
               </h1>
               <p className="text-xl text-blue-200 flex items-center gap-2">
@@ -92,18 +92,18 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {/* Active Orders Card */}
           <div className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-8 shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gray-50/10 rounded-full -ml-12 -mb-12"></div>
             <div className="relative">
               <div className="flex items-center justify-between mb-6">
-                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <Package size={32} className="text-white" />
+                <div className="p-4 bg-gray-50/20 rounded-2xl backdrop-blur-sm">
+                  <Package size={32} className="text-gray-200" />
                 </div>
-                <span className="text-xs font-bold bg-white/30 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+                <span className="text-xs font-bold bg-gray-50/30 text-gray-200 px-3 py-1.5 rounded-full backdrop-blur-sm">
                   LIVE
                 </span>
               </div>
-              <div className="text-6xl font-black text-white mb-3">
+              <div className="text-6xl font-black text-gray-200 mb-3">
                 {loading ? '...' : stats.activeOrders}
               </div>
               <div className="text-blue-100 text-lg font-semibold mb-1">
@@ -117,18 +117,18 @@ export default function Home() {
 
           {/* Total Customers Card */}
           <div className="group bg-gradient-to-br from-green-500 to-green-600 rounded-3xl p-8 shadow-2xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gray-50/10 rounded-full -ml-12 -mb-12"></div>
             <div className="relative">
               <div className="flex items-center justify-between mb-6">
-                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <Users size={32} className="text-white" />
+                <div className="p-4 bg-gray-50/20 rounded-2xl backdrop-blur-sm">
+                  <Users size={32} className="text-gray-200" />
                 </div>
-                <span className="text-xs font-bold bg-white/30 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+                <span className="text-xs font-bold bg-gray-50/30 text-gray-200 px-3 py-1.5 rounded-full backdrop-blur-sm">
                   TOTAL
                 </span>
               </div>
-              <div className="text-6xl font-black text-white mb-3">
+              <div className="text-6xl font-black text-gray-200 mb-3">
                 {loading ? '...' : stats.totalCustomers}
               </div>
               <div className="text-green-100 text-lg font-semibold mb-1">
@@ -142,18 +142,18 @@ export default function Home() {
 
           {/* Monthly Revenue Card */}
           <div className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl p-8 shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gray-50/10 rounded-full -ml-12 -mb-12"></div>
             <div className="relative">
               <div className="flex items-center justify-between mb-6">
-                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <DollarSign size={32} className="text-white" />
+                <div className="p-4 bg-gray-50/20 rounded-2xl backdrop-blur-sm">
+                  <DollarSign size={32} className="text-gray-200" />
                 </div>
-                <span className="text-xs font-bold bg-white/30 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+                <span className="text-xs font-bold bg-gray-50/30 text-gray-200 px-3 py-1.5 rounded-full backdrop-blur-sm">
                   MONTH
                 </span>
               </div>
-              <div className="text-5xl font-black text-white mb-3">
+              <div className="text-5xl font-black text-gray-200 mb-3">
                 {loading ? '...' : `₪${stats.monthlyRevenue.toLocaleString('he-IL', { maximumFractionDigits: 0 })}`}
               </div>
               <div className="text-purple-100 text-lg font-semibold mb-1">
@@ -168,10 +168,10 @@ export default function Home() {
 
         {/* Quick Actions */}
         <div className="mb-12">
-          <h2 className="text-3xl font-bold text-white mb-6">גישה מהירה</h2>
+          <h2 className="text-3xl font-bold text-gray-200 mb-6">גישה מהירה</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <Link href="/orders">
-              <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-blue-500 cursor-pointer">
+              <div className="group bg-gray-50 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-blue-500 cursor-pointer">
                 <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📦</div>
                 <div className="text-lg font-bold text-gray-800 mb-1">הזמנות</div>
                 <div className="text-sm text-gray-500">ניהול הזמנות</div>
@@ -179,7 +179,7 @@ export default function Home() {
             </Link>
 
             <Link href="/tasks/board">
-              <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-green-500 cursor-pointer">
+              <div className="group bg-gray-50 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-green-500 cursor-pointer">
                 <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📌</div>
                 <div className="text-lg font-bold text-gray-800 mb-1">לוח משימות</div>
                 <div className="text-sm text-gray-500">מעקב אחר משימות</div>
@@ -187,7 +187,7 @@ export default function Home() {
             </Link>
 
             <Link href="/customers">
-              <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-purple-500 cursor-pointer">
+              <div className="group bg-gray-50 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-purple-500 cursor-pointer">
                 <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">👥</div>
                 <div className="text-lg font-bold text-gray-800 mb-1">לקוחות</div>
                 <div className="text-sm text-gray-500">רשימת לקוחות</div>
@@ -195,7 +195,7 @@ export default function Home() {
             </Link>
 
             <Link href="/reports">
-              <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-orange-500 cursor-pointer">
+              <div className="group bg-gray-50 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-orange-500 cursor-pointer">
                 <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📊</div>
                 <div className="text-lg font-bold text-gray-800 mb-1">דוחות</div>
                 <div className="text-sm text-gray-500">דוחות וניתוחים</div>

@@ -104,21 +104,25 @@ export default function TasksBoard() {
     if (!scrollContainer) return
 
     const handleWheel = (e) => {
-      // Check if scrolling vertically
-      if (Math.abs(e.deltaY) > 0) {
+      // Only intercept if there's overflow (horizontal scrolling possible)
+      const hasHorizontalScroll = scrollContainer.scrollWidth > scrollContainer.clientWidth
+
+      if (hasHorizontalScroll && e.deltaY !== 0) {
         // Prevent default vertical scroll
         e.preventDefault()
+
         // Scroll horizontally instead
         scrollContainer.scrollLeft += e.deltaY
       }
     }
 
+    // Add event listener with passive: false to allow preventDefault
     scrollContainer.addEventListener('wheel', handleWheel, { passive: false })
 
     return () => {
       scrollContainer.removeEventListener('wheel', handleWheel)
     }
-  }, [])
+  }, [selectedDepartment, columns])
 
   const fetchCustomLabels = async () => {
     try {

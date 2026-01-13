@@ -362,6 +362,19 @@ function OrderForm({ onClose, initialCustomer, editData }) {
   const [loading, setLoading] = useState(false)
   const [lastOrder, setLastOrder] = useState(null)
 
+  // פונקציה למעבר לשדה הבא עם Enter
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const form = e.target.form
+      const inputs = Array.from(form.querySelectorAll('input, select, textarea'))
+      const index = inputs.indexOf(e.target)
+      if (index < inputs.length - 1) {
+        inputs[index + 1].focus()
+      }
+    }
+  }
+
   // Function to get status color based on keywords in status text
   const getStatusColor = (status) => {
     if (!status) return 'bg-gray-100 text-gray-700'
@@ -686,7 +699,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
           ← חזרה לרשימת הזמנות
         </button>
 
-        <div className="bg-white rounded-xl shadow-lg border-t-4 border-blue-600 p-4 md:p-6 lg:p-8">
+        <form onSubmit={(e) => e.preventDefault()} className="bg-white rounded-xl shadow-lg border-t-4 border-blue-600 p-4 md:p-6 lg:p-8">
           <div className="mb-6 md:mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center bg-gray-50 py-4 rounded-lg">
               {editData ? `✏️ עריכת הזמנה ${editData.order_number}` : '📋 פתיחת הזמנה חדשה'}
@@ -720,6 +733,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                       className="input-field bg-white border-gray-300"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       placeholder="הכנס שם לקוח"
                     />
                   </div>
@@ -730,6 +744,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                       className="input-field bg-white border-gray-300"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       placeholder="050-1234567"
                     />
                   </div>
@@ -740,6 +755,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                       className="input-field bg-white border-gray-300"
                       value={contactPerson}
                       onChange={(e) => setContactPerson(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       placeholder="שם איש קשר (אופציונלי)"
                     />
                   </div>
@@ -750,6 +766,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                       className="input-field bg-white border-gray-300"
                       value={idNumber}
                       onChange={(e) => setIdNumber(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       placeholder="תעודת זהות או מספר חברה"
                     />
                   </div>
@@ -783,6 +800,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                             placeholder="מה מזמינים?"
                             value={item.description}
                             onChange={(e) => updateItem(index, 'description', e.target.value)}
+                            onKeyDown={handleKeyDown}
                           />
                         </div>
 
@@ -795,6 +813,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                             placeholder="1"
                             value={item.quantity}
                             onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                            onKeyDown={handleKeyDown}
                           />
                         </div>
 
@@ -808,6 +827,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                             placeholder="0.00"
                             value={item.unitPrice}
                             onChange={(e) => updateItem(index, 'unitPrice', e.target.value)}
+                            onKeyDown={handleKeyDown}
                           />
                         </div>
 
@@ -821,6 +841,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                             placeholder="0.00"
                             value={item.totalPrice}
                             onChange={(e) => updateItem(index, 'totalPrice', e.target.value)}
+                            onKeyDown={handleKeyDown}
                           />
                         </div>
 
@@ -835,6 +856,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                               placeholder="לדוגמה: כונן D / תיקיית לקוחות / 2024 / שם הלקוח..."
                               value={item.notes}
                               onChange={(e) => updateItem(index, 'notes', e.target.value)}
+                              onKeyDown={handleKeyDown}
                             />
                           </div>
                         </div>
@@ -894,6 +916,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                         className="input-field text-sm bg-white border-gray-300"
                         value={selectedDepartment}
                         onChange={(e) => handleDepartmentChange(e.target.value)}
+                        onKeyDown={handleKeyDown}
                       >
                         <option value="">בחר מחלקה</option>
                         {departments.map(dept => (
@@ -909,6 +932,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                         className="input-field text-sm bg-white border-gray-300"
                         value={selectedColumn}
                         onChange={(e) => setSelectedColumn(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         disabled={!selectedDepartment}
                       >
                         <option value="">בחר עמודה</option>
@@ -955,7 +979,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
               </div>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   )

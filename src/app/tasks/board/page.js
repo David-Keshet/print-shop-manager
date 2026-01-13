@@ -761,10 +761,10 @@ export default function TasksBoard() {
   return (
     <Layout>
       {/* Main Container - Full Height, Modern Dark Theme */}
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-950 text-slate-100" style={{ direction: 'rtl' }}>
+      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#0B1437] text-slate-100" style={{ direction: 'rtl' }}>
 
         {/* Sidebar - Departments */}
-        <div className="w-64 bg-slate-900 border-l border-slate-800 flex flex-col flex-shrink-0 transition-all duration-300">
+        <div className="w-64 bg-[#0F1A3D] border-l border-slate-800/50 flex flex-col flex-shrink-0 transition-all duration-300">
           <div className="p-4 border-b border-white/10 flex justify-between items-center">
             <h2 className="font-bold text-lg text-white/90">מחלקות</h2>
             <button
@@ -807,9 +807,9 @@ export default function TasksBoard() {
         </div>
 
         {/* Board Area */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-900/30">
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[#0B1437]">
           {/* Board Header */}
-          <div className="h-14 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-6 flex-shrink-0 shadow-sm">
+          <div className="h-14 bg-[#0F1A3D]/95 backdrop-blur-md border-b border-slate-800/50 flex items-center justify-between px-6 flex-shrink-0">
             <div className="flex items-center gap-4">
               <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                 <span>{departments.find(d => d.id === selectedDepartment)?.name || 'לוח משימות'}</span>

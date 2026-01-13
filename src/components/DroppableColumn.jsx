@@ -15,8 +15,8 @@ export default function DroppableColumn({ column, children, tasksCount, onAddTas
     return (
         <div
             ref={setNodeRef}
-            className={`w-80 flex-shrink-0 flex flex-col max-h-full rounded-xl transition-all shadow-sm border ${isOver ? 'ring-2 ring-blue-500 bg-slate-800/50 border-blue-500/50' : 'bg-slate-900/50 border-slate-700/50'
-                } backdrop-blur-sm`}
+            className={`w-80 flex-shrink-0 flex flex-col max-h-full rounded-xl transition-all border ${isOver ? 'ring-2 ring-blue-500 bg-[#1A2850]/80 border-blue-500/30' : 'bg-[#131F42]/40 border-slate-700/30'
+                }`}
         >
             <div className="p-3 pb-2 flex justify-between items-center cursor-grab active:cursor-grabbing group">
                 <h4 className="font-bold text-sm px-2 text-slate-200">{column.name}</h4>

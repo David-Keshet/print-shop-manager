@@ -33,6 +33,27 @@ export default function Customers() {
     }
   }
 
+  const deleteCustomer = async (customerId, customerName) => {
+    if (!confirm(`האם אתה בטוח שברצונך למחוק את הלקוח "${customerName}"?\n\nשים לב: כל ההזמנות של הלקוח יישארו במערכת.`)) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', customerId)
+
+      if (error) throw error
+
+      alert('הלקוח נמחק בהצלחה')
+      fetchCustomers()
+    } catch (error) {
+      console.error('שגיאה במחיקת לקוח:', error)
+      alert('שגיאה במחיקת הלקוח')
+    }
+  }
+
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone.includes(searchTerm) ||
@@ -124,10 +145,17 @@ export default function Customers() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex gap-2 justify-center">
-                          <button className="text-blue-600 hover:text-blue-800">
+                          <button
+                            className="text-blue-600 hover:text-blue-800"
+                            title="ערוך לקוח"
+                          >
                             <Edit2 size={18} />
                           </button>
-                          <button className="text-red-600 hover:text-red-800">
+                          <button
+                            onClick={() => deleteCustomer(customer.id, customer.name)}
+                            className="text-red-600 hover:text-red-800"
+                            title="מחק לקוח"
+                          >
                             <Trash2 size={18} />
                           </button>
                         </div>

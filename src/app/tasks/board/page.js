@@ -47,11 +47,24 @@ export default function TasksBoard() {
   const [selectedTask, setSelectedTask] = useState(null)
   const [orderDetails, setOrderDetails] = useState(null)
   const [taskItems, setTaskItems] = useState([])
+  const [moveCardDepartment, setMoveCardDepartment] = useState('')
+  const [moveCardColumn, setMoveCardColumn] = useState('')
 
   const [orders, setOrders] = useState([])
   const [activeId, setActiveId] = useState(null)
   const [draggedTask, setDraggedTask] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [editingLabelIndex, setEditingLabelIndex] = useState(null)
+  const [editingLabelValue, setEditingLabelValue] = useState('')
+
+  // Label management states
+  const [showLabelManagementModal, setShowLabelManagementModal] = useState(false)
+  const [customLabels, setCustomLabels] = useState([])
+  const [showLabelModal, setShowLabelModal] = useState(false)
+  const [editingCustomLabel, setEditingCustomLabel] = useState(null)
+  const [labelForm, setLabelForm] = useState({ name: '', color: 'bg-blue-500' })
+  const [labelSearchQuery, setLabelSearchQuery] = useState('')
+  const [taskLabelSearchQuery, setTaskLabelSearchQuery] = useState('')
 
   // Ref for horizontal scroll container
   const scrollContainerRef = useRef(null)
@@ -69,6 +82,7 @@ export default function TasksBoard() {
 
   useEffect(() => {
     fetchBoardData()
+    fetchCustomLabels()
   }, [])
 
   // Add horizontal scroll with mouse wheel
@@ -92,6 +106,18 @@ export default function TasksBoard() {
       scrollContainer.removeEventListener('wheel', handleWheel)
     }
   }, [])
+
+  const fetchCustomLabels = async () => {
+    try {
+      const { data } = await supabase
+        .from('custom_labels')
+        .select('*')
+        .order('position')
+      setCustomLabels(data || [])
+    } catch (error) {
+      console.error('שגיאה בטעינת תוויות:', error)
+    }
+  }
 
   const fetchBoardData = async () => {
     try {
@@ -332,6 +358,8 @@ export default function TasksBoard() {
   const handleViewTaskDetails = async (task) => {
     setSelectedTask(task)
     setShowTaskDetailModal(true)
+    setMoveCardDepartment('')
+    setMoveCardColumn('')
 
     if (task.order_id) {
       try {
@@ -492,6 +520,73 @@ export default function TasksBoard() {
     })
   }
 
+  // Label management functions
+  const handleAddLabel = () => {
+    setEditingCustomLabel(null)
+    setLabelForm({ name: '', color: 'bg-blue-500' })
+    setShowLabelModal(true)
+  }
+
+  const handleEditLabel = (label) => {
+    setEditingCustomLabel(label)
+    setLabelForm({ name: label.name, color: label.color })
+    setShowLabelModal(true)
+  }
+
+  const handleSaveLabel = async () => {
+    if (!labelForm.name.trim()) return
+
+    try {
+      if (editingCustomLabel) {
+        // Update existing label
+        const { error } = await supabase
+          .from('custom_labels')
+          .update({
+            name: labelForm.name,
+            color: labelForm.color
+          })
+          .eq('id', editingCustomLabel.id)
+
+        if (error) throw error
+      } else {
+        // Add new label
+        const maxPosition = customLabels.reduce((max, label) => Math.max(max, label.position || 0), 0)
+        
+        const { error } = await supabase
+          .from('custom_labels')
+          .insert({
+            name: labelForm.name,
+            color: labelForm.color,
+            position: maxPosition + 1
+          })
+
+        if (error) throw error
+      }
+
+      setShowLabelModal(false)
+      fetchCustomLabels()
+    } catch (error) {
+      console.error('שגיאה בשמירת תווית:', error)
+    }
+  }
+
+  const handleDeleteLabel = async (labelId) => {
+    if (!confirm('האם אתה בטוח שברצונך למחוק תווית זו?')) return
+
+    try {
+      const { error } = await supabase
+        .from('custom_labels')
+        .delete()
+        .eq('id', labelId)
+
+      if (error) throw error
+
+      fetchCustomLabels()
+    } catch (error) {
+      console.error('שגיאה במחיקת תווית:', error)
+    }
+  }
+
   if (loading) {
     return (
       <Layout>
@@ -582,6 +677,13 @@ export default function TasksBoard() {
                   </button>
                 )}
               </div>
+              <button
+                onClick={() => setShowLabelManagementModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-purple-600/80 hover:bg-purple-600 text-white rounded text-sm transition-colors backdrop-blur-sm"
+              >
+                <Tag size={14} />
+                <span>ניהול תוויות</span>
+              </button>
               <button
                 onClick={() => setShowColumnManagementModal(true)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition-colors backdrop-blur-sm"
@@ -1043,9 +1145,9 @@ export default function TasksBoard() {
                     תגיות
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {availableLabels.map(label => (
+                    {customLabels.map(label => (
                       <button
-                        key={label.name}
+                        key={label.id}
                         onClick={() => toggleLabel(label.name)}
                         className={`px-3 py-1 rounded-full text-xs font-medium border transition-all flex items-center gap-1 ${(taskForm.labels || []).includes(label.name)
                           ? `${label.color} text-white border-transparent`
@@ -1179,17 +1281,15 @@ export default function TasksBoard() {
                             <div
                               key={item.id}
                               onClick={() => toggleTaskItem(item.id)}
-                              className={`flex items-start gap-4 p-5 rounded-xl cursor-pointer border-2 transition-all shadow-sm hover:shadow-md ${
-                                item.completed
-                                  ? 'bg-green-50 border-green-300'
-                                  : 'bg-white border-gray-200 hover:border-blue-300'
-                              }`}
+                              className={`flex items-start gap-4 p-5 rounded-xl cursor-pointer border-2 transition-all shadow-sm hover:shadow-md ${item.completed
+                                ? 'bg-green-50 border-green-300'
+                                : 'bg-white border-gray-200 hover:border-blue-300'
+                                }`}
                             >
-                              <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center mt-1 flex-shrink-0 transition-colors ${
-                                item.completed
-                                  ? 'bg-green-500 border-green-500 text-white'
-                                  : 'border-gray-300 text-transparent'
-                              }`}>
+                              <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center mt-1 flex-shrink-0 transition-colors ${item.completed
+                                ? 'bg-green-500 border-green-500 text-white'
+                                : 'border-gray-300 text-transparent'
+                                }`}>
                                 <CheckSquare size={18} />
                               </div>
                               <div className="flex-1">
@@ -1225,20 +1325,50 @@ export default function TasksBoard() {
                         <Tag size={14} /> תוויות
                       </h4>
 
-                      {/* Current Labels */}
-                      {selectedTask.labels && selectedTask.labels.length > 0 ? (
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {selectedTask.labels.map((label, idx) => {
-                            const labelConfig = availableLabels.find(l => l.name === label) || availableLabels[2]
-                            return (
-                              <span
-                                key={idx}
-                                className={`${labelConfig.color} text-white text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1`}
-                              >
-                                {label}
+                      {/* Search and Quick Add Labels */}
+                      <div className="space-y-3">
+                        <div className="relative">
+                          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400" size={12} />
+                          <input
+                            type="text"
+                            value={taskLabelSearchQuery}
+                            onChange={(e) => setTaskLabelSearchQuery(e.target.value)}
+                            placeholder="חיפוש תווית..."
+                            className="pl-3 pr-10 py-1.5 border border-purple-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs w-full"
+                          />
+                          {taskLabelSearchQuery && (
+                            <button
+                              onClick={() => setTaskLabelSearchQuery('')}
+                              className="absolute left-2 top-1/2 transform -translate-y-1/2 text-purple-400 hover:text-purple-600"
+                            >
+                              <X size={10} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Filtered Labels for Quick Selection */}
+                        <div className="max-h-32 overflow-y-auto">
+                          {customLabels
+                            .filter(label => {
+                              if (!taskLabelSearchQuery.trim()) return true
+                              return label.name.toLowerCase().includes(taskLabelSearchQuery.toLowerCase())
+                            })
+                            .map(label => {
+                              const isLabelOnTask = selectedTask.labels && selectedTask.labels.includes(label.name)
+                              return (
                                 <button
+                                  key={label.id}
                                   onClick={() => {
-                                    const newLabels = selectedTask.labels.filter((_, i) => i !== idx)
+                                    const currentLabels = selectedTask.labels || []
+                                    let newLabels
+                                    if (isLabelOnTask) {
+                                      // Remove label
+                                      newLabels = currentLabels.filter(l => l !== label.name)
+                                    } else {
+                                      // Add label
+                                      newLabels = [...currentLabels, label.name]
+                                    }
+                                    
                                     supabase
                                       .from('tasks')
                                       .update({ labels: newLabels })
@@ -1248,52 +1378,30 @@ export default function TasksBoard() {
                                         fetchBoardData()
                                       })
                                   }}
-                                  className="hover:bg-white/30 rounded-full p-0.5"
-                                  title="הסר תווית"
+                                  className={`w-full text-right px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-between gap-2 ${
+                                    isLabelOnTask
+                                      ? `${label.color} text-white`
+                                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                                  }`}
                                 >
-                                  <X size={12} />
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-3 h-3 rounded-full ${isLabelOnTask ? 'bg-white/30' : label.color}`}></div>
+                                    <span>{label.name}</span>
+                                  </div>
+                                  {isLabelOnTask && <CheckSquare size={12} />}
                                 </button>
-                              </span>
-                            )
-                          })}
+                              )
+                            })}
                         </div>
-                      ) : (
-                        <div className="text-gray-500 text-xs mb-3">אין תוויות</div>
-                      )}
 
-                      {/* Add Label Dropdown */}
-                      <div className="space-y-2">
-                        <label className="block text-purple-800 text-xs font-semibold">הוסף תווית:</label>
-                        <select
-                          onChange={(e) => {
-                            if (!e.target.value) return
-                            const currentLabels = selectedTask.labels || []
-                            if (currentLabels.includes(e.target.value)) {
-                              alert('תווית זו כבר קיימת')
-                              e.target.value = ''
-                              return
-                            }
-                            const newLabels = [...currentLabels, e.target.value]
-                            supabase
-                              .from('tasks')
-                              .update({ labels: newLabels })
-                              .eq('id', selectedTask.id)
-                              .then(() => {
-                                setSelectedTask({ ...selectedTask, labels: newLabels })
-                                fetchBoardData()
-                                e.target.value = ''
-                              })
-                          }}
-                          className="w-full px-2 py-1.5 border border-purple-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs"
-                          defaultValue=""
-                        >
-                          <option value="">בחר תווית להוספה...</option>
-                          {availableLabels.map((label, idx) => (
-                            <option key={idx} value={label.name}>
-                              {label.name}
-                            </option>
-                          ))}
-                        </select>
+                        {/* Show "no labels found" message */}
+                        {taskLabelSearchQuery.trim() && customLabels.filter(label => 
+                          label.name.toLowerCase().includes(taskLabelSearchQuery.toLowerCase())
+                        ).length === 0 && (
+                          <div className="text-center py-2 text-purple-600 text-xs">
+                            לא נמצאו תוויות התואמות את "{taskLabelSearchQuery}"
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1332,16 +1440,12 @@ export default function TasksBoard() {
                       <div className="mb-3">
                         <label className="block text-amber-800 text-xs font-semibold mb-1">מחלקה:</label>
                         <select
-                          id="move-department-select"
+                          value={moveCardDepartment}
                           onChange={(e) => {
-                            const columnSelect = document.getElementById('move-column-select')
-                            if (columnSelect) {
-                              columnSelect.value = ''
-                              columnSelect.disabled = !e.target.value
-                            }
+                            setMoveCardDepartment(e.target.value)
+                            setMoveCardColumn('') // Reset column when department changes
                           }}
                           className="w-full px-2 py-1.5 border border-amber-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
-                          defaultValue=""
                         >
                           <option value="">בחר מחלקה...</option>
                           {departments.map(dept => (
@@ -1356,52 +1460,63 @@ export default function TasksBoard() {
                       <div className="mb-3">
                         <label className="block text-amber-800 text-xs font-semibold mb-1">עמודה:</label>
                         <select
-                          id="move-column-select"
-                          disabled
+                          value={moveCardColumn}
+                          onChange={(e) => setMoveCardColumn(e.target.value)}
+                          disabled={!moveCardDepartment}
                           className="w-full px-2 py-1.5 border border-amber-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm disabled:bg-gray-100 disabled:text-gray-400"
-                          defaultValue=""
                         >
                           <option value="">בחר עמודה...</option>
-                          {(() => {
-                            const deptSelect = document.getElementById('move-department-select')
-                            const selectedDeptId = deptSelect ? parseInt(deptSelect.value) : null
-                            if (!selectedDeptId) return null
-                            return columns
-                              .filter(col => col.department_id === selectedDeptId)
-                              .map(col => (
-                                <option key={col.id} value={col.id}>
-                                  {col.name}
-                                </option>
-                              ))
-                          })()}
+                          {moveCardDepartment && columns
+                            .filter(col => col.department_id === parseInt(moveCardDepartment))
+                            .map(col => (
+                              <option key={col.id} value={col.id}>
+                                {col.name}
+                              </option>
+                            ))}
                         </select>
                       </div>
 
                       {/* Move Button */}
                       <button
-                        onClick={() => {
-                          const deptSelect = document.getElementById('move-department-select')
-                          const colSelect = document.getElementById('move-column-select')
-                          const selectedDeptId = deptSelect ? parseInt(deptSelect.value) : null
-                          const selectedColId = colSelect ? parseInt(colSelect.value) : null
+                        onClick={async () => {
+                          const selectedDeptId = parseInt(moveCardDepartment)
+                          const selectedColId = parseInt(moveCardColumn)
 
                           if (!selectedDeptId || !selectedColId) {
                             alert('יש לבחור גם מחלקה וגם עמודה')
                             return
                           }
 
-                          // Update task
-                          supabase
-                            .from('tasks')
-                            .update({
-                              department_id: selectedDeptId,
-                              column_id: selectedColId
-                            })
-                            .eq('id', selectedTask.id)
-                            .then(() => {
-                              setShowTaskDetailModal(false)
-                              fetchBoardData()
-                            })
+                          try {
+                            // Update task
+                            const { error: taskError } = await supabase
+                              .from('tasks')
+                              .update({
+                                department_id: selectedDeptId,
+                                column_id: selectedColId
+                              })
+                              .eq('id', selectedTask.id)
+
+                            if (taskError) throw taskError
+
+                            // Update order status to match column name
+                            if (selectedTask.order_id) {
+                              const targetColumn = columns.find(c => c.id === selectedColId)
+                              if (targetColumn) {
+                                const newStatus = targetColumn.name.trim()
+                                await supabase
+                                  .from('orders')
+                                  .update({ status: newStatus })
+                                  .eq('id', selectedTask.order_id)
+                              }
+                            }
+
+                            setShowTaskDetailModal(false)
+                            fetchBoardData()
+                          } catch (error) {
+                            console.error('שגיאה בהעברת כרטיס:', error)
+                            alert('שגיאה בהעברת הכרטיס')
+                          }
                         }}
                         className="w-full px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold text-sm transition-colors"
                       >
@@ -1411,6 +1526,173 @@ export default function TasksBoard() {
 
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Label Management Modal */}
+        {showLabelManagementModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-800">ניהול תוויות</h3>
+                <button
+                  onClick={() => setShowLabelManagementModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    onClick={() => {
+                      setEditingCustomLabel(null)
+                      setLabelForm({ name: '', color: 'bg-blue-500' })
+                      setShowLabelModal(true)
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  >
+                    <Plus size={20} />
+                    הוסף תווית חדשה
+                  </button>
+                  
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                      type="text"
+                      value={labelSearchQuery}
+                      onChange={(e) => setLabelSearchQuery(e.target.value)}
+                      placeholder="חיפוש תווית..."
+                      className="pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 w-64"
+                    />
+                    {labelSearchQuery && (
+                      <button
+                        onClick={() => setLabelSearchQuery('')}
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {customLabels
+                  .filter(label => {
+                    if (!labelSearchQuery.trim()) return true
+                    return label.name.toLowerCase().includes(labelSearchQuery.toLowerCase())
+                  })
+                  .map(label => (
+                    <div
+                      key={label.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full ${label.color}`}></div>
+                        <div>
+                          <h4 className="font-semibold text-gray-800">{label.name}</h4>
+                          <p className="text-sm text-gray-500">
+                            {tasks.filter(t => t.labels && t.labels.includes(label.name)).length} משימות משתמשות בתווית זו
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingCustomLabel(label)
+                            setLabelForm({ name: label.name, color: label.color })
+                            setShowLabelModal(true)
+                          }}
+                          className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"
+                          title="ערוך"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteLabel(label.id)}
+                          className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                          title="מחק"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                
+                {/* Show "no results" message when search has no matches */}
+                {labelSearchQuery.trim() && customLabels.filter(label => 
+                  label.name.toLowerCase().includes(labelSearchQuery.toLowerCase())
+                ).length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <p>לא נמצאו תוויות התואמות את "{labelSearchQuery}"</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Label Form Modal */}
+        {showLabelModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-96 shadow-2xl">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">
+                  {editingCustomLabel ? 'ערוך תווית' : 'הוסף תווית חדשה'}
+                </h3>
+                <button
+                  onClick={() => setShowLabelModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    שם התווית
+                  </label>
+                  <input
+                    type="text"
+                    value={labelForm.name}
+                    onChange={(e) => setLabelForm({ ...labelForm, name: e.target.value })}
+                    placeholder="שם התווית"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    צבע התווית
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {availableColors.map(color => (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => setLabelForm({ ...labelForm, color: color.bgClass.replace('50', '500') })}
+                        className={`w-full aspect-square rounded-lg transition-all ${labelForm.color === color.bgClass.replace('50', '500') ? 'ring-2 ring-purple-500 ring-offset-2' : ''
+                          }`}
+                        title={color.label}
+                      >
+                        <div className={`w-full h-full rounded-lg ${color.bgClass.replace('50', '500')}`}></div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleSaveLabel}
+                  className="w-full bg-purple-600 text-white py-2 rounded-lg font-medium hover:bg-purple-700 transition"
+                >
+                  שמור תווית
+                </button>
               </div>
             </div>
           </div>

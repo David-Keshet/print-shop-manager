@@ -69,6 +69,13 @@ export default function TasksBoard() {
   const [editingLabelIndex, setEditingLabelIndex] = useState(null)
   const [editingLabelValue, setEditingLabelValue] = useState('')
 
+  // Item remarks management
+  const [itemRemarks, setItemRemarks] = useState({}) // { itemId: 'remark text' }
+  const [editingItemRemark, setEditingItemRemark] = useState(null)
+
+  // Move card accordion state
+  const [expandedDepartment, setExpandedDepartment] = useState(null)
+
   // Label management states
   const [showLabelManagementModal, setShowLabelManagementModal] = useState(false)
   const [customLabels, setCustomLabels] = useState([])
@@ -378,6 +385,9 @@ export default function TasksBoard() {
     setMoveCardDepartment('')
     setMoveCardColumn('')
     setTaskLabelSearchQuery('')
+
+    // Auto-expand the current department in the move card accordion
+    setExpandedDepartment(task.department_id)
 
     if (task.order_id) {
       try {
@@ -892,6 +902,7 @@ export default function TasksBoard() {
                                   }
                                 }}
                                 onViewDetails={handleViewTaskDetails}
+                                customLabels={customLabels}
                               />
                             )
                           })}
@@ -943,6 +954,7 @@ export default function TasksBoard() {
                                         key={task.id}
                                         task={task}
                                         onViewDetails={handleViewTaskDetails}
+                                        customLabels={customLabels}
                                       />
                                     ))}
                                   </div>
@@ -1340,8 +1352,14 @@ export default function TasksBoard() {
 
         {/* View Task Detail Modal - גדול מאוד */}
         {showTaskDetailModal && selectedTask && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2">
-            <div className="bg-white rounded-2xl w-full max-w-[95vw] shadow-2xl h-[96vh] overflow-hidden flex flex-col">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2"
+            onClick={() => setShowTaskDetailModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl w-full max-w-[85vw] shadow-2xl h-[90vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
 
               {/* Header: Order Number - Name - Phone - קטן יותר */}
               <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-5 border-b-4 border-blue-800">
@@ -1368,7 +1386,8 @@ export default function TasksBoard() {
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setShowTaskDetailModal(false)
                         handleEditTask(selectedTask)
                       }}
@@ -1378,7 +1397,8 @@ export default function TasksBoard() {
                       <Edit2 size={20} />
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         if (confirm('למחוק את המשימה?')) {
                           handleDeleteTask(selectedTask.id)
                           setShowTaskDetailModal(false)
@@ -1388,12 +1408,6 @@ export default function TasksBoard() {
                       title="מחק"
                     >
                       <Trash2 size={20} />
-                    </button>
-                    <button
-                      onClick={() => setShowTaskDetailModal(false)}
-                      className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-xl transition-colors"
-                    >
-                      <X size={24} />
                     </button>
                   </div>
                 </div>
@@ -1419,9 +1433,10 @@ export default function TasksBoard() {
                 </div>
               )}
 
-              {/* Content - Main section with order items */}
-              <div className="flex-1 overflow-y-auto">
-                <div className="flex gap-6 p-8">
+              {/* Content - Main section with order items and sidebar */}
+              <div className="flex-1 overflow-y-auto flex">
+                {/* Main Content - Order Items (70%) */}
+                <div className="flex-1 p-8 overflow-y-auto">
 
                   {/* Main Content Area - Order Items (70%) */}
                   <div className="flex-1">
@@ -1438,30 +1453,95 @@ export default function TasksBoard() {
                           {taskItems.map(item => (
                             <div
                               key={item.id}
-                              onClick={() => toggleTaskItem(item.id)}
-                              className={`flex items-start gap-4 p-5 rounded-xl cursor-pointer border-2 transition-all shadow-sm hover:shadow-md ${item.completed
+                              className={`rounded-xl border-2 transition-all shadow-sm ${item.completed
                                 ? 'bg-green-50 border-green-300'
-                                : 'bg-white border-gray-200 hover:border-blue-300'
+                                : 'bg-white border-gray-200'
                                 }`}
                             >
-                              <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center mt-1 flex-shrink-0 transition-colors ${item.completed
-                                ? 'bg-green-500 border-green-500 text-white'
-                                : 'border-gray-300 text-transparent'
-                                }`}>
-                                <CheckSquare size={18} />
-                              </div>
-                              <div className="flex-1">
-                                <p className={`text-lg font-semibold mb-1 ${item.completed ? 'text-green-700 line-through' : 'text-gray-800'}`}>
-                                  {item.description || `פריט #${item.id}`}
-                                </p>
-                                <div className="flex items-center gap-4 text-sm text-gray-600">
-                                  <span className="flex items-center gap-1">
-                                    <span className="font-medium">כמות:</span> {item.quantity} יח'
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <span className="font-medium">מידות:</span> {item.width} × {item.height} ס"מ
-                                  </span>
+                              {/* Main Item Row */}
+                              <div
+                                onClick={() => toggleTaskItem(item.id)}
+                                className="flex items-start gap-4 p-5 cursor-pointer hover:bg-gray-50/50 rounded-t-xl"
+                              >
+                                <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center mt-1 flex-shrink-0 transition-colors ${item.completed
+                                  ? 'bg-green-500 border-green-500 text-white'
+                                  : 'border-gray-300 text-transparent'
+                                  }`}>
+                                  <CheckSquare size={18} />
                                 </div>
+                                <div className="flex-1">
+                                  <p className={`text-lg font-semibold mb-1 ${item.completed ? 'text-green-700 line-through' : 'text-gray-800'}`}>
+                                    {item.description || `פריט #${item.id}`}
+                                  </p>
+                                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                                    <span className="flex items-center gap-1">
+                                      <span className="font-medium">כמות:</span> {item.quantity} יח'
+                                    </span>
+                                    {item.notes && (
+                                      <span className="flex items-center gap-1">
+                                        <span className="font-medium">📁 מיקום קובץ:</span> {item.notes}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Item Remarks Section */}
+                              <div className="px-5 pb-4" onClick={(e) => e.stopPropagation()}>
+                                {editingItemRemark === item.id ? (
+                                  <div className="space-y-2">
+                                    <textarea
+                                      value={itemRemarks[item.id] || ''}
+                                      onChange={(e) => setItemRemarks(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                      placeholder="הוסף הערה לפריט זה... (לדוגמא: קובץ לא תקין, צריך אישור)"
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                      rows={2}
+                                      autoFocus
+                                    />
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => setEditingItemRemark(null)}
+                                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                      >
+                                        שמור
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setItemRemarks(prev => {
+                                            const newRemarks = { ...prev }
+                                            delete newRemarks[item.id]
+                                            return newRemarks
+                                          })
+                                          setEditingItemRemark(null)
+                                        }}
+                                        className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                      >
+                                        ביטול
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    {itemRemarks[item.id] ? (
+                                      <div
+                                        onClick={() => setEditingItemRemark(item.id)}
+                                        className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 text-sm text-gray-700 cursor-pointer hover:bg-yellow-100 transition-colors"
+                                      >
+                                        <div className="flex items-start gap-2">
+                                          <span className="text-yellow-600">💬</span>
+                                          <span className="flex-1">{itemRemarks[item.id]}</span>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => setEditingItemRemark(item.id)}
+                                        className="text-xs text-gray-500 hover:text-blue-600 underline transition-colors"
+                                      >
+                                        + הוסף הערה
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -1473,9 +1553,10 @@ export default function TasksBoard() {
                       </div>
                     )}
                   </div>
+                </div>
 
-                  {/* Sidebar - Details (30%) */}
-                  <div className="w-64 space-y-4 flex-shrink-0">
+                {/* Right Sidebar - Labels, Date, Description */}
+                <div className="w-64 p-6 bg-gray-50 border-r border-gray-200 overflow-y-auto space-y-4 flex-shrink-0">
 
                     {/* Labels - תוויות */}
                     <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
@@ -1568,11 +1649,20 @@ export default function TasksBoard() {
                       <h4 className="text-blue-800 mb-2 text-sm font-bold flex items-center gap-1">
                         <Calendar size={14} /> תאריך
                       </h4>
-                      <div className="text-gray-700 text-sm">
-                        {new Date(selectedTask.created_at).toLocaleDateString('he-IL', {
-                          day: '2-digit',
-                          month: '2-digit'
-                        })}
+                      <div className="text-gray-700 text-sm space-y-1">
+                        <div>
+                          {new Date(selectedTask.created_at).toLocaleDateString('he-IL', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </div>
+                        <div className="text-xs text-blue-600 font-semibold">
+                          {(() => {
+                            const daysPassed = Math.floor((new Date() - new Date(selectedTask.created_at)) / (1000 * 60 * 60 * 24))
+                            return daysPassed === 0 ? 'היום' : daysPassed === 1 ? 'אתמול' : `לפני ${daysPassed} ימים`
+                          })()}
+                        </div>
                       </div>
                     </div>
 
@@ -1588,100 +1678,108 @@ export default function TasksBoard() {
                       </div>
                     )}
 
-                    {/* Move to Department/Column - העבר כרטיס */}
-                    <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
-                      <h4 className="text-amber-800 mb-3 text-sm font-bold flex items-center gap-1">
-                        <ArrowRight size={14} /> העבר כרטיס
-                      </h4>
+                </div>
 
-                      {/* Select Department */}
-                      <div className="mb-3">
-                        <label className="block text-amber-800 text-xs font-semibold mb-1">מחלקה:</label>
-                        <select
-                          value={moveCardDepartment}
-                          onChange={(e) => {
-                            setMoveCardDepartment(e.target.value)
-                            setMoveCardColumn('') // Reset column when department changes
-                          }}
-                          className="w-full px-2 py-1.5 border border-amber-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
-                        >
-                          <option value="">בחר מחלקה...</option>
-                          {departments.map(dept => (
-                            <option key={dept.id} value={dept.id}>
-                              {dept.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Select Column */}
-                      <div className="mb-3">
-                        <label className="block text-amber-800 text-xs font-semibold mb-1">עמודה:</label>
-                        <select
-                          value={moveCardColumn}
-                          onChange={(e) => setMoveCardColumn(e.target.value)}
-                          disabled={!moveCardDepartment}
-                          className="w-full px-2 py-1.5 border border-amber-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm disabled:bg-gray-100 disabled:text-gray-400"
-                        >
-                          <option value="">בחר עמודה...</option>
-                          {moveCardDepartment && columns
-                            .filter(col => col.department_id === parseInt(moveCardDepartment))
-                            .map(col => (
-                              <option key={col.id} value={col.id}>
-                                {col.name}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-
-                      {/* Move Button */}
-                      <button
-                        onClick={async () => {
-                          const selectedDeptId = parseInt(moveCardDepartment)
-                          const selectedColId = parseInt(moveCardColumn)
-
-                          if (!selectedDeptId || !selectedColId) {
-                            alert('יש לבחור גם מחלקה וגם עמודה')
-                            return
-                          }
-
-                          try {
-                            // Update task
-                            const { error: taskError } = await supabase
-                              .from('tasks')
-                              .update({
-                                department_id: selectedDeptId,
-                                column_id: selectedColId
-                              })
-                              .eq('id', selectedTask.id)
-
-                            if (taskError) throw taskError
-
-                            // Update order status to match column name
-                            if (selectedTask.order_id) {
-                              const targetColumn = columns.find(c => c.id === selectedColId)
-                              if (targetColumn) {
-                                const newStatus = targetColumn.name.trim()
-                                await supabase
-                                  .from('orders')
-                                  .update({ status: newStatus })
-                                  .eq('id', selectedTask.order_id)
-                              }
-                            }
-
-                            setShowTaskDetailModal(false)
-                            fetchBoardData()
-                          } catch (error) {
-                            console.error('שגיאה בהעברת כרטיס:', error)
-                            alert('שגיאה בהעברת הכרטיס')
-                          }
-                        }}
-                        className="w-full px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold text-sm transition-colors"
-                      >
-                        העבר
-                      </button>
+                {/* Left Sidebar - Move Card Panel */}
+                <div className="w-80 bg-gradient-to-b from-amber-50 to-orange-50 border-l border-amber-200 overflow-y-auto flex-shrink-0">
+                  <div className="p-6">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-bold text-amber-900 flex items-center gap-2">
+                        <ArrowRight size={24} />
+                        העבר כרטיס
+                      </h3>
+                      <p className="text-xs text-amber-700 mt-1">בחר עמודה להעברה מהירה</p>
                     </div>
 
+                    {/* Accordion for Departments */}
+                    <div className="space-y-2">
+                      {departments.map(dept => {
+                        const deptColumns = columns.filter(col => col.department_id === dept.id)
+                        if (deptColumns.length === 0) return null
+
+                        const isExpanded = expandedDepartment === dept.id
+                        const hasCurrentColumn = deptColumns.some(col => col.id === selectedTask.column_id)
+
+                        return (
+                          <div key={dept.id} className="border border-amber-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                            {/* Department Header - Clickable */}
+                            <button
+                              onClick={() => setExpandedDepartment(isExpanded ? null : dept.id)}
+                              className="w-full px-4 py-3 flex items-center justify-between hover:bg-amber-50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-gray-800">{dept.name}</span>
+                                {hasCurrentColumn && (
+                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                    כאן כעת
+                                  </span>
+                                )}
+                              </div>
+                              <span className={`transform transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                                ◀
+                              </span>
+                            </button>
+
+                            {/* Columns List - Collapsible */}
+                            {isExpanded && (
+                              <div className="px-3 pb-3 space-y-2">
+                                {deptColumns.map(col => {
+                                  const isCurrentColumn = selectedTask.column_id === col.id
+                                  return (
+                                    <button
+                                      key={col.id}
+                                      onClick={async (e) => {
+                                        e.stopPropagation()
+                                        if (isCurrentColumn) return
+
+                                        try {
+                                          const { error: taskError } = await supabase
+                                            .from('tasks')
+                                            .update({
+                                              department_id: dept.id,
+                                              column_id: col.id
+                                            })
+                                            .eq('id', selectedTask.id)
+
+                                          if (taskError) throw taskError
+
+                                          if (selectedTask.order_id) {
+                                            const newStatus = col.name.trim()
+                                            await supabase
+                                              .from('orders')
+                                              .update({ status: newStatus })
+                                              .eq('id', selectedTask.order_id)
+                                          }
+
+                                          setShowTaskDetailModal(false)
+                                          fetchBoardData()
+                                        } catch (error) {
+                                          console.error('שגיאה בהעברת כרטיס:', error)
+                                          alert('שגיאה בהעברת הכרטיס')
+                                        }
+                                      }}
+                                      disabled={isCurrentColumn}
+                                      className={`w-full text-right px-4 py-3 rounded-lg font-medium transition-all ${
+                                        isCurrentColumn
+                                          ? 'bg-green-100 text-green-700 border-2 border-green-500 cursor-default shadow-sm'
+                                          : 'bg-white hover:bg-amber-50 text-gray-700 hover:text-amber-900 border-2 border-gray-200 hover:border-amber-400 hover:shadow-md'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm">{col.name}</span>
+                                        {isCurrentColumn && (
+                                          <span className="text-xs bg-green-200 px-2 py-1 rounded-full font-bold">✓ כאן</span>
+                                        )}
+                                      </div>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>

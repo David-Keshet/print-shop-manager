@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { availableLabels } from '@/app/tasks/board/constants'
 
-export default function TaskCard({ task, onViewDetails }) {
+export default function TaskCard({ task, onViewDetails, customLabels = [] }) {
     const {
         attributes,
         listeners,
@@ -74,10 +74,19 @@ export default function TaskCard({ task, onViewDetails }) {
             {/* Labels */}
             {taskLabels.length > 0 && (
                 <div className="flex gap-1.5 mb-2 flex-wrap">
-                    {taskLabels.map((label, idx) => {
-                        const labelConfig = availableLabels.find(l => l.name === label) || availableLabels[2]
+                    {taskLabels.map((labelName, idx) => {
+                        // Try custom labels first, then fall back to availableLabels
+                        const customLabel = customLabels.find(l => l.name === labelName)
+                        const labelConfig = customLabel || availableLabels.find(l => l.name === labelName) || availableLabels[2]
+
                         return (
-                            <span key={idx} className={`${labelConfig.color} h-2 w-8 rounded-full`} title={label}></span>
+                            <span
+                                key={idx}
+                                className={`${customLabel ? customLabel.color : labelConfig.color} text-white text-xs px-2 py-0.5 rounded-full font-medium`}
+                                title={labelName}
+                            >
+                                {labelName}
+                            </span>
                         )
                     })}
                 </div>

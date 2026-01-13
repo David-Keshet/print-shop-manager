@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PWA Test</title>
+</head>
+<body>
+    <h1>PWA Installation Test</h1>
+    <button id="install">התקן אפליקציה</button>
+    <p id="status"></p>
+    
+    <script>
+        let deferredPrompt;
+        const installButton = document.getElementById('install');
+        const status = document.getElementById('status');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+            status.textContent = 'האפליקציה ניתנת להתקנה!';
+        });
+        
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                status.textContent = 'אין אפשרות להתקין כרגע';
+                return;
+            }
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            status.textContent = `תוצאה: ${outcome}`;
+            deferredPrompt = null;
+        });
+        
+        // Check service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => status.textContent += ' | Service Worker: רשום')
+                .catch(err => status.textContent += ' | Service Worker: שגיאה');
+        }
+    </script>
+</body>
+</html>

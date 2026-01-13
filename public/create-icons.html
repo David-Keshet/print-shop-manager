@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>יצירת אייקונים</title>
+</head>
+<body style="direction: rtl; font-family: Arial;">
+    <h1>יצירת אייקוני PWA</h1>
+    <p>לחץ על הכפתורים להורדת האייקונים:</p>
+    <button onclick="createIcon(192)">צור אייקון 192x192</button>
+    <button onclick="createIcon(512)">צור אייקון 512x512</button>
+    <br><br>
+    <canvas id="canvas" style="border: 1px solid #ccc;"></canvas>
+
+    <script>
+        function createIcon(size) {
+            const canvas = document.getElementById('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Background with rounded corners
+            ctx.fillStyle = '#2563eb';
+            const radius = size / 8;
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw printer icon
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size * 0.04;
+
+            // Printer body
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const printerWidth = size * 0.5;
+            const printerHeight = size * 0.3;
+
+            // Top paper
+            ctx.fillRect(
+                centerX - printerWidth * 0.42,
+                centerY - printerHeight * 1.2,
+                printerWidth * 0.84,
+                printerHeight * 0.5
+            );
+
+            // Main printer
+            ctx.strokeRect(
+                centerX - printerWidth / 2,
+                centerY - printerHeight / 2,
+                printerWidth,
+                printerHeight
+            );
+
+            // Paper tray
+            ctx.fillRect(
+                centerX - printerWidth * 0.4,
+                centerY + printerHeight * 0.1,
+                printerWidth * 0.8,
+                printerHeight * 0.8
+            );
+
+            // Paper lines
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = size * 0.03;
+            ctx.beginPath();
+            ctx.moveTo(centerX - printerWidth * 0.25, centerY + printerHeight * 0.35);
+            ctx.lineTo(centerX + printerWidth * 0.25, centerY + printerHeight * 0.35);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(centerX - printerWidth * 0.25, centerY + printerHeight * 0.55);
+            ctx.lineTo(centerX + printerWidth * 0.15, centerY + printerHeight * 0.55);
+            ctx.stroke();
+
+            // Button
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(centerX + printerWidth * 0.28, centerY - printerHeight * 0.1, size * 0.025, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Download
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon-${size}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+                alert(`האייקון icon-${size}.png הורד! העתק אותו לתיקיית public/`);
+            });
+        }
+    </script>
+</body>
+</html>

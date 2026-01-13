@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { BarChart3, Users, Package, DollarSign, TrendingUp, Calendar, Menu, X } from 'lucide-react'
+import { Package, Users, DollarSign, TrendingUp, ArrowLeft, Calendar } from 'lucide-react'
 import Layout from '@/components/Layout'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +15,6 @@ export default function Home() {
     monthlyRevenue: 0
   })
   const [loading, setLoading] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     fetchStats()
@@ -63,134 +62,162 @@ export default function Home() {
     }
   }
 
+  const currentDate = new Date()
+  const hebrewDate = currentDate.toLocaleDateString('he-IL', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+
   return (
-    <div className="h-screen flex overflow-hidden">
-      {/* Toggle Button */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-6 right-6 z-50 p-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white hover:bg-white/20 transition-all shadow-xl"
-      >
-        {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
-      </button>
-
-      {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} bg-white/10 backdrop-blur-lg border-l border-white/20 shadow-2xl flex flex-col transition-all duration-300 overflow-hidden`}>
-        {/* Logo */}
-        <Link href="/">
-          <div className="p-6 border-b border-white/20 cursor-pointer hover:bg-white/5 transition-all">
-            <h1 className="text-xl font-extrabold text-white flex items-center gap-2">
-              <span>🖨️</span>
-              <span>דפוס קשת</span>
-            </h1>
+    <Layout>
+      <div className="min-h-screen p-8">
+        {/* Hero Section */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-5xl font-black text-white mb-3">
+                דפוס קשת 🖨️
+              </h1>
+              <p className="text-xl text-blue-200 flex items-center gap-2">
+                <Calendar size={20} className="text-blue-300" />
+                {hebrewDate}
+              </p>
+            </div>
           </div>
-        </Link>
-
-        {/* Menu Items */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <Link href="/orders">
-            <button className="w-full text-right px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20 transition-all flex items-center gap-3 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">📦</span>
-              <span>הזמנות</span>
-            </button>
-          </Link>
-
-          <Link href="/tasks/board">
-            <button className="w-full text-right px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20 transition-all flex items-center gap-3 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">📌</span>
-              <span>לוח משימות</span>
-            </button>
-          </Link>
-
-          <div className="border-t border-white/10 my-3"></div>
-
-          <Link href="/customers">
-            <button className="w-full text-right px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20 transition-all flex items-center gap-3 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">👥</span>
-              <span>לקוחות</span>
-            </button>
-          </Link>
-
-          <div className="border-t border-white/10 my-3"></div>
-
-          <Link href="/reports">
-            <button className="w-full text-right px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20 transition-all flex items-center gap-3 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">📊</span>
-              <span>דוחות</span>
-            </button>
-          </Link>
-
-          <div className="border-t border-white/10 my-3"></div>
-
-          <Link href="/users">
-            <button className="w-full text-right px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20 transition-all flex items-center gap-3 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">👨‍💼</span>
-              <span>ניהול משתמשים</span>
-            </button>
-          </Link>
-
-          <Link href="/settings">
-            <button className="w-full text-right px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20 transition-all flex items-center gap-3 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">⚙️</span>
-              <span>הגדרות</span>
-            </button>
-          </Link>
-        </nav>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-white/20">
-          <p className="text-xs text-white/50 text-center">© 2026 דפוס קשת</p>
         </div>
-      </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="w-[95%] mx-auto p-4">
-          {/* Welcome Card */}
-          <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-4 mb-4 border border-white/20">
-            <h2 className="text-2xl font-extrabold text-gray-800 mb-2">ברוכים הבאים למערכת!</h2>
-            <p className="text-sm text-gray-600">בחר פעולה מהתפריט הצדדי כדי להתחיל</p>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-200 hover:shadow-xl transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl">📦</span>
-                <span className="text-xs text-blue-600 font-semibold bg-blue-200 px-2 py-0.5 rounded-full">LIVE</span>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {/* Active Orders Card */}
+          <div className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-8 shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
+                  <Package size={32} className="text-white" />
+                </div>
+                <span className="text-xs font-bold bg-white/30 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+                  LIVE
+                </span>
               </div>
-              <p className="text-3xl font-extrabold text-blue-700 mb-1">
+              <div className="text-6xl font-black text-white mb-3">
                 {loading ? '...' : stats.activeOrders}
-              </p>
-              <p className="text-gray-700 font-bold text-sm">הזמנות פעילות</p>
-              <p className="text-gray-500 text-xs mt-0.5">בתהליך עיבוד</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border-2 border-green-200 hover:shadow-xl transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl">👥</span>
-                <span className="text-xs text-green-600 font-semibold bg-green-200 px-2 py-0.5 rounded-full">TOTAL</span>
               </div>
-              <p className="text-3xl font-extrabold text-green-700 mb-1">
+              <div className="text-blue-100 text-lg font-semibold mb-1">
+                הזמנות פעילות
+              </div>
+              <div className="text-blue-200 text-sm">
+                בתהליך עיבוד כרגע
+              </div>
+            </div>
+          </div>
+
+          {/* Total Customers Card */}
+          <div className="group bg-gradient-to-br from-green-500 to-green-600 rounded-3xl p-8 shadow-2xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
+                  <Users size={32} className="text-white" />
+                </div>
+                <span className="text-xs font-bold bg-white/30 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+                  TOTAL
+                </span>
+              </div>
+              <div className="text-6xl font-black text-white mb-3">
                 {loading ? '...' : stats.totalCustomers}
-              </p>
-              <p className="text-gray-700 font-bold text-sm">לקוחות במערכת</p>
-              <p className="text-gray-500 text-xs mt-0.5">סה"כ לקוחות</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl p-4 border-2 border-indigo-200 hover:shadow-xl transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl">💰</span>
-                <span className="text-xs text-indigo-600 font-semibold bg-indigo-200 px-2 py-0.5 rounded-full">MONTH</span>
               </div>
-              <p className="text-3xl font-extrabold text-indigo-700 mb-1">
-                {loading ? '...' : `₪${stats.monthlyRevenue.toFixed(0)}`}
-              </p>
-              <p className="text-gray-700 font-bold text-sm">הכנסות החודש</p>
-              <p className="text-gray-500 text-xs mt-0.5">עד כה</p>
+              <div className="text-green-100 text-lg font-semibold mb-1">
+                לקוחות במערכת
+              </div>
+              <div className="text-green-200 text-sm">
+                סה"כ לקוחות רשומים
+              </div>
+            </div>
+          </div>
+
+          {/* Monthly Revenue Card */}
+          <div className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl p-8 shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
+                  <DollarSign size={32} className="text-white" />
+                </div>
+                <span className="text-xs font-bold bg-white/30 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+                  MONTH
+                </span>
+              </div>
+              <div className="text-5xl font-black text-white mb-3">
+                {loading ? '...' : `₪${stats.monthlyRevenue.toLocaleString('he-IL', { maximumFractionDigits: 0 })}`}
+              </div>
+              <div className="text-purple-100 text-lg font-semibold mb-1">
+                הכנסות החודש
+              </div>
+              <div className="text-purple-200 text-sm">
+                מתחילת החודש עד היום
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
-  );
+
+        {/* Quick Actions */}
+        <div className="mb-12">
+          <h2 className="text-3xl font-bold text-white mb-6">גישה מהירה</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <Link href="/orders">
+              <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-blue-500 cursor-pointer">
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📦</div>
+                <div className="text-lg font-bold text-gray-800 mb-1">הזמנות</div>
+                <div className="text-sm text-gray-500">ניהול הזמנות</div>
+              </div>
+            </Link>
+
+            <Link href="/tasks/board">
+              <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-green-500 cursor-pointer">
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📌</div>
+                <div className="text-lg font-bold text-gray-800 mb-1">לוח משימות</div>
+                <div className="text-sm text-gray-500">מעקב אחר משימות</div>
+              </div>
+            </Link>
+
+            <Link href="/customers">
+              <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-purple-500 cursor-pointer">
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">👥</div>
+                <div className="text-lg font-bold text-gray-800 mb-1">לקוחות</div>
+                <div className="text-sm text-gray-500">רשימת לקוחות</div>
+              </div>
+            </Link>
+
+            <Link href="/reports">
+              <div className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 border-gray-100 hover:border-orange-500 cursor-pointer">
+                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📊</div>
+                <div className="text-lg font-bold text-gray-800 mb-1">דוחות</div>
+                <div className="text-sm text-gray-500">דוחות וניתוחים</div>
+              </div>
+            </Link>
+          </div>
+        </div>
+
+        {/* System Status */}
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-3xl p-8 border-2 border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">מערכת פעילה ומוכנה לעבודה</h3>
+              <p className="text-gray-600">כל המערכות עובדות כראוי • עודכן לאחרונה: עכשיו</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-green-700 font-semibold">מחובר</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  )
 }

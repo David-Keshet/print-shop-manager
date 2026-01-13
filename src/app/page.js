@@ -129,74 +129,70 @@ export default function Home() {
 
   return (
     <Layout>
-      <div className="min-h-screen p-8">
-        {/* Hero Section */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
+      <div className="h-screen overflow-hidden flex flex-col p-4">
+        {/* Hero Section - Compact */}
+        <div className="mb-4 flex-shrink-0">
+          <div className="flex items-center justify-between mb-2">
             <div>
-              <h1 className="text-5xl font-black text-gray-200 mb-3">
+              <h1 className="text-3xl font-black text-gray-200 mb-1">
                 דפוס קשת 🖨️
               </h1>
-              <p className="text-xl text-blue-200 flex items-center gap-2 min-h-[28px]">
+              <p className="text-sm text-blue-200 flex items-center gap-2">
                 {currentDateDisplay && (
                   <>
-                    <Calendar size={20} className="text-blue-300" />
+                    <Calendar size={14} className="text-blue-300" />
                     {currentDateDisplay}
                   </>
                 )}
               </p>
             </div>
-            <button
-              onClick={handleManualRefresh}
-              disabled={loading || refreshing}
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-            >
-              <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
-              רענן נתונים
-            </button>
+            <div className="flex items-center gap-3">
+              {lastUpdate && (
+                <div className="flex items-center gap-2 text-xs text-gray-300">
+                  <Clock size={12} />
+                  {lastUpdate.toLocaleTimeString('he-IL')}
+                </div>
+              )}
+              <button
+                onClick={handleManualRefresh}
+                disabled={loading || refreshing}
+                className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                רענן
+              </button>
+            </div>
           </div>
 
-          {/* Last Update & Error Display */}
-          <div className="flex items-center gap-4 text-sm min-h-[24px]">
-            {lastUpdate && (
-              <div className="flex items-center gap-2 text-gray-300">
-                <Clock size={16} />
-                עודכן לאחרונה: {lastUpdate.toLocaleTimeString('he-IL')}
-              </div>
-            )}
-            {error && (
-              <div className="flex items-center gap-2 text-red-400 bg-red-900/20 px-4 py-2 rounded-lg">
-                <AlertCircle size={16} />
-                {error}
-              </div>
-            )}
-          </div>
+          {/* Error Display */}
+          {error && (
+            <div className="flex items-center gap-2 text-red-400 bg-red-900/20 px-3 py-1.5 rounded-lg text-xs">
+              <AlertCircle size={14} />
+              {error}
+            </div>
+          )}
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        {/* Stats Grid - Compact */}
+        <div className="grid grid-cols-3 gap-4 mb-4 flex-shrink-0">
           {/* Active Orders Card */}
           <Link href="/orders">
-            <div className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-8 shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 shadow-xl hover:shadow-blue-500/50 transition-all hover:scale-105 cursor-pointer relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
               <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                    <Package size={32} className="text-white" />
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <Package size={20} className="text-white" />
                   </div>
-                  <span className="text-xs font-bold bg-white/30 text-white px-3 py-1.5 rounded-full backdrop-blur-sm animate-pulse">
+                  <span className="text-[10px] font-bold bg-white/30 text-white px-2 py-0.5 rounded-full animate-pulse">
                     LIVE
                   </span>
                 </div>
-                <div className="text-6xl font-black text-white mb-3">
+                <div className="text-4xl font-black text-white mb-1">
                   {loading ? '...' : stats.activeOrders}
                 </div>
-                <div className="text-blue-100 text-lg font-semibold mb-1">
+                <div className="text-blue-100 text-sm font-semibold">
                   הזמנות פעילות
-                </div>
-                <div className="text-blue-200 text-sm">
-                  בתהליך עיבוד כרגע
                 </div>
               </div>
             </div>
@@ -204,26 +200,22 @@ export default function Home() {
 
           {/* Total Customers Card */}
           <Link href="/customers">
-            <div className="group bg-gradient-to-br from-green-500 to-green-600 rounded-3xl p-8 shadow-2xl hover:shadow-green-500/50 transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="group bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 shadow-xl hover:shadow-green-500/50 transition-all hover:scale-105 cursor-pointer relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
               <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                    <Users size={32} className="text-white" />
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <Users size={20} className="text-white" />
                   </div>
-                  <span className="text-xs font-bold bg-white/30 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+                  <span className="text-[10px] font-bold bg-white/30 text-white px-2 py-0.5 rounded-full">
                     TOTAL
                   </span>
                 </div>
-                <div className="text-6xl font-black text-white mb-3">
+                <div className="text-4xl font-black text-white mb-1">
                   {loading ? '...' : stats.totalCustomers}
                 </div>
-                <div className="text-green-100 text-lg font-semibold mb-1">
+                <div className="text-green-100 text-sm font-semibold">
                   לקוחות במערכת
-                </div>
-                <div className="text-green-200 text-sm">
-                  סה"כ לקוחות רשומים
                 </div>
               </div>
             </div>
@@ -231,120 +223,91 @@ export default function Home() {
 
           {/* Monthly Revenue Card */}
           <Link href="/reports">
-            <div className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-3xl p-8 shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105 cursor-pointer relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+            <div className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 shadow-xl hover:shadow-purple-500/50 transition-all hover:scale-105 cursor-pointer relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
               <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-                    <DollarSign size={32} className="text-white" />
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-white/20 rounded-xl">
+                    <DollarSign size={20} className="text-white" />
                   </div>
-                  <span className="text-xs font-bold bg-white/30 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+                  <span className="text-[10px] font-bold bg-white/30 text-white px-2 py-0.5 rounded-full">
                     MONTH
                   </span>
                 </div>
-                <div className="text-5xl font-black text-white mb-3">
+                <div className="text-3xl font-black text-white mb-1">
                   {loading ? '...' : `₪${stats.monthlyRevenue.toLocaleString('he-IL', { maximumFractionDigits: 0 })}`}
                 </div>
-                <div className="text-purple-100 text-lg font-semibold mb-1">
+                <div className="text-purple-100 text-sm font-semibold">
                   הכנסות החודש
-                </div>
-                <div className="text-purple-200 text-sm">
-                  מתחילת החודש עד היום
                 </div>
               </div>
             </div>
           </Link>
         </div>
 
-        {/* Recent Orders Section */}
-        {recentOrders.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-3xl font-bold text-gray-200 mb-6">הזמנות אחרונות</h2>
-            <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-              <div className="space-y-3">
-                {recentOrders.map((order) => (
-                  <Link key={order.id} href={`/orders`}>
-                    <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all duration-300 cursor-pointer group">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Package size={24} className="text-blue-300" />
-                        </div>
-                        <div>
-                          <div className="text-white font-semibold flex items-center gap-2">
-                            <span>הזמנה #{order.order_number}</span>
-                            <span className="text-xs text-gray-400 font-normal">
-                              {new Date(order.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
+        {/* Recent Orders & Quick Actions - Side by Side */}
+        <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden">
+          {/* Recent Orders Section */}
+          {recentOrders.length > 0 && (
+            <div className="flex flex-col overflow-hidden">
+              <h2 className="text-xl font-bold text-gray-200 mb-3">הזמנות אחרונות</h2>
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 border border-white/10 flex-1 overflow-y-auto">
+                <div className="space-y-2">
+                  {recentOrders.map((order) => (
+                    <Link key={order.id} href={`/orders`}>
+                      <div className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all cursor-pointer group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                            <Package size={16} className="text-blue-300" />
                           </div>
-                          <div className="text-gray-400 text-sm">{order.customer_name}</div>
+                          <div>
+                            <div className="text-white text-sm font-semibold">הזמנה #{order.order_number}</div>
+                            <div className="text-gray-400 text-xs">{order.customer_name}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-white text-sm font-bold">₪{parseFloat(order.total_with_vat).toLocaleString('he-IL')}</div>
+                          {getStatusBadge(order.status)}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-left">
-                          <div className="text-white font-bold">₪{parseFloat(order.total_with_vat).toLocaleString('he-IL')}</div>
-                        </div>
-                        {getStatusBadge(order.status)}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Quick Actions */}
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold text-gray-200 mb-6">גישה מהירה</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <Link href="/orders">
-              <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-white/10 hover:border-blue-500 cursor-pointer">
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📦</div>
-                <div className="text-lg font-bold text-white mb-1">הזמנות</div>
-                <div className="text-sm text-gray-300">ניהול הזמנות</div>
-              </div>
-            </Link>
+          {/* Quick Actions */}
+          <div className="flex flex-col overflow-hidden">
+            <h2 className="text-xl font-bold text-gray-200 mb-3">גישה מהירה</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/orders">
+                <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-white/10 hover:border-blue-500 cursor-pointer">
+                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📦</div>
+                  <div className="text-sm font-bold text-white">הזמנות</div>
+                </div>
+              </Link>
 
-            <Link href="/tasks/board">
-              <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-white/10 hover:border-green-500 cursor-pointer">
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📌</div>
-                <div className="text-lg font-bold text-white mb-1">לוח משימות</div>
-                <div className="text-sm text-gray-300">מעקב אחר משימות</div>
-              </div>
-            </Link>
+              <Link href="/tasks/board">
+                <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-white/10 hover:border-green-500 cursor-pointer">
+                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📌</div>
+                  <div className="text-sm font-bold text-white">לוח משימות</div>
+                </div>
+              </Link>
 
-            <Link href="/customers">
-              <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-white/10 hover:border-purple-500 cursor-pointer">
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">👥</div>
-                <div className="text-lg font-bold text-white mb-1">לקוחות</div>
-                <div className="text-sm text-gray-300">רשימת לקוחות</div>
-              </div>
-            </Link>
+              <Link href="/customers">
+                <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-white/10 hover:border-purple-500 cursor-pointer">
+                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">👥</div>
+                  <div className="text-sm font-bold text-white">לקוחות</div>
+                </div>
+              </Link>
 
-            <Link href="/reports">
-              <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-white/10 hover:border-orange-500 cursor-pointer">
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📊</div>
-                <div className="text-lg font-bold text-white mb-1">דוחות</div>
-                <div className="text-sm text-gray-300">דוחות וניתוחים</div>
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        {/* System Status */}
-        <div className="bg-gradient-to-r from-green-500/10 to-green-600/10 backdrop-blur-sm rounded-3xl p-8 border border-green-500/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                <CheckCircle2 size={28} className="text-green-400" />
-                מערכת פעילה ומוכנה לעבודה
-              </h3>
-              <p className="text-gray-300">כל המערכות עובדות כראוי • מתעדכן אוטומטית כל 30 שניות</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
-              <span className="text-green-400 font-semibold">מחובר</span>
+              <Link href="/reports">
+                <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-white/10 hover:border-orange-500 cursor-pointer">
+                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📊</div>
+                  <div className="text-sm font-bold text-white">דוחות</div>
+                </div>
+              </Link>
             </div>
           </div>
         </div>

@@ -39,18 +39,24 @@ export default function Customers() {
     }
 
     try {
-      const { error } = await supabase
+      console.log('Attempting to delete customer:', customerId)
+
+      const { data, error } = await supabase
         .from('customers')
         .delete()
         .eq('id', customerId)
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
 
+      console.log('Customer deleted successfully:', data)
       alert('הלקוח נמחק בהצלחה')
-      fetchCustomers()
+      await fetchCustomers()
     } catch (error) {
       console.error('שגיאה במחיקת לקוח:', error)
-      alert('שגיאה במחיקת הלקוח')
+      alert(`שגיאה במחיקת הלקוח: ${error.message || 'שגיאה לא ידועה'}`)
     }
   }
 

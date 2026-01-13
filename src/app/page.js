@@ -20,8 +20,10 @@ export default function Home() {
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
   const [currentDateDisplay, setCurrentDateDisplay] = useState('')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     // Set date on client side to avoid hydration mismatch
     const date = new Date()
     setCurrentDateDisplay(date.toLocaleDateString('he-IL', {
@@ -133,34 +135,19 @@ export default function Home() {
         {/* Hero Section - Compact */}
         <div className="mb-4 flex-shrink-0">
           <div className="flex items-center justify-between mb-2">
-            <div>
-              <h1 className="text-3xl font-black text-gray-200 mb-1">
-                דפוס קשת 🖨️
-              </h1>
-              <p className="text-sm text-blue-200 flex items-center gap-2">
-                {currentDateDisplay && (
-                  <>
-                    <Calendar size={14} className="text-blue-300" />
-                    {currentDateDisplay}
-                  </>
-                )}
-              </p>
-            </div>
             <div className="flex items-center gap-3">
+              {mounted && currentDateDisplay && (
+                <div className="flex items-center gap-2 text-sm text-blue-200">
+                  <Calendar size={14} className="text-blue-300" />
+                  {currentDateDisplay}
+                </div>
+              )}
               {lastUpdate && (
                 <div className="flex items-center gap-2 text-xs text-gray-300">
                   <Clock size={12} />
                   {lastUpdate.toLocaleTimeString('he-IL')}
                 </div>
               )}
-              <button
-                onClick={handleManualRefresh}
-                disabled={loading || refreshing}
-                className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              >
-                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-                רענן
-              </button>
             </div>
           </div>
 

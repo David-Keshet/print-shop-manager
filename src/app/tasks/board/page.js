@@ -605,7 +605,7 @@ export default function TasksBoard() {
                           <Search size={20} />
                           תוצאות חיפוש עבור: "{searchQuery}"
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {tasks.filter(task => {
                             const query = searchQuery.toLowerCase()
 
@@ -630,57 +630,18 @@ export default function TasksBoard() {
                             const taskDepartment = departments.find(d => d.id === task.department_id)
 
                             return (
-                              <div
+                              <TaskCard
                                 key={task.id}
-                                onClick={() => handleViewTaskDetails(task)}
-                                className="bg-[#22272B] hover:bg-[#2C333A] rounded-lg p-3 shadow-sm border border-transparent hover:border-gray-600 cursor-pointer transition-all"
-                              >
-                                {/* Department and Column Info */}
-                                <div className="flex gap-1.5 mb-2 flex-wrap">
-                                  <span className="bg-purple-600/80 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-                                    {taskDepartment?.name}
-                                  </span>
-                                  <span className="bg-blue-600/80 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-                                    {taskColumn?.name}
-                                  </span>
-                                </div>
-
-                                {/* Task Title */}
-                                <h4 className="font-medium text-sm text-gray-100 mb-2">
-                                  {task.title || 'משימה ללא כותרת'}
-                                </h4>
-
-                                {/* Labels */}
-                                {task.labels && task.labels.length > 0 && (
-                                  <div className="flex gap-1.5 mb-2 flex-wrap">
-                                    {task.labels.map((label, idx) => {
-                                      const labelConfig = availableLabels.find(l => l.name === label) || availableLabels[2]
-                                      return (
-                                        <span key={idx} className={`${labelConfig.color} h-2 w-8 rounded-full`} title={label}></span>
-                                      )
-                                    })}
-                                  </div>
-                                )}
-
-                                {/* Order Info and Description */}
-                                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 mt-2">
-                                  {task.orders && (
-                                    <span className="flex items-center gap-1 bg-blue-900/30 text-blue-300 px-1.5 py-0.5 rounded">
-                                      <span className="opacity-70">#</span>{task.orders.order_number}
-                                    </span>
-                                  )}
-                                  {task.orders?.customer_name && (
-                                    <span className="text-gray-400">
-                                      {task.orders.customer_name}
-                                    </span>
-                                  )}
-                                  {task.description && (
-                                    <span title="יש תיאור" className="flex items-center">
-                                      <span className="text-lg leading-none">≡</span>
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                                task={{
+                                  ...task,
+                                  // Add department/column info badge in search results
+                                  _searchMeta: {
+                                    department: taskDepartment?.name,
+                                    column: taskColumn?.name
+                                  }
+                                }}
+                                onViewDetails={handleViewTaskDetails}
+                              />
                             )
                           })}
                         </div>
@@ -1117,134 +1078,338 @@ export default function TasksBoard() {
           </div>
         )}
 
-        {/* View Task Detail Modal */}
+        {/* View Task Detail Modal - גדול מאוד */}
         {showTaskDetailModal && selectedTask && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]">
-            <div className="bg-white rounded-xl p-0 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
-              {/* Header */}
-              <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-gray-50">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                      {columns.find(c => c.id === selectedTask.column_id)?.name}
-                    </span>
-                    {selectedTask.labels?.map((label, idx) => {
-                      const labelConfig = availableLabels.find(l => l.name === label)
-                      return (
-                        <span key={idx} className={`${labelConfig?.color || 'bg-gray-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
-                          {label}
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2">
+            <div className="bg-white rounded-2xl w-full max-w-[95vw] shadow-2xl h-[96vh] overflow-hidden flex flex-col">
+
+              {/* Header: Order Number - Name - Phone - קטן יותר */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-5 border-b-4 border-blue-800">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {orderDetails && (
+                        <span className="text-2xl font-bold">
+                          #{orderDetails.order_number}
                         </span>
-                      )
-                    })}
+                      )}
+                      <span className="text-white/60">•</span>
+                      <h2 className="text-xl font-bold">
+                        {orderDetails?.customer_name || selectedTask.title || 'משימה'}
+                      </h2>
+                    </div>
+                    {orderDetails?.customer_phone && (
+                      <div className="text-sm text-blue-100">
+                        📞 {orderDetails.customer_phone}
+                      </div>
+                    )}
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800">{selectedTask.title}</h2>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setShowTaskDetailModal(false)
-                      handleEditTask(selectedTask)
-                    }}
-                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="ערוך"
-                  >
-                    <Edit2 size={20} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm('למחוק את המשימה?')) {
-                        handleDeleteTask(selectedTask.id)
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
                         setShowTaskDetailModal(false)
-                      }
-                    }}
-                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="מחק"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                  <button
-                    onClick={() => setShowTaskDetailModal(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X size={24} />
-                  </button>
+                        handleEditTask(selectedTask)
+                      }}
+                      className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-xl transition-colors"
+                      title="ערוך"
+                    >
+                      <Edit2 size={20} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('למחוק את המשימה?')) {
+                          handleDeleteTask(selectedTask.id)
+                          setShowTaskDetailModal(false)
+                        }
+                      }}
+                      className="p-2 text-white/80 hover:text-white hover:bg-red-500/30 rounded-xl transition-colors"
+                      title="מחק"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                    <button
+                      onClick={() => setShowTaskDetailModal(false)}
+                      className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-xl transition-colors"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Content */}
-              <div className="p-6 overflow-y-auto custom-scrollbar">
-                {selectedTask.description && (
-                  <div className="mb-6">
-                    <h4 className="flex items-center gap-2 font-semibold text-gray-700 mb-2">
-                      <span>📝</span> תיאור
-                    </h4>
-                    <div className="bg-gray-50 p-4 rounded-lg text-gray-600 whitespace-pre-wrap leading-relaxed">
-                      {selectedTask.description}
-                    </div>
+              {/* Progress Bar - קו אחוזים */}
+              {taskItems.length > 0 && (
+                <div className="bg-gray-100 px-8 py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-gray-700">התקדמות</span>
+                    <span className="text-sm font-bold text-blue-600">
+                      {Math.round((taskItems.filter(i => i.completed).length / taskItems.length) * 100)}%
+                    </span>
                   </div>
-                )}
+                  <div className="w-full bg-gray-300 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full transition-all duration-500 ease-out"
+                      style={{
+                        width: `${(taskItems.filter(i => i.completed).length / taskItems.length) * 100}%`
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              )}
 
-                {orderDetails && (
-                  <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                    <h4 className="flex items-center gap-2 font-semibold text-blue-800 mb-3">
-                      <span>📦</span> פרטי הזמנה #{orderDetails.order_number}
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+              {/* Content - Main section with order items */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="flex gap-6 p-8">
+
+                  {/* Main Content Area - Order Items (70%) */}
+                  <div className="flex-1">
+                    {taskItems.length > 0 ? (
                       <div>
-                        <span className="text-blue-600 block text-xs">לקוח</span>
-                        <span className="font-medium text-gray-800">{orderDetails.customer_name}</span>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                          <span>📋</span>
+                          פריטים להכנה
+                          <span className="text-lg font-normal text-gray-400">
+                            ({taskItems.filter(i => i.completed).length}/{taskItems.length})
+                          </span>
+                        </h3>
+                        <div className="space-y-3">
+                          {taskItems.map(item => (
+                            <div
+                              key={item.id}
+                              onClick={() => toggleTaskItem(item.id)}
+                              className={`flex items-start gap-4 p-5 rounded-xl cursor-pointer border-2 transition-all shadow-sm hover:shadow-md ${
+                                item.completed
+                                  ? 'bg-green-50 border-green-300'
+                                  : 'bg-white border-gray-200 hover:border-blue-300'
+                              }`}
+                            >
+                              <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center mt-1 flex-shrink-0 transition-colors ${
+                                item.completed
+                                  ? 'bg-green-500 border-green-500 text-white'
+                                  : 'border-gray-300 text-transparent'
+                              }`}>
+                                <CheckSquare size={18} />
+                              </div>
+                              <div className="flex-1">
+                                <p className={`text-lg font-semibold mb-1 ${item.completed ? 'text-green-700 line-through' : 'text-gray-800'}`}>
+                                  {item.description || `פריט #${item.id}`}
+                                </p>
+                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                  <span className="flex items-center gap-1">
+                                    <span className="font-medium">כמות:</span> {item.quantity} יח'
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <span className="font-medium">מידות:</span> {item.width} × {item.height} ס"מ
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      {orderDetails.customer_phone && (
-                        <div>
-                          <span className="text-blue-600 block text-xs">טלפון</span>
-                          <span className="font-medium text-gray-800">{orderDetails.customer_phone}</span>
+                    ) : (
+                      <div className="text-center py-12 text-gray-400">
+                        <p className="text-xl">אין פריטים להצגה</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sidebar - Details (30%) */}
+                  <div className="w-64 space-y-4 flex-shrink-0">
+
+                    {/* Labels - תוויות */}
+                    <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                      <h4 className="text-purple-800 mb-3 text-sm font-bold flex items-center gap-1">
+                        <Tag size={14} /> תוויות
+                      </h4>
+
+                      {/* Current Labels */}
+                      {selectedTask.labels && selectedTask.labels.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {selectedTask.labels.map((label, idx) => {
+                            const labelConfig = availableLabels.find(l => l.name === label) || availableLabels[2]
+                            return (
+                              <span
+                                key={idx}
+                                className={`${labelConfig.color} text-white text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1`}
+                              >
+                                {label}
+                                <button
+                                  onClick={() => {
+                                    const newLabels = selectedTask.labels.filter((_, i) => i !== idx)
+                                    supabase
+                                      .from('tasks')
+                                      .update({ labels: newLabels })
+                                      .eq('id', selectedTask.id)
+                                      .then(() => {
+                                        setSelectedTask({ ...selectedTask, labels: newLabels })
+                                        fetchBoardData()
+                                      })
+                                  }}
+                                  className="hover:bg-white/30 rounded-full p-0.5"
+                                  title="הסר תווית"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </span>
+                            )
+                          })}
                         </div>
+                      ) : (
+                        <div className="text-gray-500 text-xs mb-3">אין תוויות</div>
                       )}
-                    </div>
-                  </div>
-                )}
 
-                {taskItems.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="flex items-center gap-2 font-semibold text-gray-700 mb-3">
-                      <span>📋</span> פריטים בהזמנה
-                      <span className="text-sm font-normal text-gray-400">
-                        ({taskItems.filter(i => i.completed).length}/{taskItems.length})
-                      </span>
-                    </h4>
-                    <div className="space-y-2">
-                      {taskItems.map(item => (
-                        <div
-                          key={item.id}
-                          onClick={() => toggleTaskItem(item.id)}
-                          className={`flex items-center p-3 rounded-lg cursor-pointer border transition-all ${item.completed
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-white border-gray-200 hover:border-blue-300'
-                            }`}
+                      {/* Add Label Dropdown */}
+                      <div className="space-y-2">
+                        <label className="block text-purple-800 text-xs font-semibold">הוסף תווית:</label>
+                        <select
+                          onChange={(e) => {
+                            if (!e.target.value) return
+                            const currentLabels = selectedTask.labels || []
+                            if (currentLabels.includes(e.target.value)) {
+                              alert('תווית זו כבר קיימת')
+                              e.target.value = ''
+                              return
+                            }
+                            const newLabels = [...currentLabels, e.target.value]
+                            supabase
+                              .from('tasks')
+                              .update({ labels: newLabels })
+                              .eq('id', selectedTask.id)
+                              .then(() => {
+                                setSelectedTask({ ...selectedTask, labels: newLabels })
+                                fetchBoardData()
+                                e.target.value = ''
+                              })
+                          }}
+                          className="w-full px-2 py-1.5 border border-purple-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs"
+                          defaultValue=""
                         >
-                          <div className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-colors ${item.completed
-                            ? 'bg-green-500 border-green-500 text-white'
-                            : 'border-gray-300 text-transparent'
-                            }`}>
-                            <CheckSquare size={14} />
-                          </div>
-                          <div className="flex-1">
-                            <p className={`font-medium ${item.completed ? 'text-green-800 line-through' : 'text-gray-800'}`}>
-                              {item.description || `פריט #${item.id}`}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              כמות: {item.quantity} | {item.width}x{item.height} ס"מ
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                          <option value="">בחר תווית להוספה...</option>
+                          {availableLabels.map((label, idx) => (
+                            <option key={idx} value={label.name}>
+                              {label.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                <div className="mt-8 pt-6 border-t border-gray-100 text-xs text-gray-400 flex justify-between items-center">
-                  <span>נוצר בתאריך: {new Date(selectedTask.created_at).toLocaleDateString('he-IL')} בשעה {new Date(selectedTask.created_at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span>ID: {selectedTask.id}</span>
+                    {/* Date - תאריך */}
+                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                      <h4 className="text-blue-800 mb-2 text-sm font-bold flex items-center gap-1">
+                        <Calendar size={14} /> תאריך
+                      </h4>
+                      <div className="text-gray-700 text-sm">
+                        {new Date(selectedTask.created_at).toLocaleDateString('he-IL', {
+                          day: '2-digit',
+                          month: '2-digit'
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Description - פרטים */}
+                    {selectedTask.description && (
+                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <h4 className="text-gray-800 mb-2 text-sm font-bold flex items-center gap-1">
+                          <span className="text-base">≡</span> פרטים
+                        </h4>
+                        <div className="text-gray-600 text-xs whitespace-pre-wrap leading-relaxed">
+                          {selectedTask.description}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Move to Department/Column - העבר כרטיס */}
+                    <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                      <h4 className="text-amber-800 mb-3 text-sm font-bold flex items-center gap-1">
+                        <ArrowRight size={14} /> העבר כרטיס
+                      </h4>
+
+                      {/* Select Department */}
+                      <div className="mb-3">
+                        <label className="block text-amber-800 text-xs font-semibold mb-1">מחלקה:</label>
+                        <select
+                          id="move-department-select"
+                          onChange={(e) => {
+                            const columnSelect = document.getElementById('move-column-select')
+                            if (columnSelect) {
+                              columnSelect.value = ''
+                              columnSelect.disabled = !e.target.value
+                            }
+                          }}
+                          className="w-full px-2 py-1.5 border border-amber-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
+                          defaultValue=""
+                        >
+                          <option value="">בחר מחלקה...</option>
+                          {departments.map(dept => (
+                            <option key={dept.id} value={dept.id}>
+                              {dept.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Select Column */}
+                      <div className="mb-3">
+                        <label className="block text-amber-800 text-xs font-semibold mb-1">עמודה:</label>
+                        <select
+                          id="move-column-select"
+                          disabled
+                          className="w-full px-2 py-1.5 border border-amber-300 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                          defaultValue=""
+                        >
+                          <option value="">בחר עמודה...</option>
+                          {(() => {
+                            const deptSelect = document.getElementById('move-department-select')
+                            const selectedDeptId = deptSelect ? parseInt(deptSelect.value) : null
+                            if (!selectedDeptId) return null
+                            return columns
+                              .filter(col => col.department_id === selectedDeptId)
+                              .map(col => (
+                                <option key={col.id} value={col.id}>
+                                  {col.name}
+                                </option>
+                              ))
+                          })()}
+                        </select>
+                      </div>
+
+                      {/* Move Button */}
+                      <button
+                        onClick={() => {
+                          const deptSelect = document.getElementById('move-department-select')
+                          const colSelect = document.getElementById('move-column-select')
+                          const selectedDeptId = deptSelect ? parseInt(deptSelect.value) : null
+                          const selectedColId = colSelect ? parseInt(colSelect.value) : null
+
+                          if (!selectedDeptId || !selectedColId) {
+                            alert('יש לבחור גם מחלקה וגם עמודה')
+                            return
+                          }
+
+                          // Update task
+                          supabase
+                            .from('tasks')
+                            .update({
+                              department_id: selectedDeptId,
+                              column_id: selectedColId
+                            })
+                            .eq('id', selectedTask.id)
+                            .then(() => {
+                              setShowTaskDetailModal(false)
+                              fetchBoardData()
+                            })
+                        }}
+                        className="w-full px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold text-sm transition-colors"
+                      >
+                        העבר
+                      </button>
+                    </div>
+
+                  </div>
                 </div>
               </div>
             </div>

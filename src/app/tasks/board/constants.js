@@ -2,7 +2,13 @@ export const availableLabels = [
   { name: 'דחוף', color: 'bg-red-500' },
   { name: 'חשוב', color: 'bg-orange-500' },
   { name: 'רגיל', color: 'bg-blue-500' },
-  { name: 'נמוך', color: 'bg-gray-500' }
+  { name: 'נמוך', color: 'bg-gray-500' },
+  { name: 'ממתין', color: 'bg-yellow-500' },
+  { name: 'בטיפול', color: 'bg-purple-500' },
+  { name: 'הושלם', color: 'bg-green-500' },
+  { name: 'מבוטל', color: 'bg-pink-500' },
+  { name: 'לבדיקה', color: 'bg-cyan-500' },
+  { name: 'VIP', color: 'bg-amber-500' }
 ]
 
 export const availableColors = [

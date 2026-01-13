@@ -32,6 +32,18 @@ export default function TasksBoard() {
   const [editingColumn, setEditingColumn] = useState(null)
   const [columnForm, setColumnForm] = useState({ name: '', color: 'gray' })
 
+  // Auto-transfer management modal
+  const [showAutoTransferListModal, setShowAutoTransferListModal] = useState(false)
+  const [showAutoTransferFormModal, setShowAutoTransferFormModal] = useState(false)
+  const [autoTransferRules, setAutoTransferRules] = useState([])
+  const [editingAutoTransfer, setEditingAutoTransfer] = useState(null)
+  const [autoTransferForm, setAutoTransferForm] = useState({
+    trigger_column_id: '',
+    target_department_id: '',
+    target_column_id: '',
+    is_active: true
+  })
+
   // Task modal
   const [showTaskModal, setShowTaskModal] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
@@ -83,6 +95,7 @@ export default function TasksBoard() {
   useEffect(() => {
     fetchBoardData()
     fetchCustomLabels()
+    fetchAutoTransferRules()
   }, [])
 
   // Add horizontal scroll with mouse wheel
@@ -157,8 +170,8 @@ export default function TasksBoard() {
       setTasks(tasksData || [])
       setOrders(ordersData || [])
 
-      // Set first department as selected by default
-      if (departmentsData && departmentsData.length > 0) {
+      // Set first department as selected by default only if no department is selected
+      if (departmentsData && departmentsData.length > 0 && !selectedDepartment) {
         setSelectedDepartment(departmentsData[0].id)
       }
     } catch (error) {
@@ -360,6 +373,7 @@ export default function TasksBoard() {
     setShowTaskDetailModal(true)
     setMoveCardDepartment('')
     setMoveCardColumn('')
+    setTaskLabelSearchQuery('')
 
     if (task.order_id) {
       try {
@@ -480,6 +494,9 @@ export default function TasksBoard() {
             .eq('id', task.order_id)
         }
 
+        // Check for auto-transfer rules
+        await checkAndApplyAutoTransfer(taskId, overId)
+
         fetchBoardData()
       } catch (error) {
         console.error('שגיאה בהעברת משימה:', error)
@@ -490,7 +507,135 @@ export default function TasksBoard() {
     setDraggedTask(null)
   }
 
+  // Check and apply auto-transfer rules
+  const checkAndApplyAutoTransfer = async (taskId, currentColumnId) => {
+    try {
+      // Check if there's an auto-transfer rule for this column
+      const { data: transferRule, error: ruleError } = await supabase
+        .from('auto_transfer_rules')
+        .select('*')
+        .eq('trigger_column_id', currentColumnId)
+        .eq('is_active', true)
+        .single()
 
+      if (ruleError || !transferRule) {
+        return // No auto-transfer rule found
+      }
+
+      // Get the task to check if it should be transferred
+      const { data: task, error: taskError } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('id', taskId)
+        .single()
+
+      if (taskError || !task) {
+        return
+      }
+
+      // Apply the auto-transfer
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update({
+          column_id: transferRule.target_column_id,
+          department_id: transferRule.target_department_id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', taskId)
+
+      if (updateError) {
+        console.error('שגיאה בהעברה אוטומטית:', updateError)
+        return
+      }
+
+      // Update order status if applicable
+      if (task.order_id) {
+        const targetColumn = columns.find(c => c.id === transferRule.target_column_id)
+        if (targetColumn) {
+          await supabase
+            .from('orders')
+            .update({ status: targetColumn.name.trim() })
+            .eq('id', task.order_id)
+        }
+      }
+
+      console.log(`הכרטיס הועבר אוטומטית למחלקה ועמודה היעד`)
+
+    } catch (error) {
+      console.error('שגיאה בבדיקת העברה אוטומטית:', error)
+    }
+  }
+
+  // Auto-transfer management functions
+  const fetchAutoTransferRules = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('auto_transfer_rules')
+        .select(`
+          *,
+          trigger_column:columns!auto_transfer_rules_trigger_column_id_fkey(name, departments(name)),
+          target_column:columns!auto_transfer_rules_target_column_id_fkey(name, departments(name))
+        `)
+      
+      if (error) throw error
+      setAutoTransferRules(data || [])
+    } catch (error) {
+      console.error('שגיאה בטעינת כללי העברה:', error)
+    }
+  }
+
+  const handleAddAutoTransfer = () => {
+    setEditingAutoTransfer(null)
+    setAutoTransferForm({
+      trigger_column_id: '',
+      target_department_id: '',
+      target_column_id: '',
+      is_active: true
+    })
+    setShowAutoTransferFormModal(true)
+  }
+
+  const handleSaveAutoTransfer = async () => {
+    if (!autoTransferForm.trigger_column_id || !autoTransferForm.target_department_id || !autoTransferForm.target_column_id) {
+      alert('אנא מלא את כל השדות')
+      return
+    }
+
+    try {
+      if (editingAutoTransfer) {
+        const { error } = await supabase
+          .from('auto_transfer_rules')
+          .update(autoTransferForm)
+          .eq('id', editingAutoTransfer.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('auto_transfer_rules')
+          .insert(autoTransferForm)
+        if (error) throw error
+      }
+
+      setShowAutoTransferFormModal(false)
+      fetchAutoTransferRules()
+    } catch (error) {
+      console.error('שגיאה בשמירת כלל העברה:', error)
+    }
+  }
+
+  const handleDeleteAutoTransfer = async (ruleId) => {
+    if (!confirm('האם אתה בטוח שברצונך למחוק כלל העברה זה?')) return
+    
+    try {
+      const { error } = await supabase
+        .from('auto_transfer_rules')
+        .delete()
+        .eq('id', ruleId)
+      if (error) throw error
+      fetchAutoTransferRules()
+    } catch (error) {
+      console.error('שגיאה במחיקת כלל העברה:', error)
+    }
+  }
 
   const handleDeleteDepartment = async (departmentId) => {
     if (!confirm('האם אתה בטוח שברצונך למחוק מחלקה זו?')) return
@@ -912,7 +1057,16 @@ export default function TasksBoard() {
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto shadow-2xl">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-800">ניהול עמודות</h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-2xl font-bold text-gray-800">ניהול עמודות</h3>
+                  <button
+                    onClick={() => setShowAutoTransferListModal(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors"
+                  >
+                    <ArrowRight size={16} />
+                    העברות אוטומטיות
+                  </button>
+                </div>
                 <button
                   onClick={() => setShowColumnManagementModal(false)}
                   className="text-gray-500 hover:text-gray-700"
@@ -1693,6 +1847,215 @@ export default function TasksBoard() {
                 >
                   שמור תווית
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Auto-Transfer Management Modal */}
+        {showAutoTransferListModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-2xl font-bold text-gray-800">ניהול העברות אוטומטיות</h3>
+                  <button
+                    onClick={handleAddAutoTransfer}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition-colors"
+                  >
+                    <Plus size={16} />
+                    הוסף כלל חדש
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowAutoTransferListModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {autoTransferRules.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <p>לא הוגדרו כללי העברה אוטומטית</p>
+                    <p className="text-sm mt-2">לחץ על "הוסף כלל חדש" כדי להתחיל</p>
+                  </div>
+                ) : (
+                  autoTransferRules.map(rule => (
+                    <div
+                      key={rule.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm font-medium text-gray-600">כאשר מגיע לעמודה:</span>
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">
+                            {rule.trigger_column?.name}
+                          </span>
+                          <span className="text-gray-400">במחלקה</span>
+                          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm">
+                            {rule.trigger_column?.departments?.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <ArrowRight size={16} className="text-green-600" />
+                          <span className="text-sm font-medium text-gray-600">העבר אוטומטית לעמודה:</span>
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium">
+                            {rule.target_column?.name}
+                          </span>
+                          <span className="text-gray-400">במחלקה</span>
+                          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm">
+                            {rule.target_column?.departments?.name}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          rule.is_active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {rule.is_active ? 'פעיל' : 'לא פעיל'}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setEditingAutoTransfer(rule)
+                            setAutoTransferForm({
+                              trigger_column_id: rule.trigger_column_id,
+                              target_department_id: rule.target_department_id,
+                              target_column_id: rule.target_column_id,
+                              is_active: rule.is_active
+                            })
+                            setShowAutoTransferFormModal(true)
+                          }}
+                          className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors"
+                          title="ערוך"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAutoTransfer(rule.id)}
+                          className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                          title="מחק"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Auto-Transfer Form Modal */}
+        {showAutoTransferFormModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">
+                  {editingAutoTransfer ? 'ערוך כלל העברה' : 'הוסף כלל העברה חדש'}
+                </h3>
+                <button
+                  onClick={() => setShowAutoTransferFormModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    עמודה מפעילה
+                  </label>
+                  <select
+                    value={autoTransferForm.trigger_column_id}
+                    onChange={(e) => setAutoTransferForm(prev => ({ ...prev, trigger_column_id: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">בחר עמודה</option>
+                    {columns.map(column => (
+                      <option key={column.id} value={column.id}>
+                        {column.name} ({departments.find(d => d.id === column.department_id)?.name})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    מחלקת יעד
+                  </label>
+                  <select
+                    value={autoTransferForm.target_department_id}
+                    onChange={(e) => {
+                      setAutoTransferForm(prev => ({ 
+                        ...prev, 
+                        target_department_id: e.target.value,
+                        target_column_id: '' // Reset target column when department changes
+                      }))
+                    }}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">בחר מחלקה</option>
+                    {departments.map(department => (
+                      <option key={department.id} value={department.id}>
+                        {department.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    עמודת יעד
+                  </label>
+                  <select
+                    value={autoTransferForm.target_column_id}
+                    onChange={(e) => setAutoTransferForm(prev => ({ ...prev, target_column_id: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={!autoTransferForm.target_department_id}
+                  >
+                    <option value="">בחר עמודה</option>
+                    {columns
+                      .filter(col => col.department_id === autoTransferForm.target_department_id)
+                      .map(column => (
+                        <option key={column.id} value={column.id}>
+                          {column.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={autoTransferForm.is_active}
+                    onChange={(e) => setAutoTransferForm(prev => ({ ...prev, is_active: e.target.checked }))}
+                    className="ml-2"
+                  />
+                  <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+                    כלל פעיל
+                  </label>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <button
+                    onClick={handleSaveAutoTransfer}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    {editingAutoTransfer ? 'עדכן' : 'שמור'}
+                  </button>
+                  <button
+                    onClick={() => setShowAutoTransferFormModal(false)}
+                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    ביטול
+                  </button>
+                </div>
               </div>
             </div>
           </div>

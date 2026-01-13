@@ -760,11 +760,11 @@ export default function TasksBoard() {
 
   return (
     <Layout>
-      {/* Main Container - Full Height, Dark Theme */}
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white" style={{ direction: 'rtl' }}>
+      {/* Main Container - Full Height, Modern Dark Theme */}
+      <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-950 text-slate-100" style={{ direction: 'rtl' }}>
 
         {/* Sidebar - Departments */}
-        <div className="w-64 bg-black/20 backdrop-blur-sm border-l border-white/10 flex flex-col flex-shrink-0 transition-all duration-300">
+        <div className="w-64 bg-slate-900 border-l border-slate-800 flex flex-col flex-shrink-0 transition-all duration-300">
           <div className="p-4 border-b border-white/10 flex justify-between items-center">
             <h2 className="font-bold text-lg text-white/90">מחלקות</h2>
             <button
@@ -776,19 +776,19 @@ export default function TasksBoard() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          <div className="flex-1 overflow-y-auto p-3 space-y-1">
             {departments.map(department => (
               <button
                 key={department.id}
                 onClick={() => setSelectedDepartment(department.id)}
-                className={`w-full text-right px-4 py-2 rounded-lg font-medium transition-all flex justify-between items-center group ${selectedDepartment === department.id
-                  ? 'bg-blue-600/80 text-white shadow-lg backdrop-blur-md'
-                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+                className={`w-full text-right px-4 py-2 rounded-lg font-medium transition-colors flex justify-between items-center group ${selectedDepartment === department.id
+                  ? 'bg-blue-600/20 text-blue-400 border-l-2 border-blue-500'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                   }`}
               >
                 <span>{department.name}</span>
                 {selectedDepartment === department.id && (
-                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                 )}
               </button>
             ))}
@@ -798,7 +798,7 @@ export default function TasksBoard() {
                 setDepartmentForm({ name: '' })
                 setShowDepartmentModal(true)
               }}
-              className="w-full mt-4 text-right px-4 py-2 rounded-lg text-sm text-white/50 hover:bg-white/5 hover:text-white border border-dashed border-white/20 hover:border-white/40 flex items-center gap-2 transition-all"
+              className="w-full mt-4 text-right px-4 py-2 rounded-lg text-sm text-slate-500 hover:bg-slate-800 hover:text-slate-300 border border-dashed border-slate-700 hover:border-slate-600 flex items-center gap-2 transition-colors"
             >
               <Plus size={16} />
               <span>הוסף מחלקה</span>
@@ -807,11 +807,11 @@ export default function TasksBoard() {
         </div>
 
         {/* Board Area */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-slate-900/30">
           {/* Board Header */}
-          <div className="h-14 bg-black/10 backdrop-blur-sm border-b border-white/10 flex items-center justify-between px-6 flex-shrink-0">
+          <div className="h-14 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-6 flex-shrink-0 shadow-sm">
             <div className="flex items-center gap-4">
-              <h1 className="text-xl font-bold text-white flex items-center gap-2">
+              <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                 <span>{departments.find(d => d.id === selectedDepartment)?.name || 'לוח משימות'}</span>
               </h1>
             </div>
@@ -819,18 +819,18 @@ export default function TasksBoard() {
             <div className="flex items-center gap-3">
               {/* Search Bar */}
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50" size={16} />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="חיפוש משימות..."
-                  className="pl-3 pr-10 py-1.5 bg-white/10 hover:bg-white/15 focus:bg-white/20 text-white placeholder-white/50 rounded text-sm transition-colors backdrop-blur-sm border border-white/10 focus:border-white/30 focus:outline-none w-64"
+                  className="pl-3 pr-10 py-1.5 bg-slate-800/50 hover:bg-slate-800 focus:bg-slate-800 text-slate-100 placeholder-slate-500 rounded-lg text-sm transition-colors border border-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 w-64"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white"
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-200"
                   >
                     <X size={14} />
                   </button>
@@ -838,14 +838,14 @@ export default function TasksBoard() {
               </div>
               <button
                 onClick={() => setShowLabelManagementModal(true)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-purple-600/80 hover:bg-purple-600 text-white rounded text-sm transition-colors backdrop-blur-sm"
+                className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm transition-colors shadow-sm shadow-purple-500/20"
               >
                 <Tag size={14} />
                 <span>ניהול תוויות</span>
               </button>
               <button
                 onClick={() => setShowColumnManagementModal(true)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded text-sm transition-colors backdrop-blur-sm"
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-sm transition-colors border border-slate-600"
               >
                 <Edit2 size={14} />
                 <span>ניהול עמודות</span>

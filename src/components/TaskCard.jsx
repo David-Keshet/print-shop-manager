@@ -35,7 +35,7 @@ export default function TaskCard({ task, onViewDetails, customLabels = [] }) {
                     onViewDetails(task)
                 }
             }}
-            className="group relative bg-[#22272B] hover:bg-[#2C333A] rounded-lg p-3 shadow-sm border border-transparent hover:border-gray-600 cursor-pointer transition-all"
+            className="group relative bg-white dark:bg-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 hover:shadow-md dark:hover:bg-slate-800/80 rounded-lg p-3 shadow-sm border border-slate-200/60 dark:border-slate-700 cursor-pointer transition-all"
         >
             {/* Search Meta Info (shown only in search results) */}
             {task._searchMeta && (
@@ -60,12 +60,12 @@ export default function TaskCard({ task, onViewDetails, customLabels = [] }) {
                             <span className="text-gray-500">•</span>
                         </>
                     )}
-                    <h4 className="font-semibold text-sm text-gray-100 group-hover:text-white transition-colors flex-1">
+                    <h4 className="font-semibold text-sm text-slate-800 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors flex-1">
                         {task.orders?.customer_name || task.title || 'משימה ללא כותרת'}
                     </h4>
                 </div>
                 {task.orders?.customer_phone && (
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
                         📞 {task.orders.customer_phone}
                     </div>
                 )}

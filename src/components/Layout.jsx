@@ -80,6 +80,17 @@ export default function Layout({ children }) {
             </button>
           </Link>
 
+          <Link href="/invoices" onClick={() => setSidebarOpen(false)}>
+            <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${
+              isActive('/invoices')
+                ? 'bg-amber-500/30 border-amber-400/50 shadow-lg'
+                : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
+            }`}>
+              <span className="text-2xl group-hover:scale-110 transition-transform">🧾</span>
+              {sidebarOpen && <span>חשבוניות</span>}
+            </button>
+          </Link>
+
           <Link href="/reports" onClick={() => setSidebarOpen(false)}>
             <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${
               isActive('/reports')
@@ -102,14 +113,14 @@ export default function Layout({ children }) {
             </button>
           </Link>
 
-          <Link href="/settings" onClick={() => setSidebarOpen(false)}>
+          <Link href="/settings/icount" onClick={() => setSidebarOpen(false)}>
             <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium ${
               isActive('/settings')
                 ? 'bg-gray-500/30 border-gray-400/50 shadow-lg'
                 : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
             }`}>
               <span className="text-2xl group-hover:scale-110 transition-transform">⚙️</span>
-              {sidebarOpen && <span>הגדרות</span>}
+              {sidebarOpen && <span>הגדרות iCount</span>}
             </button>
           </Link>
         </nav>

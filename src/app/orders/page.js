@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Search, Edit2, Trash2, FileText, Download, MessageSquare } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, FileText, Download, MessageSquare, Receipt } from 'lucide-react'
 import Layout from '@/components/Layout'
 import OrderPDF from '@/components/OrderPDF'
 import { formatWhatsAppUrl, formatTemplate } from '@/lib/utils'
@@ -27,6 +27,12 @@ export default function Orders() {
   const [whatsAppTargetUrl, setWhatsAppTargetUrl] = useState('')
   const [whatsAppCustomerName, setWhatsAppCustomerName] = useState('')
   const [whatsAppTemplateType, setWhatsAppTemplateType] = useState('new_order') // new_order, order_ready, payment
+
+  // Invoice Modal State
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [invoiceType, setInvoiceType] = useState('invoice')
+  const [creatingInvoice, setCreatingInvoice] = useState(false)
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null)
 
   // טעינת הזמנות
   useEffect(() => {
@@ -128,6 +134,55 @@ export default function Orders() {
     order.order_number.toString().includes(searchTerm)
   )
 
+
+  // הפקת חשבונית
+  const handleCreateInvoice = async (order) => {
+    if (order.invoiced) {
+      const viewInvoice = confirm('כבר נוצרה חשבונית להזמנה זו. האם תרצה לצפות בחשבונית?')
+      if (viewInvoice) {
+        window.location.href = `/invoices`
+      }
+      return
+    }
+
+    setSelectedOrderForInvoice(order)
+    setShowInvoiceModal(true)
+  }
+
+  const createInvoice = async () => {
+    if (!selectedOrderForInvoice) return
+
+    try {
+      setCreatingInvoice(true)
+
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          order_id: selectedOrderForInvoice.id,
+          invoice_type: invoiceType,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('החשבונית נוצרה בהצלחה!')
+        setShowInvoiceModal(false)
+        fetchOrders() // רענן את ההזמנות
+        window.location.href = `/invoices/${data.invoice.id}`
+      } else {
+        alert(`שגיאה ביצירת חשבונית: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error creating invoice:', error)
+      alert('שגיאה ביצירת חשבונית')
+    } finally {
+      setCreatingInvoice(false)
+    }
+  }
 
   const handleWhatsAppClick = async (order, type = 'new_order') => {
     if (!order.customer_phone) {
@@ -374,6 +429,16 @@ export default function Orders() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
+                                handleCreateInvoice(order)
+                              }}
+                              className={`${order.invoiced ? 'text-purple-600' : 'text-orange-600'} hover:opacity-70`}
+                              title={order.invoiced ? 'צפה בחשבונית' : 'הפק חשבונית'}
+                            >
+                              <Receipt size={20} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
                                 viewOrder(order)
                               }}
                               className="text-blue-600 hover:text-blue-800"
@@ -491,6 +556,90 @@ export default function Orders() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Invoice Modal */}
+        {showInvoiceModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <Receipt className="text-orange-500" size={24} />
+                  הפקת חשבונית
+                </h3>
+                <button
+                  onClick={() => setShowInvoiceModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {selectedOrderForInvoice && (
+                <div className="space-y-4">
+                  {/* פרטי הזמנה */}
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">הזמנה:</span>
+                      <span className="font-semibold">#{selectedOrderForInvoice.order_number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">לקוח:</span>
+                      <span className="font-semibold">{selectedOrderForInvoice.customer_name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">סכום:</span>
+                      <span className="font-bold text-lg text-green-600">
+                        ₪{parseFloat(selectedOrderForInvoice.total_with_vat || 0).toLocaleString('he-IL')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* סוג חשבונית */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      סוג מסמך
+                    </label>
+                    <select
+                      value={invoiceType}
+                      onChange={(e) => setInvoiceType(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    >
+                      <option value="invoice">חשבונית</option>
+                      <option value="invoice_receipt">חשבונית מס קבלה</option>
+                      <option value="receipt">קבלה</option>
+                    </select>
+                  </div>
+
+                  {/* הסברים */}
+                  <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-800">
+                    <strong>חשבונית:</strong> מסמך לדרישת תשלום<br />
+                    <strong>חשבונית מס קבלה:</strong> שולב - חשבונית + קבלה<br />
+                    <strong>קבלה:</strong> אישור על תשלום שהתקבל
+                  </div>
+
+                  {/* כפתורי פעולה */}
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={createInvoice}
+                      disabled={creatingInvoice}
+                      className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Receipt size={20} />
+                      {creatingInvoice ? 'מפיק חשבונית...' : 'הפק חשבונית'}
+                    </button>
+                    <button
+                      onClick={() => setShowInvoiceModal(false)}
+                      disabled={creatingInvoice}
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-xl font-bold transition-colors disabled:opacity-50"
+                    >
+                      ביטול
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

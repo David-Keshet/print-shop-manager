@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+tmpclaude-*
+test-connection-*.js
+nul
 
 # debug
 npm-debug.log*

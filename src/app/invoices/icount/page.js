@@ -15,71 +15,77 @@ import {
   AlertCircle,
   ArrowRight
 } from 'lucide-react'
-import { getICountClient } from '@/lib/icount/client'
+import { supabase } from '@/lib/supabase'
 
 export default function ICountDocumentsPage() {
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState(null)
-  const [connectionStatus, setConnectionStatus] = useState(null)
+  const [syncMessage, setSyncMessage] = useState(null)
 
   useEffect(() => {
-    checkConnection()
     fetchDocuments()
   }, [])
-
-  const checkConnection = async () => {
-    try {
-      const client = getICountClient()
-      const result = await client.testConnection()
-      setConnectionStatus(result)
-    } catch (error) {
-      setConnectionStatus({
-        success: false,
-        message: error.message,
-      })
-    }
-  }
 
   const fetchDocuments = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const client = getICountClient()
+      // קרא חשבוניות מ-Supabase (לא ישירות מ-iCount!)
+      const { data, error: supabaseError } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          customer:customers(name, phone),
+          order:orders(order_number)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100)
 
-      // בדוק אם יש חיבור
-      if (!client.hasCredentials()) {
-        setError('לא הוגדרו פרטי התחברות ל-iCount. אנא הגדר בעמוד ההגדרות.')
-        setLoading(false)
-        return
-      }
+      if (supabaseError) throw supabaseError
 
-      // שלוף את כל המסמכים
-      const response = await client.getDocuments(null, {
-        limit: 100,
-        offset: 0
-      })
-
-      console.log('iCount response:', response)
-
-      if (response.data) {
-        setDocuments(response.data)
-      } else if (Array.isArray(response)) {
-        setDocuments(response)
-      } else {
-        setDocuments([])
-      }
+      setDocuments(data || [])
     } catch (error) {
       console.error('Error fetching documents:', error)
-      setError(error.message || 'שגיאה בטעינת מסמכים מ-iCount')
+      setError(error.message || 'שגיאה בטעינת חשבוניות')
       setDocuments([])
     } finally {
       setLoading(false)
       setRefreshing(false)
+    }
+  }
+
+  const handleSyncFromICount = async () => {
+    setSyncing(true)
+    setSyncMessage(null)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/icount/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'all' })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setSyncMessage('✅ סנכרון הושלם בהצלחה!')
+        fetchDocuments() // Refresh after sync
+      } else {
+        setError(data.message || 'שגיאה בסנכרון')
+      }
+    } catch (err) {
+      console.error('Sync error:', err)
+      setError('שגיאה בסנכרון עם iCount')
+    } finally {
+      setSyncing(false)
+      setTimeout(() => setSyncMessage(null), 3000)
     }
   }
 
@@ -122,9 +128,9 @@ export default function ICountDocumentsPage() {
 
     const search = searchTerm.toLowerCase()
     return (
-      doc.doc_num?.toString().includes(search) ||
-      doc.client_name?.toLowerCase().includes(search) ||
-      doc.description?.toLowerCase().includes(search)
+      doc.invoice_number?.toString().includes(search) ||
+      doc.customer?.name?.toLowerCase().includes(search) ||
+      doc.notes?.toLowerCase().includes(search)
     )
   })
 
@@ -152,41 +158,40 @@ export default function ICountDocumentsPage() {
               </p>
             </div>
 
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-              {refreshing ? 'מרענן...' : 'רענן'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSyncFromICount}
+                disabled={syncing}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Cloud size={18} className={syncing ? 'animate-pulse' : ''} />
+                {syncing ? 'מסנכרן...' : 'סנכרן מ-iCount'}
+              </button>
+
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+                {refreshing ? 'מרענן...' : 'רענן'}
+              </button>
+            </div>
           </div>
 
-          {/* Connection Status */}
-          {connectionStatus && (
-            <div
-              className={`flex items-center gap-3 p-4 rounded-lg mb-4 ${
-                connectionStatus.success
-                  ? 'bg-green-900/20 border border-green-700 text-green-200'
-                  : 'bg-red-900/20 border border-red-700 text-red-200'
-              }`}
-            >
-              {connectionStatus.success ? (
-                <CheckCircle size={24} className="flex-shrink-0" />
-              ) : (
-                <XCircle size={24} className="flex-shrink-0" />
-              )}
-              <div>
-                <p className="font-semibold">
-                  {connectionStatus.success ? 'מחובר ל-iCount' : 'אין חיבור ל-iCount'}
-                </p>
-                <p className="text-sm opacity-90">{connectionStatus.message}</p>
-                {!connectionStatus.success && (
-                  <Link href="/settings/icount" className="text-sm underline hover:opacity-80 mt-1 inline-block">
-                    עבור להגדרות
-                  </Link>
-                )}
-              </div>
+          {/* Success Message */}
+          {syncMessage && (
+            <div className="flex items-center gap-2 text-green-400 bg-green-900/20 px-4 py-3 rounded-lg mb-4">
+              <CheckCircle size={20} />
+              {syncMessage}
+            </div>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <div className="flex items-center gap-2 text-red-400 bg-red-900/20 px-4 py-3 rounded-lg mb-4">
+              <AlertCircle size={20} />
+              {error}
             </div>
           )}
 
@@ -226,21 +231,21 @@ export default function ICountDocumentsPage() {
           <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-4 text-white">
             <div className="text-sm opacity-90 mb-1">חשבוניות</div>
             <div className="text-3xl font-bold">
-              {documents.filter(d => d.type === 'invoice' || d.type === 'invoice_receipt').length}
+              {documents.filter(d => d.invoice_type === 'invoice' || d.invoice_type === 'invoice_receipt').length}
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-4 text-white">
             <div className="text-sm opacity-90 mb-1">קבלות</div>
             <div className="text-3xl font-bold">
-              {documents.filter(d => d.type === 'receipt').length}
+              {documents.filter(d => d.invoice_type === 'receipt').length}
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl p-4 text-white">
             <div className="text-sm opacity-90 mb-1">זיכויים</div>
             <div className="text-3xl font-bold">
-              {documents.filter(d => d.type === 'credit').length}
+              {documents.filter(d => d.invoice_type === 'credit').length}
             </div>
           </div>
         </div>
@@ -280,32 +285,32 @@ export default function ICountDocumentsPage() {
               <tbody className="divide-y divide-gray-700">
                 {filteredDocuments.map((doc) => (
                   <tr
-                    key={doc.docid || doc.doc_id}
+                    key={doc.id}
                     className="hover:bg-gray-800/30 transition-colors"
                   >
                     <td className="px-6 py-4 text-white font-mono font-semibold">
-                      {doc.doc_num || doc.docnum || '-'}
+                      {doc.invoice_number || '-'}
                     </td>
                     <td className="px-6 py-4 text-gray-300">
                       <span className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs">
-                        {getDocumentTypeName(doc.type)}
+                        {getDocumentTypeName(doc.invoice_type)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-white">
-                      {doc.client_name || 'לא צוין'}
+                      {doc.customer?.name || 'לא צוין'}
                     </td>
                     <td className="px-6 py-4 text-gray-300">
-                      {doc.date ? new Date(doc.date).toLocaleDateString('he-IL') : '-'}
+                      {doc.issue_date ? new Date(doc.issue_date).toLocaleDateString('he-IL') : '-'}
                     </td>
                     <td className="px-6 py-4 text-white font-semibold">
-                      {doc.amount || doc.total ? (
-                        `₪${parseFloat(doc.amount || doc.total).toLocaleString('he-IL')}`
+                      {doc.total_amount ? (
+                        `₪${parseFloat(doc.total_amount).toLocaleString('he-IL')}`
                       ) : (
                         '-'
                       )}
                     </td>
                     <td className="px-6 py-4 text-gray-300 max-w-xs truncate">
-                      {doc.description || doc.remarks || '-'}
+                      {doc.notes || '-'}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">

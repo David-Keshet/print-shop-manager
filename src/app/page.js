@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
-import { Package, Users, DollarSign, TrendingUp, Calendar, RefreshCw, Clock, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Package, Users, DollarSign, TrendingUp, Calendar, RefreshCw, Clock, AlertCircle, CheckCircle2, CloudSync, Database } from 'lucide-react'
 import Layout from '@/components/Layout'
 
 export const dynamic = 'force-dynamic'
@@ -17,10 +16,13 @@ export default function Home() {
   const [recentOrders, setRecentOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState(null)
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
   const [currentDateDisplay, setCurrentDateDisplay] = useState('')
   const [mounted, setMounted] = useState(false)
+  const [fromCache, setFromCache] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -52,54 +54,44 @@ export default function Home() {
     setError(null)
 
     try {
-      // 1. Get active orders (new or in_progress)
-      const { data: orders, error: ordersError } = await supabase
-        .from('orders')
-        .select('id')
-        .in('status', ['new', 'in_progress'])
+      // Use cached API endpoints for faster loading
+      const [statsResponse, ordersResponse] = await Promise.all([
+        fetch('/api/cache/stats'),
+        fetch('/api/cache/orders?limit=5&type=recent')
+      ])
 
-      if (ordersError) throw ordersError
+      const statsData = await statsResponse.json()
+      const ordersData = await ordersResponse.json()
 
-      // 2. Get total customers
-      const { count: customersCount, error: customersError } = await supabase
-        .from('customers')
-        .select('*', { count: 'exact', head: true })
+      if (!statsData.success) {
+        throw new Error(statsData.error || 'שגיאה בטעינת סטטיסטיקות')
+      }
 
-      if (customersError) throw customersError
-
-      // 3. Get monthly revenue
-      const currentMonth = new Date().toISOString().slice(0, 7)
-      const { data: monthlyOrders, error: monthlyError } = await supabase
-        .from('orders')
-        .select('total_with_vat')
-        .gte('created_at', `${currentMonth}-01T00:00:00`)
-        .lte('created_at', `${currentMonth}-31T23:59:59`)
-
-      if (monthlyError) throw monthlyError
-
-      const monthlyRevenue = monthlyOrders?.reduce((sum, order) =>
-        sum + parseFloat(order.total_with_vat || 0), 0) || 0
-
-      // 4. Get recent orders (top 5)
-      const { data: recent, error: recentError } = await supabase
-        .from('orders')
-        .select('id, order_number, customer_name, total_with_vat, status, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5)
-
-      if (recentError) {
-        console.error('Error fetching recent orders:', recentError)
+      if (!ordersData.success) {
+        console.error('Error fetching recent orders:', ordersData.error)
+        setRecentOrders([])
       } else {
-        setRecentOrders(recent || [])
+        setRecentOrders(ordersData.data || [])
       }
 
       setStats({
-        activeOrders: orders?.length || 0,
-        totalCustomers: customersCount || 0,
-        monthlyRevenue
+        activeOrders: statsData.data.activeOrders || 0,
+        totalCustomers: statsData.data.totalCustomers || 0,
+        monthlyRevenue: statsData.data.monthlyRevenue || 0
       })
 
       setLastUpdate(new Date())
+
+      // Track cache status
+      setFromCache(statsData.fromCache || ordersData.fromCache)
+
+      // Log cache status for debugging
+      if (statsData.fromCache) {
+        console.log('📦 Stats loaded from cache')
+      }
+      if (ordersData.fromCache) {
+        console.log('📦 Orders loaded from cache')
+      }
 
     } catch (err) {
       console.error('Error in fetchStats:', err)
@@ -112,6 +104,44 @@ export default function Home() {
 
   const handleManualRefresh = () => {
     fetchStats()
+  }
+
+  const handleSyncFromICount = async () => {
+    setSyncing(true)
+    setSyncMessage(null)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/icount/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'all' })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setSyncMessage('✅ סנכרון הושלם בהצלחה!')
+
+        // Clear cache to force fresh data
+        await Promise.all([
+          fetch('/api/cache/stats', { method: 'DELETE' }),
+          fetch('/api/cache/orders', { method: 'DELETE' })
+        ])
+
+        // Refresh stats after sync with fresh data
+        fetchStats()
+      } else {
+        setError(data.message || 'שגיאה בסנכרון')
+      }
+    } catch (err) {
+      console.error('Sync error:', err)
+      setError('שגיאה בסנכרון עם iCount')
+    } finally {
+      setSyncing(false)
+      // Clear message after 3 seconds
+      setTimeout(() => setSyncMessage(null), 3000)
+    }
   }
 
   const getStatusBadge = (status) => {
@@ -146,10 +176,34 @@ export default function Home() {
                 <div className="flex items-center gap-2 text-xs text-gray-300">
                   <Clock size={12} />
                   {lastUpdate.toLocaleTimeString('he-IL')}
+                  {fromCache && (
+                    <span className="flex items-center gap-1 bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full">
+                      <Database size={10} />
+                      Cache
+                    </span>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Sync Button */}
+            <button
+              onClick={handleSyncFromICount}
+              disabled={syncing}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-sm font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg"
+            >
+              <CloudSync size={16} className={syncing ? 'animate-spin' : ''} />
+              {syncing ? 'מסנכרן...' : 'סנכרן עם iCount'}
+            </button>
           </div>
+
+          {/* Success Message */}
+          {syncMessage && (
+            <div className="flex items-center gap-2 text-green-400 bg-green-900/20 px-3 py-1.5 rounded-lg text-xs animate-pulse">
+              <CheckCircle2 size={14} />
+              {syncMessage}
+            </div>
+          )}
 
           {/* Error Display */}
           {error && (

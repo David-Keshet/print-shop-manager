@@ -4,12 +4,25 @@
  */
 
 import { ICOUNT_CONFIG } from './config'
+import { sessionCache } from './sessionCache'
+import { rateLimiter } from './rateLimiter'
 
 export class ICountClient {
   constructor(credentials = null) {
     this.credentials = credentials || this.loadCredentials()
     this.offlineMode = ICOUNT_CONFIG.offlineMode
     this.sessionId = null // Store session ID for reuse
+    this.cacheKey = this.getCacheKey() // מפתח ייחודי ל-cache
+  }
+
+  /**
+   * יוצר מפתח cache ייחודי לפי credentials
+   */
+  getCacheKey() {
+    if (this.credentials?.cid && this.credentials?.user) {
+      return `${this.credentials.cid}:${this.credentials.user}`
+    }
+    return 'default'
   }
 
   /**
@@ -79,9 +92,27 @@ export class ICountClient {
       throw new Error('חסרים פרטי התחברות (CID, user, pass)')
     }
 
+    // 1. בדוק אם יש session ב-cache
+    const cachedSession = sessionCache.get(this.cacheKey)
+    if (cachedSession) {
+      this.sessionId = cachedSession
+      return cachedSession
+    }
+
+    // 2. בדוק rate limit לפני שליחת בקשה
+    if (!rateLimiter.canMakeRequest()) {
+      const waitTime = rateLimiter.getWaitTime()
+      throw new Error(`Rate limit reached. Please wait ${Math.ceil(waitTime / 1000)} seconds`)
+    }
+
     try {
+      // 3. רשום שאנחנו שולחים בקשה
+      rateLimiter.recordRequest()
+
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), ICOUNT_CONFIG.timeout)
+
+      console.log('🔐 Logging in to iCount (no cached session)...')
 
       const response = await fetch('https://api.icount.co.il/api/v3.php/auth/login', {
         method: 'POST',
@@ -106,6 +137,11 @@ export class ICountClient {
 
       if (data.sid) {
         this.sessionId = data.sid
+
+        // 4. שמור session ב-cache ל-30 דקות
+        sessionCache.set(this.cacheKey, data.sid, this.credentials)
+        console.log('✅ Login successful, session cached')
+
         return data.sid
       } else if (data.status === false) {
         throw new Error(data.error_description || 'התחברות נכשלה')
@@ -149,7 +185,17 @@ export class ICountClient {
       }
     }
 
+    // בדוק rate limit
+    if (!rateLimiter.canMakeRequest()) {
+      const stats = rateLimiter.getStats()
+      console.warn(`⏸️ Rate limit: ${stats.current}/${stats.max} requests. Wait ${Math.ceil(stats.waitTime / 1000)}s`)
+      throw new Error(`Rate limit reached (${stats.percentage}%). Wait ${Math.ceil(stats.waitTime / 1000)} seconds before retry`)
+    }
+
     try {
+      // רשום בקשה
+      rateLimiter.recordRequest()
+
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), ICOUNT_CONFIG.timeout)
 

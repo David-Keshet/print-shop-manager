@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, Home } from 'lucide-react'
+import SyncIndicator from './SyncIndicator'
 
 export default function Layout({ children }) {
   const pathname = usePathname()
@@ -21,6 +22,9 @@ export default function Layout({ children }) {
 
   return (
     <div className="h-screen flex overflow-hidden">
+      {/* Sync Status Indicator */}
+      <SyncIndicator />
+
       {/* Toggle Button - פינה ימנית תחתונה */}
       {mounted && (
         <button
@@ -110,6 +114,17 @@ export default function Layout({ children }) {
             }`}>
               <span className="text-2xl group-hover:scale-110 transition-transform">👨‍💼</span>
               {sidebarOpen && <span>ניהול משתמשים</span>}
+            </button>
+          </Link>
+
+          <Link href="/cache" onClick={() => setSidebarOpen(false)}>
+            <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${
+              isActive('/cache')
+                ? 'bg-teal-500/30 border-teal-400/50 shadow-lg'
+                : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
+            }`}>
+              <span className="text-2xl group-hover:scale-110 transition-transform">💾</span>
+              {sidebarOpen && <span>Cache</span>}
             </button>
           </Link>
 

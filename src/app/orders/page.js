@@ -18,7 +18,7 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [orderItems, setOrderItems] = useState([])
   const [editingOrder, setEditingOrder] = useState(null)
-  const [prefilledCustomer, setPrefilledCustomer] = useState(null)
+  const [prefilledCustomer, setPrefilledCustomer] = useState(null) // State for new order customer
 
   // WhatsApp Modal State
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)

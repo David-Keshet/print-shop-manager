@@ -52,6 +52,6 @@ body {
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-lg p-4;
+    @apply bg-sky-100 rounded-xl shadow-lg p-4;
   }
 }

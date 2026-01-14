@@ -18,6 +18,7 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [orderItems, setOrderItems] = useState([])
   const [editingOrder, setEditingOrder] = useState(null)
+  const [prefilledCustomer, setPrefilledCustomer] = useState(null)
 
   // WhatsApp Modal State
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
@@ -306,7 +307,7 @@ export default function Orders() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-sky-200">
                     <tr>
                       <th className="px-4 py-3 text-right font-bold">מספר הזמנה</th>
                       <th className="px-4 py-3 text-right font-bold">שם לקוח</th>
@@ -319,7 +320,7 @@ export default function Orders() {
                   </thead>
                   <tbody>
                     {filteredOrders.map((order) => (
-                      <tr key={order.id} className="border-b hover:bg-gray-50 cursor-pointer">
+                      <tr key={order.id} className="border-b hover:bg-sky-50 cursor-pointer">
                         <td
                           className="px-4 py-3 font-bold text-blue-600"
                           onClick={() => viewOrder(order)}
@@ -847,15 +848,15 @@ function OrderForm({ onClose, initialCustomer, editData }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-transparent">
       <div className="max-w-[100vw] mx-auto p-4 md:p-6 lg:p-8">
         <button onClick={onClose} className="btn-secondary mb-4">
           ← חזרה לרשימת הזמנות
         </button>
 
-        <form onSubmit={(e) => e.preventDefault()} className="bg-white rounded-xl shadow-lg border-t-4 border-blue-600 p-4 md:p-6 lg:p-8">
+        <form onSubmit={(e) => e.preventDefault()} className="bg-sky-100 rounded-xl shadow-lg border-t-4 border-blue-600 p-4 md:p-6 lg:p-8">
           <div className="mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center bg-gray-50 py-4 rounded-lg">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center bg-sky-50 py-4 rounded-lg">
               {editData ? `✏️ עריכת הזמנה ${editData.order_number}` : '📋 פתיחת הזמנה חדשה'}
             </h1>
 
@@ -875,7 +876,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
           <div className="flex flex-col xl:flex-row gap-6 lg:gap-8">
             {/* צד ימין - פרטי הזמנה ולקוח */}
             <div className="flex-1">
-              <div className="bg-gray-50 p-6 rounded-xl mb-8">
+              <div className="bg-sky-50 p-6 rounded-xl mb-8">
                 <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                   👤 פרטי לקוח
                 </h2>
@@ -925,6 +926,13 @@ function OrderForm({ onClose, initialCustomer, editData }) {
                     />
                   </div>
                 </div>
+
+                <div className="mt-4 pt-4 border-t border-blue-100 flex items-center justify-between">
+                  <span className="text-gray-500 font-medium text-sm">תאריך פתיחת הזמנה:</span>
+                  <span className="font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full text-sm">
+                    {new Date().toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  </span>
+                </div>
               </div>
 
               <div className="mb-8">
@@ -943,7 +951,7 @@ function OrderForm({ onClose, initialCustomer, editData }) {
 
                 <div className="space-y-6">
                   {items.map((item, index) => (
-                    <div key={index} className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div key={index} className="relative bg-sky-50 border border-blue-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
                       <div className="grid grid-cols-12 gap-4">
                         {/* תיאור מוצר - דואמיננטי */}
                         <div className="col-span-12 md:col-span-6">
@@ -1167,7 +1175,7 @@ function CustomerSearchModal({ onClose, onConfirm }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+      <div className="bg-sky-100 rounded-xl p-6 w-full max-w-md shadow-2xl">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">חיפוש לקוח</h2>
 
         <div className="flex gap-2 mb-6">
@@ -1218,7 +1226,7 @@ function CustomerSearchModal({ onClose, onConfirm }) {
               </div>
             ))
           ) : searched && !loading ? (
-            <div className="text-center py-4 bg-gray-50 rounded-lg">
+            <div className="text-center py-4 bg-sky-50 rounded-lg">
               <p className="text-gray-600 mb-4">לא נמצא לקוח תואם</p>
               <button
                 onClick={() => onConfirm({ phone: query.match(/^\d+$/) ? query : '', name: !query.match(/^\d+$/) ? query : '' }, 'new')}

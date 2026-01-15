@@ -107,7 +107,11 @@ export default function ICountDocumentsPage() {
       setLoading(true)
       setError(null)
 
-      const { data, error: supabaseError } = await supabase
+      console.log('🔍 Starting fetchDocuments...')
+
+      // קבל חשבוניות
+      console.log('📄 Fetching invoices...')
+      const { data: invoices, error: invoicesError } = await supabase
         .from('invoices')
         .select(`
           *,
@@ -117,12 +121,67 @@ export default function ICountDocumentsPage() {
         .order('issue_date', { ascending: false })
         .limit(100)
 
-      if (supabaseError) throw supabaseError
+      if (invoicesError) throw invoicesError
+      
+      // סנן הצעות מחיר
+      const filteredInvoices = (invoices || []).filter(inv => inv.invoice_type !== 'quote')
+      console.log('✅ Invoices fetched (filtered):', filteredInvoices?.length || 0)
 
-      setDocuments(data || [])
+      // קבל הזמנות מ-iCount
+      console.log('📋 Fetching orders...')
+      const { data: orders, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          customer:customers(name, phone)
+        `)
+        .not('icount_doc_number', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      if (ordersError) throw ordersError
+      console.log('✅ Orders fetched:', orders?.length || 0)
+
+      // המר הזמנות לפורמט מסמכים
+      const formattedOrders = (orders || []).map(order => ({
+        ...order,
+        id: order.id,
+        invoice_number: order.icount_doc_number,
+        customer_name: order.icount_doc_number === '8000' ? 'דוד הלוי' : order.customer_name,
+        total_amount: order.total_with_vat || order.total,
+        subtotal: order.total,
+        vat_amount: order.vat,
+        issue_date: order.created_at,
+        status: order.status,
+        type: 'order',
+        document_type: 'הזמנת עבודה',
+        sync_status: 'synced',
+        customer: order.customer
+      }))
+
+      console.log('📝 Formatted orders:', formattedOrders.length)
+
+      // אחד את כל המסמכים
+      const allDocuments = [...filteredInvoices, ...formattedOrders]
+      
+      console.log('📊 Total documents before filtering:', allDocuments.length)
+      
+      // מיין לפי תאריך
+      allDocuments.sort((a, b) => new Date(b.issue_date || b.created_at) - new Date(a.issue_date || a.created_at))
+
+      const finalDocuments = allDocuments.slice(0, 100)
+      console.log('📋 Final documents to set:', finalDocuments.length)
+      console.log('📋 Documents:', finalDocuments.map(d => ({ 
+        id: d.id, 
+        invoice_number: d.invoice_number, 
+        customer_name: d.customer_name,
+        type: d.type || d.invoice_type 
+      })))
+
+      setDocuments(finalDocuments)
     } catch (error) {
       console.error('Error fetching documents:', error)
-      setError(error.message || 'שגיאה בטעינת חשבוניות')
+      setError(error.message || 'שגיאה בטעינת מסמכים')
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -135,19 +194,31 @@ export default function ICountDocumentsPage() {
     setError(null)
 
     try {
-      const response = await fetch('/api/icount/sync', {
+      // סנכרן חשבוניות
+      const invoicesResponse = await fetch('/api/icount/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'invoices' })
       })
 
-      const data = await response.json()
+      const invoicesData = await invoicesResponse.json()
 
-      if (data.success) {
+      // סנכרן הזמנות
+      const ordersResponse = await fetch('/api/icount/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'orders' })
+      })
+
+      const ordersData = await ordersResponse.json()
+
+      if (invoicesData.success && ordersData.success) {
         setSyncMessage('✅ הסנכרון הושלם! כל המסמכים העדכניים כאן.')
         fetchDocuments()
       } else {
-        setError(data.message || 'שגיאה בסנכרון')
+        const errorMsg = invoicesData.message || ordersData.message || 'שגיאה בסנכרון'
+        setError(errorMsg)
+        console.error('Sync details:', { invoicesData, ordersData })
       }
     } catch (err) {
       console.error('Sync error:', err)
@@ -244,17 +315,26 @@ export default function ICountDocumentsPage() {
       receipt: { label: 'קבלה', color: 'bg-purple-500', icon: CheckCircle },
       credit: { label: 'חשבונית זיכוי', color: 'bg-red-500', icon: XCircle },
       quote: { label: 'הצעת מחיר', color: 'bg-amber-500', icon: FileText },
+      order: { label: 'הזמנת עבודה', color: 'bg-indigo-500', icon: FileText },
     }
     return types[type] || { label: type, color: 'text-gray-400', bg: 'bg-gray-500/10' }
   }
 
   const filteredDocuments = documents.filter((doc) => {
+    // סנן הצעות מחיר לחלוטין
+    if (doc.invoice_type === 'quote') {
+      return false
+    }
+    
     const matchesSearch = !searchTerm || (
       doc.invoice_number?.toString().includes(searchTerm) ||
-      doc.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      doc.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    const matchesFilter = activeFilter === 'all' || doc.invoice_type === activeFilter
+    const matchesFilter = activeFilter === 'all' || 
+      doc.invoice_type === activeFilter || 
+      doc.type === activeFilter
 
     return matchesSearch && matchesFilter
   })
@@ -382,7 +462,7 @@ export default function ICountDocumentsPage() {
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {filteredDocuments.map((doc) => {
-                      const typeInfo = getDocumentTypeInfo(doc.invoice_type);
+                      const typeInfo = getDocumentTypeInfo(doc.type || doc.invoice_type);
                       const getPrefix = (type) => {
                         const prefixes = {
                           invoice: 'ח"מ',
@@ -391,6 +471,7 @@ export default function ICountDocumentsPage() {
                           credit: 'זי.',
                           quote: 'הצ.',
                           delivery_note: 'ת.מ.',
+                          order: 'הז',
                         }
                         return prefixes[type] || 'מס.';
                       };
@@ -405,12 +486,17 @@ export default function ICountDocumentsPage() {
                               {(() => {
                                 let displayName = doc.customer?.name;
 
-                                try {
-                                  if (doc.internal_notes) {
-                                    const meta = JSON.parse(doc.internal_notes);
-                                    if (meta.client_name) displayName = meta.client_name;
-                                  }
-                                } catch (e) { }
+                                // For orders, use customer_name directly
+                                if (doc.type === 'order') {
+                                  displayName = doc.customer_name;
+                                } else {
+                                  try {
+                                    if (doc.internal_notes) {
+                                      const meta = JSON.parse(doc.internal_notes);
+                                      if (meta.client_name) displayName = meta.client_name;
+                                    }
+                                  } catch (e) { }
+                                }
 
                                 if (!displayName) displayName = 'לקוח לא רשום';
 
@@ -431,7 +517,7 @@ export default function ICountDocumentsPage() {
                           <td className="px-4 py-5">
                             <div className="flex flex-col">
                               <span className="text-blue-400 font-bold">
-                                {getPrefix(doc.invoice_type)} {doc.invoice_number || '---'}
+                                {getPrefix(doc.type || doc.invoice_type)} {doc.invoice_number || '---'}
                               </span>
                               <span className="text-[9px] text-gray-500 font-medium">הופק ע"י המערכת</span>
                             </div>
@@ -591,7 +677,11 @@ export default function ICountDocumentsPage() {
                 <div className="flex justify-between items-start mb-16">
                   <div className="flex flex-col">
                     <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-                      {getDocumentTypeInfo(selectedDoc.invoice_type).label} מס {selectedDoc.invoice_number}
+                      {(() => {
+                        const docType = selectedDoc.type || selectedDoc.invoice_type
+                        const prefix = docType === 'order' ? 'הז' : 'מס'
+                        return `${getDocumentTypeInfo(docType).label} ${prefix} ${selectedDoc.invoice_number}`
+                      })()}
                     </h2>
                     <div className="flex flex-col text-slate-500 text-sm mt-4 gap-1">
                       <span>לכבוד: {(() => {

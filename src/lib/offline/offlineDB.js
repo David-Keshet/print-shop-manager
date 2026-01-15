@@ -138,17 +138,33 @@ class OfflineDB {
    * Get items by index
    */
   async getByIndex(storeName, indexName, value) {
-    await this.init()
+    try {
+      await this.init()
 
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readonly')
-      const store = transaction.objectStore(storeName)
-      const index = store.index(indexName)
-      const request = index.getAll(value)
+      // בדוק אם החיבור עדיין פתוח
+      if (!this.db || this.db.closed) {
+        console.warn('Database connection closed, reinitializing...')
+        await this.init()
+      }
 
-      request.onsuccess = () => resolve(request.result || [])
-      request.onerror = () => reject(request.error)
-    })
+      return new Promise((resolve, reject) => {
+        try {
+          const transaction = this.db.transaction([storeName], 'readonly')
+          const store = transaction.objectStore(storeName)
+          const index = store.index(indexName)
+          const request = index.getAll(value)
+
+          request.onsuccess = () => resolve(request.result || [])
+          request.onerror = () => reject(request.error)
+        } catch (error) {
+          console.error('Transaction error:', error)
+          reject(error)
+        }
+      })
+    } catch (error) {
+      console.error('getByIndex error:', error)
+      return [] // Return empty array as fallback
+    }
   }
 
   /**
@@ -203,7 +219,12 @@ class OfflineDB {
    * Get pending sync items
    */
   async getPendingSync(storeName) {
-    return this.getByIndex(storeName, 'sync_status', 'pending')
+    try {
+      return await this.getByIndex(storeName, 'sync_status', 'pending')
+    } catch (error) {
+      console.error(`Failed to get pending sync for ${storeName}:`, error)
+      return [] // Return empty array as fallback
+    }
   }
 
   /**

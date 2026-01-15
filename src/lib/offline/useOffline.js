@@ -68,6 +68,7 @@ export function useOffline() {
         setPendingCount(pending.total)
       } catch (error) {
         console.error('Failed to get pending count:', error)
+        setPendingCount(0) // Set to 0 on error to prevent infinite errors
       }
     }
 

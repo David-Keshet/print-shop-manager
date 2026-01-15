@@ -42,6 +42,75 @@ class SyncService {
   }
 
   /**
+   * עדכון הזמנה קיימת עם נתונים נכונים
+   */
+  async updateOrderWithCorrectData(icountDocNumber, customerName, docType) {
+    try {
+      console.log(`🔧 Updating order ${icountDocNumber} with correct data...`)
+      
+      // חפש את ההזמנה לפי מספר iCount
+      const { data: existingOrder, error: findError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('icount_doc_number', icountDocNumber)
+        .single()
+      
+      if (findError) {
+        console.error('❌ Find error:', findError)
+        return { success: false, error: findError.message }
+      }
+      
+      if (!existingOrder) {
+        console.error('❌ Order not found')
+        return { success: false, error: 'Order not found' }
+      }
+      
+      console.log('✅ Found order:', existingOrder)
+      
+      // השתמש ב-service role key לעדכונים
+      const { createClient } = require('@supabase/supabase-js')
+      const supabaseAdmin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      )
+      
+      // עדכן את ההזמנה
+      const updateData = {
+        customer_name: customerName
+      }
+      
+      const { data: updatedOrder, error: updateError } = await supabaseAdmin
+        .from('orders')
+        .update(updateData)
+        .eq('id', existingOrder.id)
+        .select()
+      
+      if (updateError) {
+        console.error('❌ Update error:', updateError)
+        return { success: false, error: updateError.message }
+      }
+      
+      console.log('✅ Updated order successfully:', updatedOrder[0])
+      
+      return { 
+        success: true, 
+        message: 'Order updated successfully',
+        order: updatedOrder[0]
+      }
+      
+    } catch (err) {
+      console.error('❌ General error:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
+  /**
    * סנכרון מלא - מושך את כל הנתונים מ-iCount
    */
   async syncAll() {
@@ -151,9 +220,9 @@ class SyncService {
     let errors = 0
 
     try {
-      const lastMonth = new Date()
+      const lastYear = new Date()
       const today = new Date()
-      lastMonth.setMonth(lastMonth.getMonth() - 2)
+      lastYear.setFullYear(lastYear.getFullYear() - 1) // כל ההזמנות מהשנה האחרונה
 
       const formatDate = (date) => {
         const d = date.getDate().toString().padStart(2, '0')
@@ -162,10 +231,10 @@ class SyncService {
         return `${y}-${m}-${d}`
       }
 
-      const fromDate = formatDate(lastMonth)
+      const fromDate = formatDate(lastYear)
       const toDate = formatDate(today)
 
-      console.log(`🔍 iCount Orders Sync: ${fromDate} to ${toDate}`)
+      console.log(`🔍 iCount Orders Sync: ${fromDate} to ${toDate} (Full year range)`)
       console.log('🔍 Checking iCount client connection...')
       
       if (!this.iCountClient) {
@@ -243,91 +312,222 @@ class SyncService {
           const docType = doc.doctype || doc.type
           const docID = doc.docid || doc.doc_id || doc.id
 
-          console.log(`🔍 Processing order document ${docType} ${docNum}...`)
-          debugLog.push(`Processing document ${docType} ${docNum}`)
-
           if (!docNum) {
             debugLog.push(`ERROR: No document number found for doc: ${JSON.stringify(doc)}`)
             errors++
             continue
           }
 
-          // קבל מידע מלא על המסמך
+          console.log(`🔍 Processing order document ${docType} ${docNum}...`)
+          debugLog.push(`Processing document ${docType} ${docNum}`)
+          debugLog.push(`Document data: ${JSON.stringify(doc, null, 2)}`)
+
+          // קבל מידע מלא על המסמך - נסה מספר endpoints
           let fullDoc = doc
           try {
+            debugLog.push(`Trying doc/info endpoint`)
             const infoResponse = await this.iCountClient.request('doc/info', {
               doc_type: docType,
               doc_num: docNum
             })
             if (infoResponse && infoResponse.status !== false) {
               fullDoc = { ...doc, ...infoResponse }
+              debugLog.push(`doc/info successful`)
             }
           } catch (infoError) {
             console.warn(`⚠️ Could not fetch info for ${docNum}:`, infoError.message)
+            debugLog.push(`doc/info failed: ${infoError.message}`)
           }
+
+          // אם doc/info לא עבד, נסה doc/get
+          if (!fullDoc.client_name && !fullDoc.customer_name) {
+            try {
+              debugLog.push(`Trying doc/get endpoint`)
+              const getResponse = await this.iCountClient.request('doc/get', {
+                doc_type: docType,
+                doc_num: docNum
+              })
+              if (getResponse && getResponse.status !== false) {
+                fullDoc = { ...fullDoc, ...getResponse }
+                debugLog.push(`doc/get successful`)
+              }
+            } catch (getError) {
+              console.warn(`⚠️ Could not get doc ${docNum}:`, getError.message)
+              debugLog.push(`doc/get failed: ${getError.message}`)
+            }
+          }
+
+          // אם עדיין אין שם לקוח, נסה doc/details
+          if (!fullDoc.client_name && !fullDoc.customer_name) {
+            try {
+              debugLog.push(`Trying doc/details endpoint`)
+              const detailsResponse = await this.iCountClient.request('doc/details', {
+                doc_type: docType,
+                doc_num: docNum
+              })
+              if (detailsResponse && detailsResponse.status !== false) {
+                fullDoc = { ...fullDoc, ...detailsResponse }
+                debugLog.push(`doc/details successful`)
+              }
+            } catch (detailsError) {
+              console.warn(`⚠️ Could not get details for ${docNum}:`, detailsError.message)
+              debugLog.push(`doc/details failed: ${detailsError.message}`)
+            }
+          }
+
+          // אם עדיין אין שם לקוח, נסה doc/search עם פרמטרים נכונים
+          if (!fullDoc.client_name && !fullDoc.customer_name) {
+            try {
+              debugLog.push(`Trying doc/search with proper parameters`)
+              const searchResponse = await this.iCountClient.request('doc/search', {
+                doc_type: docType,
+                doc_num: docNum,
+                from_date: fullDoc.dateissued || '2026-01-01',
+                to_date: fullDoc.dateissued || '2026-12-31',
+                free_text: ' ',
+                limit: 1
+              })
+              if (searchResponse && searchResponse.data && searchResponse.data.length > 0) {
+                fullDoc = { ...fullDoc, ...searchResponse.data[0] }
+                debugLog.push(`doc/search successful`)
+              }
+            } catch (searchError) {
+              console.warn(`⚠️ Could not search doc ${docNum}:`, searchError.message)
+              debugLog.push(`doc/search failed: ${searchError.message}`)
+            }
+          }
+
+          debugLog.push(`Full document data: ${JSON.stringify(fullDoc, null, 2)}`)
+          debugLog.push(`All document fields: ${Object.keys(fullDoc).join(', ')}`)
 
           // חישוב סכומים
           const total = parseFloat(fullDoc.total || fullDoc.amount || 0)
           const subtotal = parseFloat(fullDoc.subtotal || fullDoc.sum_no_vat || fullDoc.sum_before_vat || (total / 1.18))
           const vat = parseFloat(fullDoc.vat_amount || fullDoc.sum_vat || (total - subtotal))
 
-          // מידע לקוח
-          const clientID = fullDoc.client_id || fullDoc.clientid
-          let clientName = fullDoc.client_name || fullDoc.clientname || fullDoc.customer_name
-          let clientPhone = fullDoc.client_phone || fullDoc.phone || ''
-          let clientEmail = fullDoc.client_email || fullDoc.email || ''
+          // מידע לקוח - בדוק את כל השדות האפשריים
+          const clientID = fullDoc.client_id || fullDoc.clientid || fullDoc.customer_id
+          let clientName = fullDoc.client_name || fullDoc.clientname || fullDoc.customer_name || 
+                          fullDoc.contact_name || fullDoc.name || fullDoc.full_name ||
+                          fullDoc.customer || fullDoc.client || fullDoc.recipient_name
+          let clientPhone = fullDoc.client_phone || fullDoc.phone || fullDoc.telephone || 
+                           fullDoc.mobile || fullDoc.cellular || fullDoc.contact_phone
+          let clientEmail = fullDoc.client_email || fullDoc.email || fullDoc.mail
+
+          debugLog.push(`All possible customer name fields: client_name=${fullDoc.client_name}, clientname=${fullDoc.clientname}, customer_name=${fullDoc.customer_name}, contact_name=${fullDoc.contact_name}, name=${fullDoc.name}, full_name=${fullDoc.full_name}, customer=${fullDoc.customer}, client=${fullDoc.client}, recipient_name=${fullDoc.recipient_name}`)
+          debugLog.push(`All possible customer phone fields: client_phone=${fullDoc.client_phone}, phone=${fullDoc.phone}, telephone=${fullDoc.telephone}, mobile=${fullDoc.mobile}, cellular=${fullDoc.cellular}, contact_phone=${fullDoc.contact_phone}`)
+          debugLog.push(`All possible customer email fields: client_email=${fullDoc.client_email}, email=${fullDoc.email}, mail=${fullDoc.mail}`)
 
           console.log(`👤 Customer info - ID: ${clientID}, Name: ${clientName}, Phone: ${clientPhone}`)
+          debugLog.push(`Customer info - ID: ${clientID}, Name: ${clientName}, Phone: ${clientPhone}`)
           
-          // תמיד נסה למצוא את הלקוח האמיתי מ-iCount
-          if (clientID && (!clientName || clientName.includes('ICOUNT') || /^\d+$/.test(clientName.trim()))) {
-            console.log(`🔍 Trying to find real customer name for ID: ${clientID}`)
+          // אם אין שם לקוח וכל ה-API calls נכשלו, נשתמש בשם פשוט
+          if (!clientName && clientID) {
+            clientName = `לקוח מספר ${clientID}`
+            debugLog.push(`Using simple customer name: ${clientName}`)
+          }
+          
+          // תמיד נסה למצוא את הלקוח האמיתי מ-iCount - רק אם אין לנו שם סביר
+          debugLog.push(`Checking if customer lookup needed: clientID=${clientID}, clientName=${clientName}`)
+          const needsLookup = clientID && (!clientName || clientName.includes('ICOUNT') || /^\d+$/.test(clientName.trim()))
+          debugLog.push(`Customer lookup needed: ${needsLookup}`)
+          
+          if (needsLookup) {
+            debugLog.push(`Attempting customer lookup for ID: ${clientID}`)
             
-            // נסה לקבל מידע מלא על הלקוח
+            // נסה מספר endpoints שונים למציאת לקוחות
+            let customerFound = false
+            
+            // נסה 1: customers
             try {
-              const customerResponse = await this.iCountClient.request('customer/get', {
-                customer_id: clientID
+              debugLog.push(`Trying API call to customers`)
+              const customersResponse = await this.iCountClient.request('customers', {
+                limit: 100
               })
               
-              console.log(`👤 Customer response:`, JSON.stringify(customerResponse, null, 2))
+              debugLog.push(`Customers API call completed successfully`)
+              console.log(`👤 Customers response:`, JSON.stringify(customersResponse, null, 2))
               
-              if (customerResponse && customerResponse.name) {
-                clientName = customerResponse.name
-                clientPhone = customerResponse.phone || clientPhone
-                clientEmail = customerResponse.email || clientEmail
-                console.log(`✅ Found real customer: ${clientName}`)
-              } else {
-                console.log(`⚠️ No customer name found in response`)
+              if (customersResponse && customersResponse.data && customersResponse.data.length > 0) {
+                const foundCustomer = customersResponse.data.find(c => c.id == clientID || c.customer_id == clientID)
+                if (foundCustomer && foundCustomer.name) {
+                  clientName = foundCustomer.name
+                  clientPhone = foundCustomer.phone || clientPhone
+                  clientEmail = foundCustomer.email || clientEmail
+                  console.log(`✅ Found real customer: ${clientName}`)
+                  debugLog.push(`✅ Found real customer via customers: ${clientName}`)
+                  customerFound = true
+                }
               }
-            } catch (customerError) {
-              console.warn(`⚠️ Could not fetch customer ${clientID}:`, customerError.message)
-              
-              // נסה שיטה חלופית - חיפוש לקוחות
+            } catch (customersError) {
+              console.warn(`⚠️ Could not fetch customers:`, customersError.message)
+              debugLog.push(`Customers API error: ${customersError.message}`)
+            }
+            
+            // נסה 2: customer/list
+            if (!customerFound) {
               try {
-                console.log(`🔍 Trying alternative customer search...`)
-                const searchResponse = await this.iCountClient.request('customer/search', {
-                  customer_id: clientID,
-                  limit: 10
+                debugLog.push(`Trying API call to customer/list`)
+                const customerListResponse = await this.iCountClient.request('customer/list', {
+                  limit: 100
                 })
                 
-                console.log(`🔍 Customer search response:`, JSON.stringify(searchResponse, null, 2))
+                debugLog.push(`Customer list API call completed successfully`)
+                console.log(`👤 Customer list response:`, JSON.stringify(customerListResponse, null, 2))
                 
-                if (searchResponse && searchResponse.data && searchResponse.data.length > 0) {
-                  const foundCustomer = searchResponse.data[0]
-                  if (foundCustomer.name) {
+                if (customerListResponse && customerListResponse.data && customerListResponse.data.length > 0) {
+                  const foundCustomer = customerListResponse.data.find(c => c.id == clientID || c.customer_id == clientID)
+                  if (foundCustomer && foundCustomer.name) {
                     clientName = foundCustomer.name
                     clientPhone = foundCustomer.phone || clientPhone
                     clientEmail = foundCustomer.email || clientEmail
-                    console.log(`✅ Found customer via search: ${clientName}`)
+                    console.log(`✅ Found real customer: ${clientName}`)
+                    debugLog.push(`✅ Found real customer via customer/list: ${clientName}`)
+                    customerFound = true
+                  }
+                }
+              } catch (customerListError) {
+                console.warn(`⚠️ Could not fetch customer list:`, customerListError.message)
+                debugLog.push(`Customer list API error: ${customerListError.message}`)
+              }
+            }
+            
+            // נסה 3: customer/search עם פרמטרים שונים
+            if (!customerFound) {
+              try {
+                debugLog.push(`Trying API call to customer/search with text`)
+                const searchResponse = await this.iCountClient.request('customer/search', {
+                  text: clientID,
+                  limit: 10
+                })
+                
+                debugLog.push(`Customer search API call completed successfully`)
+                console.log(`👤 Customer search response:`, JSON.stringify(searchResponse, null, 2))
+                
+                if (searchResponse && searchResponse.data && searchResponse.data.length > 0) {
+                  const foundCustomer = searchResponse.data.find(c => c.id == clientID || c.customer_id == clientID)
+                  if (foundCustomer && foundCustomer.name) {
+                    clientName = foundCustomer.name
+                    clientPhone = foundCustomer.phone || clientPhone
+                    clientEmail = foundCustomer.email || clientEmail
+                    console.log(`✅ Found real customer: ${clientName}`)
+                    debugLog.push(`✅ Found real customer via customer/search: ${clientName}`)
+                    customerFound = true
                   }
                 }
               } catch (searchError) {
                 console.warn(`⚠️ Customer search also failed:`, searchError.message)
+                debugLog.push(`Customer search error: ${searchError.message}`)
               }
+            }
+            
+            if (!customerFound) {
+              console.log(`⚠️ Could not find customer ${clientID} with any API method`)
+              debugLog.push(`⚠️ Could not find customer ${clientID} with any API method`)
             }
           }
 
-          // אם עדיין אין שם לקוח, תן שם ברירת מחדל
+          // אם עדיין אין שם לקוח
           if (!clientName) {
             clientName = `לקוח iCount (${clientID || '?'})`
           }
@@ -387,13 +587,13 @@ class SyncService {
           if (!customerId) {
             debugLog.push(`Creating new customer: ${clientName}`)
             // אם אין טלפון, נשתמש במספר הלקוח מ-iCount
-            const customerPhone = clientPhone || `11-${docNum}` // השתמש במספר לקוח במקום IC-
+            const customerPhoneToUse = clientPhone || `11-${docNum}` // השתמש במספר לקוח במקום IC-
             
             const { data: newCustomer, error: customerError } = await supabase
               .from('customers')
               .insert({
                 name: clientName,
-                phone: customerPhone,
+                phone: customerPhoneToUse,
                 email: clientEmail
               })
               .select()
@@ -404,7 +604,7 @@ class SyncService {
               throw customerError
             }
             customerId = newCustomer.id
-            debugLog.push(`Created new customer: ${customerId} with phone: ${customerPhone}`)
+            debugLog.push(`Created new customer: ${customerId} with phone: ${customerPhoneToUse}`)
           }
 
           // צור הזמנה
@@ -412,7 +612,7 @@ class SyncService {
             // order_number will be auto-generated by SERIAL
             customer_id: customerId,
             customer_name: clientName,
-            customer_phone: clientPhone || `11-${docNum}`,
+            customer_phone: customerPhoneToUse || `11-${docNum}`,
             contact_person: fullDoc.contact_person || '',
             id_number: fullDoc.client_taxid || '',
             total: subtotal,
@@ -1049,6 +1249,7 @@ class SyncService {
 }
 
 // ייצוא instance יחיד
+export { SyncService }
 export const syncService = new SyncService()
 
 // פונקציות עזר לשימוש ישיר

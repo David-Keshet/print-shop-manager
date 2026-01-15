@@ -21,7 +21,7 @@ export default function TasksBoard() {
   const [columns, setColumns] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedDepartment, setSelectedDepartment] = useState(null)
-  const [departmentsSidebarCollapsed, setDepartmentsSidebarCollapsed] = useState(false)
+  const [departmentsSidebarCollapsed, setDepartmentsSidebarCollapsed] = useState(true)
 
   // Department management modal
   const [showDepartmentManagementModal, setShowDepartmentManagementModal] = useState(false)

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, Home, Package, ClipboardList, Users, FileText, BarChart3, UserCog, Database, Settings } from 'lucide-react'
+import { Menu, Home, Package, ClipboardList, Users, FileText, BarChart3, UserCog, Truck, Settings } from 'lucide-react'
 import SyncIndicator from './SyncIndicator'
 
 export default function Layout({ children }) {
@@ -21,15 +21,15 @@ export default function Layout({ children }) {
   }
 
   const menuItems = [
-    { path: '/', icon: Home, label: 'דף הבית', color: 'indigo' },
+    { path: '/', icon: Home, label: 'עמוד הבית', color: 'indigo' },
     { path: '/orders', icon: Package, label: 'הזמנות', color: 'blue' },
-    { path: '/tasks/board', icon: ClipboardList, label: 'לוח משימות', color: 'green' },
-    { path: '/customers', icon: Users, label: 'לקוחות', color: 'purple' },
     { path: '/documents', icon: FileText, label: 'מסמכים', color: 'amber' },
     { path: '/reports', icon: BarChart3, label: 'דוחות', color: 'orange' },
-    { path: '/users', icon: UserCog, label: 'ניהול משתמשים', color: 'pink' },
-    { path: '/cache', icon: Database, label: 'Cache', color: 'teal' },
-    { path: '/settings', icon: Settings, label: 'הגדרות מערכת', color: 'gray' },
+    { path: '/customers', icon: Users, label: 'לקוחות', color: 'purple' },
+    { path: '/tasks/board', icon: ClipboardList, label: 'לוח המשימות', color: 'green' },
+    { path: '/suppliers', icon: Truck, label: 'ספקים', color: 'cyan' },
+    { path: '/users', icon: UserCog, label: 'משתמשים', color: 'pink' },
+    { path: '/settings', icon: Settings, label: 'הגדרות', color: 'gray' },
   ]
 
   const handleLinkClick = () => {

@@ -120,10 +120,12 @@ export default function Home() {
 
   const quickActions = [
     { href: '/orders', icon: '📦', label: 'הזמנות', desc: 'ניהול הזמנות', gradient: 'from-blue-600 to-blue-800', hoverGlow: 'hover:shadow-blue-500/25' },
-    { href: '/tasks/board', icon: '📌', label: 'לוח משימות', desc: 'מעקב משימות', gradient: 'from-emerald-600 to-emerald-800', hoverGlow: 'hover:shadow-emerald-500/25' },
-    { href: '/customers', icon: '👥', label: 'לקוחות', desc: 'ניהול לקוחות', gradient: 'from-violet-600 to-violet-800', hoverGlow: 'hover:shadow-violet-500/25' },
     { href: '/documents', icon: '📄', label: 'מסמכים', desc: 'ניהול מסמכים', gradient: 'from-amber-600 to-amber-800', hoverGlow: 'hover:shadow-amber-500/25' },
     { href: '/reports', icon: '📊', label: 'דוחות', desc: 'צפייה בדוחות', gradient: 'from-rose-600 to-rose-800', hoverGlow: 'hover:shadow-rose-500/25' },
+    { href: '/customers', icon: '👥', label: 'לקוחות', desc: 'ניהול לקוחות', gradient: 'from-violet-600 to-violet-800', hoverGlow: 'hover:shadow-violet-500/25' },
+    { href: '/tasks/board', icon: '📌', label: 'לוח משימות', desc: 'מעקב משימות', gradient: 'from-emerald-600 to-emerald-800', hoverGlow: 'hover:shadow-emerald-500/25' },
+    { href: '/suppliers', icon: '🚚', label: 'ספקים', desc: 'ניהול ספקים', gradient: 'from-cyan-600 to-cyan-800', hoverGlow: 'hover:shadow-cyan-500/25' },
+    { href: '/users', icon: '👤', label: 'משתמשים', desc: 'ניהול משתמשים', gradient: 'from-pink-600 to-pink-800', hoverGlow: 'hover:shadow-pink-500/25' },
     { href: '/settings', icon: '⚙️', label: 'הגדרות', desc: 'הגדרות מערכת', gradient: 'from-slate-600 to-slate-800', hoverGlow: 'hover:shadow-slate-500/25' },
   ]
 

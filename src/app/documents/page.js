@@ -5,17 +5,13 @@ import Layout from '@/components/Layout'
 import Link from 'next/link'
 import {
   FileText,
-  Plus,
   Search,
-  Filter,
   Download,
   Send,
   CheckCircle,
   XCircle,
   Clock,
   AlertTriangle,
-  RefreshCw,
-  Cloud,
   Receipt,
   CreditCard,
   FileCheck
@@ -37,7 +33,6 @@ export default function DocumentsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     fetchDocuments()
@@ -69,22 +64,6 @@ export default function DocumentsPage() {
       console.error('Error fetching documents:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const syncDocuments = async () => {
-    try {
-      setSyncing(true)
-      const response = await fetch('/api/invoices/sync')
-      const data = await response.json()
-
-      if (data.success) {
-        await fetchDocuments()
-      }
-    } catch (error) {
-      console.error('Error syncing:', error)
-    } finally {
-      setSyncing(false)
     }
   }
 
@@ -143,20 +122,12 @@ export default function DocumentsPage() {
     )
   })
 
-  // Calculate statistics
-  const totalAmount = documents.reduce((sum, d) => sum + parseFloat(d.total_amount || 0), 0)
-  const unpaidAmount = documents
-    .filter(d => d.payment_status === 'unpaid')
-    .reduce((sum, d) => sum + parseFloat(d.total_amount || 0), 0)
-  const syncedCount = documents.filter(d => d.sync_status === 'synced').length
-  const pendingSyncCount = documents.filter(d => d.sync_status === 'pending').length
-
   return (
     <Layout>
       <div className="min-h-screen p-6">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <div>
               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                 <FileText size={32} />
@@ -165,31 +136,6 @@ export default function DocumentsPage() {
               <p className="text-gray-400 mt-1">
                 ניהול חשבוניות, קבלות, זיכויים ומסמכים נוספים עם סנכרון ל-iCount
               </p>
-            </div>
-
-            <div className="flex gap-3">
-              <Link href="/documents/icount">
-                <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
-                  <Cloud size={18} />
-                  מסמכים מ-iCount
-                </button>
-              </Link>
-
-              <button
-                onClick={syncDocuments}
-                disabled={syncing}
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-              >
-                <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
-                {syncing ? 'מסנכרן...' : 'סנכרון'}
-              </button>
-
-              <Link href="/orders">
-                <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-                  <Plus size={18} />
-                  מסמך חדש מהזמנה
-                </button>
-              </Link>
             </div>
           </div>
 
@@ -233,33 +179,6 @@ export default function DocumentsPage() {
                 <option value="partially_paid">שולם חלקית</option>
               </optgroup>
             </select>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-4 text-white">
-            <div className="text-sm opacity-90 mb-1">סה"כ מסמכים</div>
-            <div className="text-3xl font-bold">{documents.length}</div>
-          </div>
-
-          <div className="bg-gradient-to-br from-yellow-600 to-yellow-700 rounded-xl p-4 text-white">
-            <div className="text-sm opacity-90 mb-1">ממתינים לתשלום</div>
-            <div className="text-3xl font-bold">₪{unpaidAmount.toLocaleString('he-IL', { maximumFractionDigits: 0 })}</div>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-4 text-white">
-            <div className="text-sm opacity-90 mb-1">מסונכרנים</div>
-            <div className="text-3xl font-bold">
-              {syncedCount} / {documents.length}
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-4 text-white">
-            <div className="text-sm opacity-90 mb-1">סה"כ סכום</div>
-            <div className="text-2xl font-bold">
-              ₪{totalAmount.toLocaleString('he-IL', { maximumFractionDigits: 0 })}
-            </div>
           </div>
         </div>
 

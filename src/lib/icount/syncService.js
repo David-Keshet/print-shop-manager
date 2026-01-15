@@ -166,7 +166,7 @@ class SyncService {
         console.log(`🔍 iCount Sync (Multi-type): ${fromDate} to ${toDate}`)
 
         // משיכה של סוגים שונים בנפרד כי 'all' חסום למשתמש
-        const typesToSync = ['invoice', 'invrec', 'receipt', 'credit']
+        const typesToSync = ['invoice', 'invrec', 'receipt', 'credit', 'deal', 'proposal', 'proforma', 'order']
         documents = []
 
         // נסיון חיפוש ספציפי לפי מילה כדי למצוא את "משרד ראש הממשלה"
@@ -267,8 +267,8 @@ class SyncService {
           let vat = parseFloat(fullDoc.vat_amount || fullDoc.sum_vat || 0)
 
           if (total > 0 && subtotal === 0 && vat === 0) {
-            // אם יש סה"כ אבל אין פירוט, נחשב לפי 17% (מע"מ ישראל)
-            subtotal = total / 1.17
+            // אם יש סה"כ אבל אין פירוט, נחשב לפי 18% (מע"מ ישראל החל מ-2025)
+            subtotal = total / 1.18
             vat = total - subtotal
           }
 
@@ -302,28 +302,56 @@ class SyncService {
 
           console.log(`💾 Upserting invoice ${docNum} for: ${clientName}`)
 
-          const { error: upsertError } = await supabase
+          const { data: savedInvoice, error: upsertError } = await supabase
             .from('invoices')
             .upsert(invoiceData, {
               onConflict: 'invoice_number',
               ignoreDuplicates: false
             })
+            .select()
+            .single()
 
           if (upsertError) {
             console.error(`❌ Error upserting invoice ${docNum}:`, upsertError)
             errors++
-          } else {
-            created++
+            continue
+          }
+
+          created++
+
+          // שמירת פריטי החשבונית (Items)
+          const items = fullDoc.items || fullDoc.lines || []
+          if (items.length > 0) {
+            console.log(`📦 Saving ${items.length} items for invoice ${docNum}`)
+
+            // מחיקת פריטים ישנים אם קיימים (כדי למנוע כפילויות בעדכון)
+            await supabase.from('invoice_items').delete().eq('invoice_id', savedInvoice.id)
+
+            const invoiceItems = items.map((item, index) => ({
+              invoice_id: savedInvoice.id,
+              description: item.description || item.name || 'פריט כללי',
+              quantity: parseFloat(item.quantity || 1),
+              unit_price: parseFloat(item.unit_price || item.price || 0),
+              vat_rate: parseFloat(item.vat_rate || 18.00),
+              vat_amount: parseFloat(item.vat_amount || 0),
+              total: parseFloat(item.total || item.sum || 0),
+              line_number: index + 1
+            }))
+
+            const { error: itemsError } = await supabase
+              .from('invoice_items')
+              .insert(invoiceItems)
+
+            if (itemsError) console.error(`❌ Error saving items for ${docNum}:`, itemsError)
           }
 
           await this.logSync({
             entity_type: 'invoice',
-            entity_id: 0,
+            entity_id: savedInvoice.id,
             operation: 'upsert',
             direction: 'from_icount',
-            status: upsertError ? 'failed' : 'success',
-            response_data: fullDoc,
-            error_message: upsertError?.message
+            status: 'success',
+            response_data: fullDoc
           })
 
         } catch (docError) {
@@ -355,8 +383,11 @@ class SyncService {
       invrec: 'invoice_receipt',
       receipt: 'receipt',
       credit: 'credit',
-      quote: 'invoice', // הצעת מחיר → חשבונית
-      deal: 'invoice',
+      quote: 'quote', // הצעת מחיר
+      proposal: 'quote', // הצעת מחיר
+      deal: 'quote', // הזמנת עבודה/עסקה
+      order: 'quote', // הזמנה
+      proforma: 'invoice', // חשבונית פרופורמה
     }
     return typeMap[type] || 'invoice'
   }

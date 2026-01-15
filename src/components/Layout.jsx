@@ -80,13 +80,13 @@ export default function Layout({ children }) {
               </button>
             </Link>
 
-            <Link href="/invoices" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/invoices')
+            <Link href="/documents" onClick={() => setSidebarOpen(false)}>
+              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/documents')
                   ? 'bg-amber-500/30 border-amber-400/50 shadow-lg'
                   : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
                 }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">🧾</span>
-                {sidebarOpen && <span>חשבוניות</span>}
+                <span className="text-2xl group-hover:scale-110 transition-transform">📄</span>
+                {sidebarOpen && <span>מסמכים</span>}
               </button>
             </Link>
 

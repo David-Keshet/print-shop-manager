@@ -224,12 +224,28 @@ export class InvoiceService {
 
   /**
    * בניית מסמך לפורמט של iCount
+   * תמיכה בכל סוגי המסמכים: חשבוניות, קבלות, זיכויים וכו'
    */
   buildICountDocument(invoice) {
     const customer = invoice.customers
 
+    // קביעת סוג המסמך ב-iCount בהתאם לסוג המסמך המקומי
+    const getICountDocumentType = (localType) => {
+      const typeMapping = {
+        'invoice': 'invoice',                    // חשבונית מס
+        'invoice_receipt': 'invoice_receipt',    // חשבונית מס קבלה
+        'receipt': 'receipt',                    // קבלה
+        'credit': 'credit',                      // חשבונית זיכוי
+        'quote': 'quote',                        // הצעת מחיר
+        'delivery_note': 'delivery_note',        // תעודת משלוח
+        'return': 'return',                      // החזרה
+        'purchase': 'purchase'                   // חשבונית קניה
+      }
+      return typeMapping[localType] || 'invoice'
+    }
+
     return {
-      type: invoice.invoice_type,
+      type: getICountDocumentType(invoice.invoice_type),
       lang: 'he',
       currency: 'ILS',
 
@@ -258,8 +274,8 @@ export class InvoiceService {
       // הערות
       remarks: invoice.notes,
 
-      // הגדרות נוספות
-      income: true, // חשבונית הכנסה
+      // הגדרות נוספות בהתאם לסוג המסמך
+      income: ['invoice', 'invoice_receipt', 'receipt'].includes(invoice.invoice_type), // מסמכי הכנסה
       vat_type: 0, // כולל מע"מ
     }
   }
@@ -275,7 +291,8 @@ export class InvoiceService {
   }
 
   /**
-   * קבלת רשימת חשבוניות
+   * קבלת רשימת חשבוניות/מסמכים
+   * תמיכה בסינון לפי סוג מסמך (document type)
    */
   async getInvoices(filters = {}) {
     let query = supabase
@@ -297,6 +314,11 @@ export class InvoiceService {
 
     if (filters.payment_status) {
       query = query.eq('payment_status', filters.payment_status)
+    }
+
+    // סנן לפי סוג מסמך (document type)
+    if (filters.invoice_type) {
+      query = query.eq('invoice_type', filters.invoice_type)
     }
 
     const { data, error } = await query

@@ -2,31 +2,37 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Package, Users, DollarSign, TrendingUp, Calendar, RefreshCw, Clock, AlertCircle, CheckCircle2, CloudSync, Database } from 'lucide-react'
+import { Calendar, Clock, AlertCircle, Zap, ArrowUpRight, ClipboardList, Package } from 'lucide-react'
 import Layout from '@/components/Layout'
 
 export const dynamic = 'force-dynamic'
 
 export default function Home() {
-  const [stats, setStats] = useState({
-    activeOrders: 0,
-    totalCustomers: 0,
-    monthlyRevenue: 0
-  })
   const [recentOrders, setRecentOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [syncing, setSyncing] = useState(false)
-  const [syncMessage, setSyncMessage] = useState(null)
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
   const [currentDateDisplay, setCurrentDateDisplay] = useState('')
   const [mounted, setMounted] = useState(false)
   const [fromCache, setFromCache] = useState(false)
+  const [greeting, setGreeting] = useState('')
 
   useEffect(() => {
     setMounted(true)
-    // Set date on client side to avoid hydration mismatch
+    
+    // Set greeting based on time of day
+    const hour = new Date().getHours()
+    if (hour >= 5 && hour < 12) {
+      setGreeting('בוקר טוב! ☀️')
+    } else if (hour >= 12 && hour < 17) {
+      setGreeting('צהריים טובים! 🌤️')
+    } else if (hour >= 17 && hour < 21) {
+      setGreeting('ערב טוב! 🌆')
+    } else {
+      setGreeting('לילה טוב! 🌙')
+    }
+
     const date = new Date()
     setCurrentDateDisplay(date.toLocaleDateString('he-IL', {
       weekday: 'long',
@@ -37,7 +43,6 @@ export default function Home() {
 
     fetchStats()
 
-    // Auto refresh every 30 seconds
     const interval = setInterval(() => {
       fetchStats(true)
     }, 30000)
@@ -54,18 +59,8 @@ export default function Home() {
     setError(null)
 
     try {
-      // Use cached API endpoints for faster loading
-      const [statsResponse, ordersResponse] = await Promise.all([
-        fetch('/api/cache/stats'),
-        fetch('/api/cache/orders?limit=5&type=recent')
-      ])
-
-      const statsData = await statsResponse.json()
+      const ordersResponse = await fetch('/api/cache/orders?limit=5&type=recent')
       const ordersData = await ordersResponse.json()
-
-      if (!statsData.success) {
-        throw new Error(statsData.error || 'שגיאה בטעינת סטטיסטיקות')
-      }
 
       if (!ordersData.success) {
         console.error('Error fetching recent orders:', ordersData.error)
@@ -74,24 +69,8 @@ export default function Home() {
         setRecentOrders(ordersData.data || [])
       }
 
-      setStats({
-        activeOrders: statsData.data.activeOrders || 0,
-        totalCustomers: statsData.data.totalCustomers || 0,
-        monthlyRevenue: statsData.data.monthlyRevenue || 0
-      })
-
       setLastUpdate(new Date())
-
-      // Track cache status
-      setFromCache(statsData.fromCache || ordersData.fromCache)
-
-      // Log cache status for debugging
-      if (statsData.fromCache) {
-        console.log('📦 Stats loaded from cache')
-      }
-      if (ordersData.fromCache) {
-        console.log('📦 Orders loaded from cache')
-      }
+      setFromCache(ordersData.fromCache)
 
     } catch (err) {
       console.error('Error in fetchStats:', err)
@@ -102,255 +81,174 @@ export default function Home() {
     }
   }
 
-  const handleManualRefresh = () => {
-    fetchStats()
-  }
-
-  const handleSyncFromICount = async () => {
-    setSyncing(true)
-    setSyncMessage(null)
-    setError(null)
-
-    try {
-      const response = await fetch('/api/icount/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'all' })
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        setSyncMessage('✅ סנכרון הושלם בהצלחה!')
-
-        // Clear cache to force fresh data
-        await Promise.all([
-          fetch('/api/cache/stats', { method: 'DELETE' }),
-          fetch('/api/cache/orders', { method: 'DELETE' })
-        ])
-
-        // Refresh stats after sync with fresh data
-        fetchStats()
-      } else {
-        setError(data.message || 'שגיאה בסנכרון')
-      }
-    } catch (err) {
-      console.error('Sync error:', err)
-      setError('שגיאה בסנכרון עם iCount')
-    } finally {
-      setSyncing(false)
-      // Clear message after 3 seconds
-      setTimeout(() => setSyncMessage(null), 3000)
-    }
-  }
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      'new': { label: 'חדש', color: 'bg-blue-100 text-blue-800' },
-      'in_progress': { label: 'בתהליך', color: 'bg-yellow-100 text-yellow-800' },
-      'ready': { label: 'מוכן', color: 'bg-green-100 text-green-800' },
-      'completed': { label: 'הושלם', color: 'bg-gray-100 text-gray-800' }
+      'new': { label: 'חדש', color: 'bg-blue-500/20 text-blue-300 border border-blue-500/30' },
+      'in_progress': { label: 'בתהליך', color: 'bg-amber-500/20 text-amber-300 border border-amber-500/30' },
+      'ready': { label: 'מוכן', color: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' },
+      'completed': { label: 'הושלם', color: 'bg-slate-500/20 text-slate-300 border border-slate-500/30' }
     }
-    const statusInfo = statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800' }
+    const statusInfo = statusMap[status] || { label: status, color: 'bg-slate-500/20 text-slate-300 border border-slate-500/30' }
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusInfo.color}`}>
+      <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${statusInfo.color}`}>
         {statusInfo.label}
       </span>
     )
   }
 
+  const quickActions = [
+    { href: '/orders', icon: '📦', label: 'הזמנות', desc: 'ניהול הזמנות', gradient: 'from-blue-600 to-blue-800', hoverGlow: 'hover:shadow-blue-500/25' },
+    { href: '/tasks/board', icon: '📌', label: 'לוח משימות', desc: 'מעקב משימות', gradient: 'from-emerald-600 to-emerald-800', hoverGlow: 'hover:shadow-emerald-500/25' },
+    { href: '/customers', icon: '👥', label: 'לקוחות', desc: 'ניהול לקוחות', gradient: 'from-violet-600 to-violet-800', hoverGlow: 'hover:shadow-violet-500/25' },
+    { href: '/documents', icon: '📄', label: 'מסמכים', desc: 'ניהול מסמכים', gradient: 'from-amber-600 to-amber-800', hoverGlow: 'hover:shadow-amber-500/25' },
+    { href: '/reports', icon: '📊', label: 'דוחות', desc: 'צפייה בדוחות', gradient: 'from-rose-600 to-rose-800', hoverGlow: 'hover:shadow-rose-500/25' },
+    { href: '/settings', icon: '⚙️', label: 'הגדרות', desc: 'הגדרות מערכת', gradient: 'from-slate-600 to-slate-800', hoverGlow: 'hover:shadow-slate-500/25' },
+  ]
+
   return (
     <Layout>
-      <div className="h-screen overflow-hidden flex flex-col p-4">
-        {/* Hero Section - Compact */}
-        <div className="mb-4 flex-shrink-0">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              {mounted && currentDateDisplay && (
-                <div className="flex items-center gap-2 text-sm text-blue-200">
-                  <Calendar size={14} className="text-blue-300" />
-                  {currentDateDisplay}
-                </div>
-              )}
-              {lastUpdate && (
-                <div className="flex items-center gap-2 text-xs text-gray-300">
-                  <Clock size={12} />
-                  {lastUpdate.toLocaleTimeString('he-IL')}
-                  {fromCache && (
-                    <span className="flex items-center gap-1 bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full">
-                      <Database size={10} />
-                      Cache
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Sync Button */}
-            <button
-              onClick={handleSyncFromICount}
-              disabled={syncing}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-sm font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg"
-            >
-              <CloudSync size={16} className={syncing ? 'animate-spin' : ''} />
-              {syncing ? 'מסנכרן...' : 'סנכרן עם iCount'}
-            </button>
-          </div>
-
-          {/* Success Message */}
-          {syncMessage && (
-            <div className="flex items-center gap-2 text-green-400 bg-green-900/20 px-3 py-1.5 rounded-lg text-xs animate-pulse">
-              <CheckCircle2 size={14} />
-              {syncMessage}
-            </div>
-          )}
-
-          {/* Error Display */}
-          {error && (
-            <div className="flex items-center gap-2 text-red-400 bg-red-900/20 px-3 py-1.5 rounded-lg text-xs">
-              <AlertCircle size={14} />
-              {error}
-            </div>
-          )}
+      <div className="min-h-screen p-6 lg:p-8">
+        {/* Background Effects */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-3xl"></div>
         </div>
 
-        {/* Stats Grid - Compact */}
-        <div className="grid grid-cols-3 gap-4 mb-4 flex-shrink-0">
-          {/* Active Orders Card */}
-          <Link href="/orders">
-            <div className="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 shadow-xl hover:shadow-blue-500/50 transition-all hover:scale-105 cursor-pointer relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-white/20 rounded-xl">
-                    <Package size={20} className="text-white" />
+        <div className="relative z-10 max-w-7xl mx-auto">
+          {/* Header Section */}
+          <header className="mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl lg:text-4xl text-white mb-2">
+                  {mounted && greeting}
+                </h1>
+                <p className="text-slate-400 text-xl">ברוכים הבאים למערכת ניהול דפוס קשת</p>
+                {mounted && currentDateDisplay && (
+                  <div className="flex items-center gap-2 mt-3 text-slate-500">
+                    <Calendar size={16} />
+                    <span>{currentDateDisplay}</span>
                   </div>
-                  <span className="text-[10px] font-bold bg-white/30 text-white px-2 py-0.5 rounded-full animate-pulse">
-                    LIVE
-                  </span>
-                </div>
-                <div className="text-4xl font-black text-white mb-1">
-                  {loading ? '...' : stats.activeOrders}
-                </div>
-                <div className="text-blue-100 text-sm font-semibold">
-                  הזמנות פעילות
-                </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Last Update Info */}
+                {lastUpdate && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 text-sm text-slate-400">
+                    <Clock size={14} />
+                    <span>עודכן: {lastUpdate.toLocaleTimeString('he-IL')}</span>
+                    {fromCache && (
+                      <span className="flex items-center gap-1 bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full text-xs">
+                        <Zap size={10} />
+                        מהיר
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Sync Button removed */}
               </div>
             </div>
-          </Link>
 
-          {/* Total Customers Card */}
-          <Link href="/customers">
-            <div className="group bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 shadow-xl hover:shadow-green-500/50 transition-all hover:scale-105 cursor-pointer relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-white/20 rounded-xl">
-                    <Users size={20} className="text-white" />
-                  </div>
-                  <span className="text-[10px] font-bold bg-white/30 text-white px-2 py-0.5 rounded-full">
-                    TOTAL
-                  </span>
-                </div>
-                <div className="text-4xl font-black text-white mb-1">
-                  {loading ? '...' : stats.totalCustomers}
-                </div>
-                <div className="text-green-100 text-sm font-semibold">
-                  לקוחות במערכת
-                </div>
+
+            {error && (
+              <div className="mt-4 flex items-center gap-2 text-red-400 bg-red-500/10 border border-red-500/20 px-4 py-3 rounded-xl text-sm">
+                <AlertCircle size={16} />
+                {error}
               </div>
-            </div>
-          </Link>
+            )}
+          </header>
 
-          {/* Monthly Revenue Card */}
-          <Link href="/reports">
-            <div className="group bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 shadow-xl hover:shadow-purple-500/50 transition-all hover:scale-105 cursor-pointer relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2 bg-white/20 rounded-xl">
-                    <DollarSign size={20} className="text-white" />
-                  </div>
-                  <span className="text-[10px] font-bold bg-white/30 text-white px-2 py-0.5 rounded-full">
-                    MONTH
-                  </span>
-                </div>
-                <div className="text-3xl font-black text-white mb-1">
-                  {loading ? '...' : `₪${stats.monthlyRevenue.toLocaleString('he-IL', { maximumFractionDigits: 0 })}`}
-                </div>
-                <div className="text-purple-100 text-sm font-semibold">
-                  הכנסות החודש
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
 
-        {/* Recent Orders & Quick Actions - Side by Side */}
-        <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden">
-          {/* Recent Orders Section */}
-          {recentOrders.length > 0 && (
-            <div className="flex flex-col overflow-hidden">
-              <h2 className="text-xl font-bold text-gray-200 mb-3">הזמנות אחרונות</h2>
-              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 border border-white/10 flex-1 overflow-y-auto">
-                <div className="space-y-2">
-                  {recentOrders.map((order) => (
-                    <Link key={order.id} href={`/orders`}>
-                      <div className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all cursor-pointer group">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                            <Package size={16} className="text-blue-300" />
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Quick Actions */}
+            <section className="lg:col-span-1">
+              <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/30">
+                <h2 className="text-2xl text-white mb-5 flex items-center gap-2">
+                  <Zap size={20} className="text-amber-400" />
+                  גישה מהירה
+                </h2>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  {quickActions.map((action, index) => (
+                    <Link key={index} href={action.href}>
+                      <div className={`group relative bg-gradient-to-br ${action.gradient} rounded-xl p-4 transition-all duration-300 hover:scale-105 ${action.hoverGlow} hover:shadow-xl cursor-pointer overflow-hidden`}>
+                        <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors"></div>
+                        <div className="relative">
+                          <div className="text-3xl mb-2 group-hover:scale-110 transition-transform duration-300">
+                            {action.icon}
                           </div>
-                          <div>
-                            <div className="text-white text-sm font-semibold">הזמנה #{order.order_number}</div>
-                            <div className="text-gray-400 text-xs">{order.customer_name}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-white text-sm font-bold">₪{parseFloat(order.total_with_vat).toLocaleString('he-IL')}</div>
-                          {getStatusBadge(order.status)}
+                          <div className="text-white text-base">{action.label}</div>
+                          <div className="text-white/70 text-sm mt-0.5">{action.desc}</div>
                         </div>
                       </div>
                     </Link>
                   ))}
                 </div>
               </div>
-            </div>
-          )}
+            </section>
 
-          {/* Quick Actions */}
-          <div className="flex flex-col overflow-hidden">
-            <h2 className="text-xl font-bold text-gray-200 mb-3">גישה מהירה</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Link href="/orders">
-                <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-white/10 hover:border-blue-500 cursor-pointer">
-                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📦</div>
-                  <div className="text-sm font-bold text-white">הזמנות</div>
+            {/* Recent Orders */}
+            <section className="lg:col-span-2">
+              <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/30 h-full">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-2xl text-white flex items-center gap-2">
+                    <ClipboardList size={20} className="text-blue-400" />
+                    פעולות אחרונות
+                  </h2>
+                  <Link href="/orders" className="text-blue-400 hover:text-blue-300 text-base flex items-center gap-1 transition-colors">
+                    צפה בכל
+                    <ArrowUpRight size={14} />
+                  </Link>
                 </div>
-              </Link>
 
-              <Link href="/tasks/board">
-                <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-white/10 hover:border-green-500 cursor-pointer">
-                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📌</div>
-                  <div className="text-sm font-bold text-white">לוח משימות</div>
-                </div>
-              </Link>
-
-              <Link href="/customers">
-                <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-white/10 hover:border-purple-500 cursor-pointer">
-                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">👥</div>
-                  <div className="text-sm font-bold text-white">לקוחות</div>
-                </div>
-              </Link>
-
-              <Link href="/reports">
-                <div className="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-white/10 hover:border-orange-500 cursor-pointer">
-                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📊</div>
-                  <div className="text-sm font-bold text-white">דוחות</div>
-                </div>
-              </Link>
-            </div>
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="h-16 bg-slate-700/30 rounded-xl animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : recentOrders.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentOrders.map((order) => (
+                      <Link key={order.id} href="/orders">
+                        <div className="group flex items-center justify-between p-4 bg-slate-700/20 hover:bg-slate-700/40 rounded-xl transition-all cursor-pointer border border-transparent hover:border-slate-600/50">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-xl flex items-center justify-center border border-blue-500/20">
+                              <Package size={20} className="text-blue-400" />
+                            </div>
+                            <div>
+                              <div className="text-white text-base">הזמנה #{order.order_number}</div>
+                              <div className="text-slate-300 text-sm">{order.customer_name}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-left">
+                              <div className="text-white text-base">₪{parseFloat(order.total_with_vat).toLocaleString('he-IL')}</div>
+                            </div>
+                            {getStatusBadge(order.status)}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                    <Package size={48} className="mb-4 opacity-50" />
+                    <p className="text-base">אין הזמנות אחרונות</p>
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
+
+          {/* Footer */}
+          <footer className="mt-8 text-center text-slate-500 text-sm">
+            <p>© 2026 דפוס קשת - מערכת ניהול מתקדמת</p>
+          </footer>
         </div>
       </div>
     </Layout>

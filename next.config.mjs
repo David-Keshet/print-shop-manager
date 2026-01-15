@@ -12,9 +12,33 @@ const nextConfig = {
     pagesBufferLength: 2, // רק 2 דפים ב-buffer במקום 5
   },
 
-  // ניקוי cache אוטומטי ב-build
+  // ניקוי cache אוטומטי ב-build - פתרון אגרסיבי
   generateBuildId: async () => {
-    return Date.now().toString();
+    const now = new Date();
+    return `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}-${Math.random().toString(36).substr(2, 9)}`;
+  },
+
+  // הוספת headers נגד cache
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          },
+        ],
+      },
+    ];
   },
 
   // שיפור HMR

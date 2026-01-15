@@ -4,12 +4,9 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { getICountClient } from './client'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+import { ICountClient } from './client.js'
+import { supabase } from '../supabase.js'
+import { decrypt } from '../encryption.js'
 
 class SyncService {
   constructor() {
@@ -35,10 +32,10 @@ class SyncService {
     }
 
     // צור client עם הגדרות
-    this.iCountClient = getICountClient({
+    this.iCountClient = new ICountClient({
       cid: settings.cid,
       user: settings.user_name,
-      pass: settings.encrypted_pass, // TODO: decrypt
+      pass: decrypt(settings.encrypted_pass),
     })
 
     return this.iCountClient
@@ -114,6 +111,7 @@ class SyncService {
    * סנכרון לקוחות מ-iCount
    */
   async syncCustomers() {
+    await this.initializeICountClient()
     console.log('👥 Syncing customers from iCount...')
 
     try {
@@ -135,6 +133,7 @@ class SyncService {
    * סנכרון חשבוניות מ-iCount
    */
   async syncInvoices() {
+    await this.initializeICountClient()
     console.log('📄 Syncing invoices from iCount...')
 
     let created = 0
@@ -150,112 +149,186 @@ class SyncService {
       let documents = []
 
       try {
-        // ננסה כמה דרכים למשוך מסמכים
-
-        // אופציה 1: חיפוש לפי תאריך (חודש אחרון)
         const lastMonth = new Date()
-        lastMonth.setMonth(lastMonth.getMonth() - 1)
-        const fromDate = lastMonth.toISOString().split('T')[0]
+        const today = new Date()
+        lastMonth.setMonth(lastMonth.getMonth() - 2) // משוך חודשיים אחרונים ליתר ביטחון
 
-        const response = await this.iCountClient.request('doc/search', {
-          from_date: fromDate,
-          limit: 100,
-          offset: 0
-        })
+        const formatDate = (date) => {
+          const d = date.getDate().toString().padStart(2, '0')
+          const m = (date.getMonth() + 1).toString().padStart(2, '0')
+          const y = date.getFullYear()
+          return `${y}-${m}-${d}` // Try YYYY-MM-DD
+        }
 
-        documents = response?.data || response || []
+        const fromDate = formatDate(lastMonth)
+        const toDate = formatDate(today)
+
+        console.log(`🔍 iCount Sync (Multi-type): ${fromDate} to ${toDate}`)
+
+        // משיכה של סוגים שונים בנפרד כי 'all' חסום למשתמש
+        const typesToSync = ['invoice', 'invrec', 'receipt', 'credit']
+        documents = []
+
+        // נסיון חיפוש ספציפי לפי מילה כדי למצוא את "משרד ראש הממשלה"
+        try {
+          console.log('🔍 Searching specifically for "משרד ראש הממשלה"...')
+          const searchResponse = await this.iCountClient.request('doc/search', {
+            free_text: 'משרד ראש הממשלה',
+            doc_type: 'all',
+            limit: 100
+          })
+          const specificDocs = (searchResponse?.results_list || searchResponse?.data || []).map(d => ({ ...d, doctype: d.doctype || d.doc_type || 'invoice' }))
+          console.log(`✅ Found ${specificDocs.length} documents matching search term`)
+
+          if (specificDocs.length > 0) {
+            documents = [...specificDocs]
+          } else {
+            // נסיון נוסף עם חלק מהשם
+            const altSearch = await this.iCountClient.request('doc/search', {
+              free_text: 'משרד ראש',
+              limit: 50
+            })
+            const altDocs = (altSearch?.results_list || altSearch?.data || []).map(d => ({ ...d, doctype: d.doctype || d.doc_type || 'invoice' }))
+            documents = [...altDocs]
+          }
+        } catch (searchErr) {
+          console.warn('⚠️ Specific search failed:', searchErr.message)
+        }
+
+        // המשך למשיכה רגילה בשיטת הסוגים
+        for (const type of typesToSync) {
+          try {
+            console.log(`📡 Fetching ${type}...`)
+            const response = await this.iCountClient.request('doc/search', {
+              from_date: fromDate,
+              to_date: toDate,
+              date_from: fromDate,
+              date_to: toDate,
+              doc_type: type,
+              doctype: type,
+              free_text: ' ',
+              limit: 100
+            })
+            const batch = (response?.results_list || response?.data || []).map(d => ({ ...d, doctype: d.doctype || d.doc_type || type }))
+
+            // הימנע מכפילויות
+            const newDocs = batch.filter(b => !documents.some(d => d.docnum === b.docnum && (d.doctype || d.type) === (b.doctype || b.type)))
+            documents = [...documents, ...newDocs]
+            console.log(`✅ Got ${newDocs.length} new documents of type ${type}`)
+          } catch (e) {
+            console.warn(`⚠️ Failed to sync type ${type}:`, e.message)
+          }
+        }
       } catch (apiError) {
-        // אם doc/search לא עובד, נחזיר הודעה מפורטת
-        console.error('❌ iCount API error:', apiError.message)
+        console.error('❌ iCount API global error:', apiError.message)
         return {
           synced: 0,
           created: 0,
           updated: 0,
           errors: 1,
-          message: `Failed to fetch from iCount: ${apiError.message}. Try again in a few minutes if rate limited.`,
+          message: `Failed to fetch from iCount: ${apiError.message}.`,
         }
       }
 
-      console.log(`📦 Found ${documents.length} documents in iCount`)
+      console.log(`📦 Found total ${documents.length} documents in iCount`)
 
-      if (documents.length === 0) {
-        return {
-          synced: 0,
-          created: 0,
-          updated: 0,
-          errors: 0,
-          message: 'No documents found in iCount or unable to fetch them',
-        }
-      }
+      let created = 0
+      let updated = 0
+      let errors = 0
 
-      // עבור על כל מסמך ויצור/עדכן חשבונית
       for (const doc of documents) {
         try {
-          // בדוק אם החשבונית כבר קיימת (לפי icount_doc_id)
-          const { data: existing } = await supabase
-            .from('invoices')
-            .select('id')
-            .eq('icount_doc_id', doc.docid || doc.doc_id)
-            .single()
+          const docNum = (doc.docnum || doc.doc_num || '').toString()
+          const docType = doc.doctype || doc.type
+          const docID = doc.docid || doc.doc_id || doc.id
+
+          console.log(`🔍 Fetching details for ${docType} ${docNum}...`)
+
+          let fullDoc = doc
+          try {
+            // ננסה לקבל מידע מלא כולל שם לקוח
+            // בשלב זה אנחנו מנסים doc_type ו-doc_num כי אלו הפרמטרים הנפוצים ב-API v3
+            const infoResponse = await this.iCountClient.request('doc/info', {
+              doc_type: docType,
+              doc_num: docNum
+            })
+            if (infoResponse && infoResponse.status !== false) {
+              fullDoc = { ...doc, ...infoResponse }
+            }
+          } catch (infoError) {
+            console.warn(`⚠️ Could not fetch info for ${docNum}:`, infoError.message)
+          }
+
+          const total = parseFloat(fullDoc.total || fullDoc.amount || 0)
+          const balance = parseFloat(fullDoc.balance !== undefined ? fullDoc.balance : (fullDoc.debt !== undefined ? fullDoc.debt : total))
+
+          // חישוב מע"מ וסכום לפני מע"מ אם חסר (לפי 17%)
+          let subtotal = parseFloat(fullDoc.subtotal || fullDoc.sum_no_vat || fullDoc.sum_before_vat || 0)
+          let vat = parseFloat(fullDoc.vat_amount || fullDoc.sum_vat || 0)
+
+          if (total > 0 && subtotal === 0 && vat === 0) {
+            // אם יש סה"כ אבל אין פירוט, נחשב לפי 17% (מע"מ ישראל)
+            subtotal = total / 1.17
+            vat = total - subtotal
+          }
+
+          // מיפוי שמות לקוחות ידועים אם ה-API מחזיר רק מזהה
+          const clientID = fullDoc.client_id || fullDoc.clientid
+          let clientName = fullDoc.client_name || fullDoc.clientname || fullDoc.customer_name
+
+          if (!clientName || clientName === clientID) {
+            if (clientID === '6') clientName = 'משרד ראש הממשלה'
+            else clientName = clientName || `לקוח iCount (${clientID || '?'})`
+          }
 
           const invoiceData = {
-            icount_doc_id: (doc.docid || doc.doc_id)?.toString(),
-            invoice_number: doc.doc_num || doc.docnum,
-            invoice_type: this.mapICountDocType(doc.type),
-            issue_date: doc.date || new Date().toISOString().split('T')[0],
-            total_amount: parseFloat(doc.amount || doc.total || 0),
-            status: this.mapICountStatus(doc.status),
+            invoice_number: docNum,
+            invoice_type: this.mapICountDocType(docType),
+            issue_date: fullDoc.dateissued || fullDoc.date || new Date().toISOString().split('T')[0],
+            subtotal: subtotal,
+            vat_amount: vat,
+            total_amount: total,
+            paid_amount: total - balance,
+            status: (balance <= 0) ? 'paid' : (fullDoc.is_cancelled ? 'cancelled' : 'pending'),
             sync_status: 'synced',
             synced_at: new Date().toISOString(),
-            notes: doc.description || doc.remarks,
+            notes: fullDoc.description || fullDoc.remarks || fullDoc.comment,
+            internal_notes: JSON.stringify({
+              client_name: clientName,
+              original_balance: balance,
+              icount_doc_id: docID
+            })
           }
 
-          if (existing) {
-            // עדכן
-            await supabase
-              .from('invoices')
-              .update(invoiceData)
-              .eq('id', existing.id)
+          console.log(`💾 Upserting invoice ${docNum} for: ${clientName}`)
 
-            updated++
-            console.log(`✅ Updated invoice ${invoiceData.invoice_number}`)
+          const { error: upsertError } = await supabase
+            .from('invoices')
+            .upsert(invoiceData, {
+              onConflict: 'invoice_number',
+              ignoreDuplicates: false
+            })
+
+          if (upsertError) {
+            console.error(`❌ Error upserting invoice ${docNum}:`, upsertError)
+            errors++
           } else {
-            // צור חדש
-            const { error: insertError } = await supabase
-              .from('invoices')
-              .insert(invoiceData)
-
-            if (insertError) {
-              console.error(`❌ Error creating invoice:`, insertError)
-              errors++
-            } else {
-              created++
-              console.log(`✅ Created invoice ${invoiceData.invoice_number}`)
-            }
+            created++
           }
 
-          // רשום בלוג
           await this.logSync({
             entity_type: 'invoice',
-            entity_id: existing?.id || 0,
-            operation: existing ? 'update' : 'create',
+            entity_id: 0,
+            operation: 'upsert',
             direction: 'from_icount',
-            status: 'success',
-            response_data: doc,
+            status: upsertError ? 'failed' : 'success',
+            response_data: fullDoc,
+            error_message: upsertError?.message
           })
 
         } catch (docError) {
           console.error(`❌ Error processing document:`, docError)
           errors++
-
-          await this.logSync({
-            entity_type: 'invoice',
-            entity_id: 0,
-            operation: 'sync',
-            direction: 'from_icount',
-            status: 'failed',
-            error_message: docError.message,
-          })
         }
       }
 
@@ -264,7 +337,7 @@ class SyncService {
         created,
         updated,
         errors,
-        message: `Synced ${created + updated} invoices (${created} new, ${updated} updated)`,
+        message: `Synced ${created} invoices for ${documents.length} records found`,
       }
     } catch (error) {
       console.error('Error syncing invoices:', error)
@@ -455,13 +528,69 @@ class SyncService {
    */
   async logSync(logEntry) {
     try {
-      await supabase.from('sync_log').insert({
+      const { data, error } = await supabase.from('sync_log').insert({
         ...logEntry,
         attempted_at: new Date().toISOString(),
         completed_at: logEntry.status === 'success' ? new Date().toISOString() : null,
       })
+      if (error) throw error
     } catch (error) {
       console.error('Error logging sync:', error)
+    }
+  }
+
+  /**
+   * קבלת מספר החשבוניות הפתוחות (שלא שולמו) מ-iCount
+   */
+  async getOpenInvoicesCount() {
+    console.log('📊 Fetching open invoices count from iCount...')
+
+    try {
+      await this.initializeICountClient()
+
+      const lastMonth = new Date()
+      const today = new Date()
+      lastMonth.setFullYear(lastMonth.getFullYear() - 1)
+
+      const formatDate = (date) => {
+        const d = date.getDate().toString().padStart(2, '0')
+        const m = (date.getMonth() + 1).toString().padStart(2, '0')
+        const y = date.getFullYear()
+        return `${y}-${m}-${d}`
+      }
+
+      const fromDate = formatDate(lastMonth)
+      const toDate = formatDate(today)
+
+      let totalCount = 0
+      const typesToCheck = ['invoice', 'invrec']
+
+      for (const type of typesToCheck) {
+        try {
+          const response = await this.iCountClient.request('doc/search', {
+            from_date: fromDate,
+            to_date: toDate,
+            date_from: fromDate,
+            date_to: toDate,
+            is_debt: 1,
+            doc_type: type,
+            free_text: ' ',
+            limit: 100
+          })
+          totalCount += response?.results_count || (response?.results_list?.length || 0)
+        } catch (e) {
+          console.warn(`⚠️ Failed to fetch count for ${type}:`, e.message)
+        }
+      }
+
+      return {
+        success: true,
+        count: totalCount,
+        message: `נמצאו ${totalCount} חשבוניות פתוחות`,
+      }
+    } catch (error) {
+      console.error('Error fetching count:', error.message)
+      return { success: false, message: error.message }
     }
   }
 }

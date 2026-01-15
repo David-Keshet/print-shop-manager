@@ -3,9 +3,9 @@
  * שירות לחיבור ל-API של iCount
  */
 
-import { ICOUNT_CONFIG } from './config'
-import { sessionCache } from './sessionCache'
-import { rateLimiter } from './rateLimiter'
+import { ICOUNT_CONFIG } from './config.js'
+import { sessionCache } from './sessionCache.js'
+import { rateLimiter } from './rateLimiter.js'
 
 export class ICountClient {
   constructor(credentials = null) {
@@ -92,6 +92,12 @@ export class ICountClient {
       throw new Error('חסרים פרטי התחברות (CID, user, pass)')
     }
 
+    // 0. אם יש SID קבוע (API Key), אין צורך בהתחברות
+    if (this.credentials.sid) {
+      this.sessionId = this.credentials.sid
+      return this.credentials.sid
+    }
+
     // 1. בדוק אם יש session ב-cache
     const cachedSession = sessionCache.get(this.cacheKey)
     if (cachedSession) {
@@ -114,16 +120,18 @@ export class ICountClient {
 
       console.log('🔐 Logging in to iCount (no cached session)...')
 
+      const cid = isNaN(parseInt(this.credentials.cid, 10)) ? this.credentials.cid : parseInt(this.credentials.cid, 10)
+      const formParams = new URLSearchParams()
+      formParams.append('cid', cid)
+      formParams.append('user', this.credentials.user)
+      formParams.append('pass', this.credentials.pass)
+
       const response = await fetch('https://api.icount.co.il/api/v3.php/auth/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({
-          cid: isNaN(parseInt(this.credentials.cid, 10)) ? this.credentials.cid : parseInt(this.credentials.cid, 10),
-          user: this.credentials.user,
-          pass: this.credentials.pass
-        }),
+        body: formParams.toString(),
         signal: controller.signal,
       })
 
@@ -199,41 +207,56 @@ export class ICountClient {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), ICOUNT_CONFIG.timeout)
 
-      // בניית URL עם method ב-path (לא ב-body!)
+      // חזרה למבנה ה-URL שעובד
       const url = `${ICOUNT_CONFIG.baseUrl}/${method}`
 
-      // בניית גוף הבקשה ללא action
       const fullRequestBody = {
         ...params,
       }
 
-      // אם יש API Key, השתמש בו
-      if (this.credentials.apiKey) {
-        fullRequestBody.api_key = this.credentials.apiKey  // iCount expects 'api_key' not 'apiKey'
-        fullRequestBody.user = this.credentials.user
-        fullRequestBody.pass = this.credentials.pass
-      }
-      // אם יש session ID או SID, השתמש בו
-      else if (this.sessionId) {
-        fullRequestBody.sid = this.sessionId
-      }
-      // אחרת, שלח CID/User/Pass
-      else {
-        // CID צריך להישאר string אם זה לא מספר
-        const cidValue = this.credentials.cid
-        console.log('Sending CID:', cidValue, 'Type:', typeof cidValue)
+      // טיפול עקבי ב-CID
+      const cid = isNaN(parseInt(this.credentials.cid, 10))
+        ? this.credentials.cid
+        : parseInt(this.credentials.cid, 10)
 
-        fullRequestBody.cid = cidValue
+      if (this.credentials.cid) {
+        fullRequestBody.cid = cid
+      }
+
+      // אם יש SID קבוע (API Key), השתמש בו
+      const sid = this.credentials.sid || this.sessionId
+
+      if (this.credentials.apiKey) {
+        fullRequestBody.api_key = this.credentials.apiKey
         fullRequestBody.user = this.credentials.user
         fullRequestBody.pass = this.credentials.pass
       }
+      else if (sid) {
+        fullRequestBody.sid = sid
+      }
+      else {
+        fullRequestBody.user = this.credentials.user
+        fullRequestBody.pass = this.credentials.pass
+      }
+
+      console.log(`📡 iCount Request [${method}] to ${url}`)
+
+      // בניית גוף הבקשה כ-URLSearchParams (form-urlencoded)
+      const formParams = new URLSearchParams()
+      Object.keys(fullRequestBody).forEach(key => {
+        if (fullRequestBody[key] !== undefined && fullRequestBody[key] !== null) {
+          formParams.append(key, fullRequestBody[key])
+        }
+      })
+
+      console.log('📦 Request body (Form):', formParams.toString())
 
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify(fullRequestBody),
+        body: formParams.toString(),
         signal: controller.signal,
       })
 
@@ -244,15 +267,21 @@ export class ICountClient {
       }
 
       const data = await response.json()
+      console.log('📥 iCount Response:', JSON.stringify(data, null, 2))
 
       // בדיקת שגיאות מ-iCount
       if (data.status === false || data.status === 0) {
+        if (data.error_description === 'שאילתא ריקה' || data.error_description === 'Empty Query') {
+          console.error('❌ iCount Error: Empty Query. The parameters provided might not be sufficient for iCount to perform a search.')
+        }
+
         // אם השגיאה היא auth_required, נסה להתחבר מחדש
         if (data.reason === 'auth_required' && this.sessionId) {
           this.sessionId = null
           return this.request(method, params) // נסה שוב
         }
-        throw new Error(data.error_description || data.message || 'שגיאה לא ידועה מ-iCount')
+
+        throw new Error(data.error_description || data.message || 'שגיאה מ-iCount')
       }
 
       return data

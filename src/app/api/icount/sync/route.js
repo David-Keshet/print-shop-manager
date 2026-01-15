@@ -27,6 +27,10 @@ export async function POST(request) {
         result = await syncService.syncInvoices()
         break
 
+      case 'open_count':
+        result = await syncService.getOpenInvoicesCount()
+        break
+
       default:
         return NextResponse.json(
           { success: false, message: 'Invalid sync type' },

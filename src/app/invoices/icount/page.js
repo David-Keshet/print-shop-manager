@@ -13,22 +13,35 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Filter,
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  Layers,
+  ExternalLink
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+
+export const dynamic = 'force-dynamic'
 
 export default function ICountDocumentsPage() {
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [syncing, setSyncing] = useState(false)
-  const [filter, setFilter] = useState('all')
+  const [activeFilter, setActiveFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState(null)
   const [syncMessage, setSyncMessage] = useState(null)
 
   useEffect(() => {
     fetchDocuments()
+
+    // רענון אוטומטי של התצוגה כל 30 שניות
+    const interval = setInterval(fetchDocuments, 30000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const fetchDocuments = async () => {
@@ -36,7 +49,6 @@ export default function ICountDocumentsPage() {
       setLoading(true)
       setError(null)
 
-      // קרא חשבוניות מ-Supabase (לא ישירות מ-iCount!)
       const { data, error: supabaseError } = await supabase
         .from('invoices')
         .select(`
@@ -44,7 +56,7 @@ export default function ICountDocumentsPage() {
           customer:customers(name, phone),
           order:orders(order_number)
         `)
-        .order('created_at', { ascending: false })
+        .order('issue_date', { ascending: false })
         .limit(100)
 
       if (supabaseError) throw supabaseError
@@ -53,7 +65,6 @@ export default function ICountDocumentsPage() {
     } catch (error) {
       console.error('Error fetching documents:', error)
       setError(error.message || 'שגיאה בטעינת חשבוניות')
-      setDocuments([])
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -69,278 +80,228 @@ export default function ICountDocumentsPage() {
       const response = await fetch('/api/icount/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'all' })
+        body: JSON.stringify({ type: 'invoices' })
       })
 
       const data = await response.json()
 
       if (data.success) {
-        setSyncMessage('✅ סנכרון הושלם בהצלחה!')
-        fetchDocuments() // Refresh after sync
+        setSyncMessage('✅ הסנכרון הושלם! כל המסמכים העדכניים כאן.')
+        fetchDocuments()
       } else {
         setError(data.message || 'שגיאה בסנכרון')
       }
     } catch (err) {
       console.error('Sync error:', err)
-      setError('שגיאה בסנכרון עם iCount')
+      setError('שגיאה בתקשורת עם השרת')
     } finally {
       setSyncing(false)
-      setTimeout(() => setSyncMessage(null), 3000)
+      setTimeout(() => setSyncMessage(null), 5000)
     }
   }
 
-  const handleRefresh = () => {
-    setRefreshing(true)
-    fetchDocuments()
-  }
-
-  const getDocumentTypeName = (type) => {
-    const typeMap = {
-      invoice: 'חשבונית',
-      invoice_receipt: 'חשבונית מס קבלה',
-      receipt: 'קבלה',
-      credit: 'חשבונית זיכוי',
-      quote: 'הצעת מחיר',
-      delivery_note: 'תעודת משלוח',
-      purchase: 'חשבונית קניה',
+  const getDocumentTypeInfo = (type) => {
+    const types = {
+      invoice: { label: 'חשבונית מס', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+      invoice_receipt: { label: 'חשבונית מס קבלה', color: 'text-green-400', bg: 'bg-green-500/10' },
+      receipt: { label: 'קבלה', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+      credit: { label: 'חשבונית זיכוי', color: 'text-red-400', bg: 'bg-red-500/10' },
+      quote: { label: 'הצעת מחיר', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+      delivery_note: { label: 'תעודת משלוח', color: 'text-amber-400', bg: 'bg-amber-500/10' },
     }
-    return typeMap[type] || type
-  }
-
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      draft: { label: 'טיוטה', color: 'bg-gray-500' },
-      sent: { label: 'נשלח', color: 'bg-blue-500' },
-      paid: { label: 'שולם', color: 'bg-green-500' },
-      cancelled: { label: 'בוטל', color: 'bg-red-500' },
-    }
-
-    const statusInfo = statusMap[status] || { label: status, color: 'bg-gray-500' }
-    return (
-      <span className={`${statusInfo.color} text-white px-3 py-1 rounded-full text-xs font-semibold`}>
-        {statusInfo.label}
-      </span>
-    )
+    return types[type] || { label: type, color: 'text-gray-400', bg: 'bg-gray-500/10' }
   }
 
   const filteredDocuments = documents.filter((doc) => {
-    if (!searchTerm) return true
-
-    const search = searchTerm.toLowerCase()
-    return (
-      doc.invoice_number?.toString().includes(search) ||
-      doc.customer?.name?.toLowerCase().includes(search) ||
-      doc.notes?.toLowerCase().includes(search)
+    const matchesSearch = !searchTerm || (
+      doc.invoice_number?.toString().includes(searchTerm) ||
+      doc.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
+
+    const matchesFilter = activeFilter === 'all' || doc.invoice_type === activeFilter
+
+    return matchesSearch && matchesFilter
   })
+
+  // Stats calculation
+  const totalAmount = filteredDocuments.reduce((sum, doc) => sum + parseFloat(doc.total_amount || 0), 0)
+  const invoicesCount = filteredDocuments.filter(d => d.invoice_type?.includes('invoice')).length
 
   return (
     <Layout>
-      <div className="min-h-screen p-6">
-        {/* Header */}
-        <div className="mb-6">
-          <Link
-            href="/invoices"
-            className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-4"
-          >
-            <ArrowRight size={20} />
-            חזרה לחשבוניות
-          </Link>
+      <div className="min-h-screen bg-[#0f172a] text-white p-4 md:p-8">
+        <div className="max-w-7xl mx-auto">
 
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                <Cloud size={32} />
-                מסמכים מ-iCount
-              </h1>
-              <p className="text-gray-400 mt-1">
-                צפייה בכל החשבוניות והמסמכים שלך מ-iCount
-              </p>
-            </div>
-
+          {/* Minimalist Header */}
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+              מסמכי iCount
+            </h1>
             <div className="flex gap-2">
               <button
-                onClick={handleSyncFromICount}
-                disabled={syncing}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                onClick={fetchDocuments}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold border border-white/10 transition-all flex items-center gap-2"
               >
-                <Cloud size={18} className={syncing ? 'animate-pulse' : ''} />
-                {syncing ? 'מסנכרן...' : 'סנכרן מ-iCount'}
-              </button>
-
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-              >
-                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-                {refreshing ? 'מרענן...' : 'רענן'}
+                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                רענן
               </button>
             </div>
           </div>
 
-          {/* Success Message */}
-          {syncMessage && (
-            <div className="flex items-center gap-2 text-green-400 bg-green-900/20 px-4 py-3 rounded-lg mb-4">
-              <CheckCircle size={20} />
-              {syncMessage}
+          {/* Minimal Search */}
+          <div className="relative mb-6">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+            <input
+              type="text"
+              placeholder="חיפוש מהיר..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl pr-10 pl-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+            />
+          </div>
+
+          {/* Main Content Table (Matching iCount Layout) */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <RefreshCw className="animate-spin text-blue-500" size={48} />
+              <p className="text-blue-200 font-bold">מתחבר ל-iCount וטוען נתונים...</p>
+            </div>
+          ) : filteredDocuments.length === 0 ? (
+            <div className="text-center py-24 bg-white/5 rounded-3xl border border-white/10 shadow-2xl">
+              <Layers className="text-gray-600 mx-auto mb-4" size={64} />
+              <h3 className="text-2xl font-bold text-gray-300">לא נמצאו מסמכים</h3>
+              <p className="text-gray-500 mt-2">נסה לבצע סנכרון או לשנות את החיפוש</p>
+            </div>
+          ) : (
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-right border-collapse">
+                  <thead>
+                    <tr className="bg-white/5 border-b border-white/10">
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs w-10 text-center">
+                        <input type="checkbox" className="rounded border-white/20 bg-white/5" />
+                      </th>
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs">לקוח / ספק</th>
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs">מספר מסמך</th>
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs">תאריך</th>
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs">סוג הכנסה</th>
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs">סה"כ לפני מע"מ</th>
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs">מע"מ</th>
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs">סה"כ כולל מע"מ</th>
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs">יתרה</th>
+                      <th className="px-4 py-5 font-bold text-gray-400 text-xs">פרטים נוספים</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredDocuments.map((doc) => {
+                      const typeInfo = getDocumentTypeInfo(doc.invoice_type);
+                      const getPrefix = (type) => {
+                        const prefixes = {
+                          invoice: 'ח"מ',
+                          invoice_receipt: 'חמ"ק',
+                          receipt: 'קב.',
+                          credit: 'זי.',
+                          quote: 'הצ.',
+                          delivery_note: 'ת.מ.',
+                        }
+                        return prefixes[type] || 'מס.';
+                      };
+
+                      return (
+                        <tr key={doc.id} className="hover:bg-white/5 transition-colors group">
+                          <td className="px-4 py-5 text-center">
+                            <input type="checkbox" className="rounded border-white/20 bg-white/5" />
+                          </td>
+                          <td className="px-4 py-5">
+                            <div className="flex items-center gap-3">
+                              {(() => {
+                                let displayName = doc.customer?.name;
+
+                                try {
+                                  if (doc.internal_notes) {
+                                    const meta = JSON.parse(doc.internal_notes);
+                                    if (meta.client_name) displayName = meta.client_name;
+                                  }
+                                } catch (e) { }
+
+                                if (!displayName) displayName = 'לקוח לא רשום';
+
+                                return (
+                                  <>
+                                    <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs uppercase border border-blue-500/20 shadow-sm">
+                                      {displayName.substring(0, 1)}
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="font-bold text-blue-50">{displayName}</span>
+                                      {doc.customer?.phone && <span className="text-[10px] text-gray-500">{doc.customer.phone}</span>}
+                                    </div>
+                                  </>
+                                )
+                              })()}
+                            </div>
+                          </td>
+                          <td className="px-4 py-5">
+                            <div className="flex flex-col">
+                              <span className="text-blue-400 font-bold">
+                                {getPrefix(doc.invoice_type)} {doc.invoice_number || '---'}
+                              </span>
+                              <span className="text-[9px] text-gray-500 font-medium">הופק ע"י המערכת</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-5">
+                            <span className="text-gray-300 text-sm">
+                              {doc.issue_date ? new Date(doc.issue_date).toLocaleDateString('he-IL') : '---'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-5 text-gray-500 text-xs">
+                            -
+                          </td>
+                          <td className="px-4 py-5">
+                            <span className="text-gray-300">₪{parseFloat(doc.subtotal || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span>
+                          </td>
+                          <td className="px-4 py-5">
+                            <span className="text-gray-300">₪{parseFloat(doc.vat_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span>
+                          </td>
+                          <td className="px-4 py-5">
+                            <span className="text-gray-200 font-bold">₪{parseFloat(doc.total_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span>
+                          </td>
+                          <td className="px-4 py-5 text-center">
+                            {(() => {
+                              let balance = doc.total_amount - (doc.paid_amount || 0);
+                              try {
+                                if (doc.internal_notes) {
+                                  const meta = JSON.parse(doc.internal_notes);
+                                  if (meta.original_balance !== undefined) balance = meta.original_balance;
+                                }
+                              } catch (e) { }
+
+                              return (
+                                <div className={`inline-block px-2 py-1 rounded font-bold text-xs ${balance > 0 ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'text-gray-500'}`}>
+                                  ₪{parseFloat(balance).toLocaleString('he-IL', { minimumFractionDigits: 2 })}
+                                </div>
+                              )
+                            })()}
+                          </td>
+                          <td className="px-4 py-5">
+                            <div className="flex items-center gap-2">
+                              <button className="p-2 bg-white/5 hover:bg-blue-600 rounded-lg transition-all" title="צפה">
+                                <Eye size={14} className="text-blue-400 group-hover:text-white" />
+                              </button>
+                              <button className="p-2 bg-white/5 hover:bg-green-600 rounded-lg transition-all" title="הורד">
+                                <Download size={14} className="text-green-400 group-hover:text-white" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
-
-          {/* Error Display */}
-          {error && (
-            <div className="flex items-center gap-2 text-red-400 bg-red-900/20 px-4 py-3 rounded-lg mb-4">
-              <AlertCircle size={20} />
-              {error}
-            </div>
-          )}
-
-          {/* Search */}
-          <div className="flex gap-3 mb-4">
-            <div className="flex-1 relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="חיפוש לפי מספר מסמך, לקוח או תיאור..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-gray-800 text-white rounded-lg px-4 py-2 pr-10 border border-gray-700 focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-          </div>
         </div>
-
-        {/* Error Display */}
-        {error && (
-          <div className="bg-red-900/20 border border-red-700 rounded-lg p-4 mb-6 flex items-center gap-3 text-red-200">
-            <AlertCircle size={24} className="flex-shrink-0" />
-            <div>
-              <p className="font-semibold">שגיאה</p>
-              <p className="text-sm">{error}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-4 text-white">
-            <div className="text-sm opacity-90 mb-1">סה"כ מסמכים</div>
-            <div className="text-3xl font-bold">{documents.length}</div>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-4 text-white">
-            <div className="text-sm opacity-90 mb-1">חשבוניות</div>
-            <div className="text-3xl font-bold">
-              {documents.filter(d => d.invoice_type === 'invoice' || d.invoice_type === 'invoice_receipt').length}
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-4 text-white">
-            <div className="text-sm opacity-90 mb-1">קבלות</div>
-            <div className="text-3xl font-bold">
-              {documents.filter(d => d.invoice_type === 'receipt').length}
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl p-4 text-white">
-            <div className="text-sm opacity-90 mb-1">זיכויים</div>
-            <div className="text-3xl font-bold">
-              {documents.filter(d => d.invoice_type === 'credit').length}
-            </div>
-          </div>
-        </div>
-
-        {/* Documents Table */}
-        {loading ? (
-          <div className="text-center py-12 text-gray-400">
-            <RefreshCw size={48} className="animate-spin mx-auto mb-4" />
-            טוען מסמכים מ-iCount...
-          </div>
-        ) : filteredDocuments.length === 0 ? (
-          <div className="text-center py-12">
-            <Cloud size={64} className="mx-auto mb-4 text-gray-600" />
-            <p className="text-gray-400 text-lg mb-2">
-              {documents.length === 0 ? 'אין מסמכים זמינים' : 'לא נמצאו מסמכים'}
-            </p>
-            {documents.length === 0 && (
-              <p className="text-gray-500 text-sm">
-                המסמכים שתיצור יופיעו כאן
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">מספר מסמך</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">סוג</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">לקוח</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">תאריך</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">סכום</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">תיאור</th>
-                  <th className="text-center px-6 py-4 text-gray-300 font-semibold">פעולות</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {filteredDocuments.map((doc) => (
-                  <tr
-                    key={doc.id}
-                    className="hover:bg-gray-800/30 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-white font-mono font-semibold">
-                      {doc.invoice_number || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-gray-300">
-                      <span className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs">
-                        {getDocumentTypeName(doc.invoice_type)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-white">
-                      {doc.customer?.name || 'לא צוין'}
-                    </td>
-                    <td className="px-6 py-4 text-gray-300">
-                      {doc.issue_date ? new Date(doc.issue_date).toLocaleDateString('he-IL') : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-white font-semibold">
-                      {doc.total_amount ? (
-                        `₪${parseFloat(doc.total_amount).toLocaleString('he-IL')}`
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-gray-300 max-w-xs truncate">
-                      {doc.notes || '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-blue-400"
-                          title="צפה"
-                        >
-                          <Eye size={18} />
-                        </button>
-                        <button
-                          className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-green-400"
-                          title="הורד PDF"
-                        >
-                          <Download size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Debug Info */}
-        {documents.length > 0 && (
-          <div className="mt-4 text-center text-xs text-gray-500">
-            מציג {filteredDocuments.length} מתוך {documents.length} מסמכים
-          </div>
-        )}
       </div>
     </Layout>
   )

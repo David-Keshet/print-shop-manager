@@ -12,6 +12,11 @@ const nextConfig = {
     pagesBufferLength: 2, // רק 2 דפים ב-buffer במקום 5
   },
 
+  // ניקוי cache אוטומטי ב-build
+  generateBuildId: async () => {
+    return Date.now().toString();
+  },
+
   // שיפור HMR
   webpack: (config, { dev, isServer }) => {
     if (dev && !isServer) {

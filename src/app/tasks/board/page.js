@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import Layout from '@/components/Layout'
-import { Plus, Edit2, Trash2, X, Save, Calendar, Tag, CheckSquare, Square, ArrowRight, Search } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Save, Calendar, Tag, CheckSquare, Square, ArrowRight, Search, Menu } from 'lucide-react'
 import { DndContext, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -21,6 +21,7 @@ export default function TasksBoard() {
   const [columns, setColumns] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedDepartment, setSelectedDepartment] = useState(null)
+  const [departmentsSidebarCollapsed, setDepartmentsSidebarCollapsed] = useState(false)
 
   // Department management modal
   const [showDepartmentManagementModal, setShowDepartmentManagementModal] = useState(false)
@@ -903,46 +904,80 @@ export default function TasksBoard() {
       <div className="flex flex-row-reverse h-[calc(100vh-64px)] overflow-hidden bg-[#0B1437] text-slate-100" style={{ direction: 'rtl' }}>
 
         {/* Sidebar - Departments */}
-        <div className="w-64 bg-[#0F1A3D] border-r border-slate-800/50 flex flex-col flex-shrink-0 transition-all duration-300">
-          <div className="p-4 border-b border-white/10 flex justify-between items-center">
-            <h2 className="font-bold text-lg text-white/90">מחלקות</h2>
-            <button
-              onClick={() => setShowDepartmentManagementModal(true)}
-              className="text-white/70 hover:text-white p-1 hover:bg-white/10 rounded transition-colors"
-              title="ניהול מחלקות"
-            >
-              <Edit2 size={16} />
-            </button>
+        <div className={`${departmentsSidebarCollapsed ? 'w-16' : 'w-64'} bg-[#0F1A3D] border-r border-slate-800/50 flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden`}>
+          {/* Header with toggle button */}
+          <div className={`p-4 border-b border-white/10 flex items-center ${departmentsSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+            {!departmentsSidebarCollapsed && (
+              <h2 className="font-bold text-lg text-white/90">מחלקות</h2>
+            )}
+            
+            <div className="flex items-center gap-2">
+              {!departmentsSidebarCollapsed && (
+                <button
+                  onClick={() => setShowDepartmentManagementModal(true)}
+                  className="text-white/70 hover:text-white p-1 hover:bg-white/10 rounded transition-colors"
+                  title="ניהול מחלקות"
+                >
+                  <Edit2 size={16} />
+                </button>
+              )}
+              
+              <button
+                onClick={() => setDepartmentsSidebarCollapsed(!departmentsSidebarCollapsed)}
+                className="text-white/70 hover:text-white p-1 hover:bg-white/10 rounded transition-colors"
+                title={departmentsSidebarCollapsed ? 'הרחב' : 'כווץ'}
+              >
+                <Menu size={16} />
+              </button>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-1">
-            {departments.map(department => (
-              <button
-                key={department.id}
-                onClick={() => setSelectedDepartment(department.id)}
-                className={`w-full text-right px-4 py-2 rounded-lg font-medium transition-colors flex justify-between items-center group ${selectedDepartment === department.id
-                  ? 'bg-blue-600/20 text-blue-400 border-r-2 border-blue-500'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                  }`}
+          {/* Content - Collapsed or Expanded */}
+          {departmentsSidebarCollapsed ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div 
+                className="text-white/90 font-bold text-lg whitespace-nowrap cursor-pointer hover:text-blue-400 transition-colors"
+                style={{
+                  writingMode: 'vertical-rl',
+                  textOrientation: 'mixed',
+                  transform: 'rotate(180deg)'
+                }}
+                onClick={() => setDepartmentsSidebarCollapsed(false)}
+                title="הרחב סיידבר"
               >
-                <span>{department.name}</span>
-                {selectedDepartment === department.id && (
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                )}
+                מחלקות
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-3 space-y-1">
+              {departments.map(department => (
+                <button
+                  key={department.id}
+                  onClick={() => setSelectedDepartment(department.id)}
+                  className={`w-full text-right px-4 py-2 rounded-lg font-medium transition-colors flex justify-between items-center group ${selectedDepartment === department.id
+                    ? 'bg-blue-600/20 text-blue-400 border-r-2 border-blue-500'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    }`}
+                >
+                  <span>{department.name}</span>
+                  {selectedDepartment === department.id && (
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  )}
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  setEditingDepartment(null)
+                  setDepartmentForm({ name: '' })
+                  setShowDepartmentModal(true)
+                }}
+                className="w-full mt-4 text-right px-4 py-2 rounded-lg text-sm text-slate-500 hover:bg-slate-800 hover:text-slate-300 border border-dashed border-slate-700 hover:border-slate-600 flex items-center gap-2 transition-colors"
+              >
+                <Plus size={16} />
+                <span>הוסף מחלקה</span>
               </button>
-            ))}
-            <button
-              onClick={() => {
-                setEditingDepartment(null)
-                setDepartmentForm({ name: '' })
-                setShowDepartmentModal(true)
-              }}
-              className="w-full mt-4 text-right px-4 py-2 rounded-lg text-sm text-slate-500 hover:bg-slate-800 hover:text-slate-300 border border-dashed border-slate-700 hover:border-slate-600 flex items-center gap-2 transition-colors"
-            >
-              <Plus size={16} />
-              <span>הוסף מחלקה</span>
-            </button>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Board Area */}
@@ -2595,4 +2630,3 @@ export default function TasksBoard() {
     </Layout >
   )
 }
-

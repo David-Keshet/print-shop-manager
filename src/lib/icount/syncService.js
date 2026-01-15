@@ -58,6 +58,10 @@ class SyncService {
 
       await this.initializeICountClient()
 
+      // סנכרן הזמנות
+      const ordersResult = await this.syncOrders()
+      console.log('✅ Orders synced:', ordersResult)
+
       // סנכרן לקוחות
       const customersResult = await this.syncCustomers()
       console.log('✅ Customers synced:', customersResult)
@@ -82,6 +86,7 @@ class SyncService {
         message: 'Sync completed successfully',
         duration: `${duration}ms`,
         results: {
+          orders: ordersResult,
           customers: customersResult,
           invoices: invoicesResult,
         },
@@ -130,8 +135,425 @@ class SyncService {
   }
 
   /**
-   * סנכרון חשבוניות מ-iCount
+   * סנכרון הזמנות מ-iCount
+   * יוצר הזמנות ממסמכים מסוג 'order', 'deal', 'proposal' ב-iCount
    */
+  async syncOrders() {
+    console.log('🚀 ===== SYNC ORDERS START =====')
+    const debugLog = [] // Collect debug info
+    
+    await this.initializeICountClient()
+    console.log('📦 Syncing orders from iCount...')
+    debugLog.push('Started sync, initialized iCount client')
+
+    let created = 0
+    let updated = 0
+    let errors = 0
+
+    try {
+      const lastMonth = new Date()
+      const today = new Date()
+      lastMonth.setMonth(lastMonth.getMonth() - 2)
+
+      const formatDate = (date) => {
+        const d = date.getDate().toString().padStart(2, '0')
+        const m = (date.getMonth() + 1).toString().padStart(2, '0')
+        const y = date.getFullYear()
+        return `${y}-${m}-${d}`
+      }
+
+      const fromDate = formatDate(lastMonth)
+      const toDate = formatDate(today)
+
+      console.log(`🔍 iCount Orders Sync: ${fromDate} to ${toDate}`)
+      console.log('🔍 Checking iCount client connection...')
+      
+      if (!this.iCountClient) {
+        console.error('❌ iCount client not initialized!')
+        throw new Error('iCount client not initialized')
+      }
+
+      // משיכת מסמכים שהם הזמנות
+      const orderTypes = ['order', 'deal', 'proposal'] // הסרנו invoice ו-invrec - רק הזמנות
+      let documents = []
+
+      for (const type of orderTypes) {
+        try {
+          console.log(`📡 Fetching ${type} documents...`)
+          const response = await this.iCountClient.request('doc/search', {
+            from_date: fromDate,
+            to_date: toDate,
+            date_from: fromDate,
+            date_to: toDate,
+            doc_type: type,
+            doctype: type,
+            free_text: ' ',
+            limit: 100
+          })
+          
+          console.log(`📥 Response for ${type}:`, JSON.stringify(response, null, 2))
+          
+          const batch = (response?.results_list || response?.data || response || []).map(d => ({ 
+            ...d, 
+            doctype: d.doctype || d.doc_type || type 
+          }))
+          
+          documents = [...documents, ...batch]
+          console.log(`✅ Got ${batch.length} documents of type ${type}`)
+        } catch (e) {
+          console.warn(`⚠️ Failed to fetch ${type}:`, e.message)
+          console.warn(`⚠️ Full error:`, e)
+        }
+      }
+
+      console.log(`📦 Found total ${documents.length} order documents in iCount`)
+      debugLog.push(`Found ${documents.length} documents`)
+      
+      if (documents.length === 0) {
+        console.log('🔍 No documents found. Trying broader search...')
+        debugLog.push('No documents found, trying broad search')
+        
+        // נסה חיפוש כללי יותר
+        try {
+          const broadResponse = await this.iCountClient.request('doc/search', {
+            limit: 50
+          })
+          console.log('🔍 Broad search response:', JSON.stringify(broadResponse, null, 2))
+          
+          // אם יש תוצאות, נוסיף אותן
+          if (broadResponse && broadResponse.data && broadResponse.data.length > 0) {
+            console.log(`📥 Found ${broadResponse.data.length} documents in broad search`)
+            documents = broadResponse.data.map(d => ({ 
+              ...d, 
+              doctype: d.doctype || d.doc_type || 'unknown' 
+            }))
+            debugLog.push(`Broad search found ${documents.length} documents`)
+          }
+        } catch (broadError) {
+          console.warn('⚠️ Broad search failed:', broadError.message)
+          debugLog.push(`Broad search failed: ${broadError.message}`)
+        }
+      }
+
+      for (const doc of documents) {
+        debugLog.push(`Starting to process document: ${JSON.stringify(doc, null, 2)}`)
+        
+        try {
+          const docNum = (doc.docnum || doc.doc_num || '').toString()
+          const docType = doc.doctype || doc.type
+          const docID = doc.docid || doc.doc_id || doc.id
+
+          console.log(`🔍 Processing order document ${docType} ${docNum}...`)
+          debugLog.push(`Processing document ${docType} ${docNum}`)
+
+          if (!docNum) {
+            debugLog.push(`ERROR: No document number found for doc: ${JSON.stringify(doc)}`)
+            errors++
+            continue
+          }
+
+          // קבל מידע מלא על המסמך
+          let fullDoc = doc
+          try {
+            const infoResponse = await this.iCountClient.request('doc/info', {
+              doc_type: docType,
+              doc_num: docNum
+            })
+            if (infoResponse && infoResponse.status !== false) {
+              fullDoc = { ...doc, ...infoResponse }
+            }
+          } catch (infoError) {
+            console.warn(`⚠️ Could not fetch info for ${docNum}:`, infoError.message)
+          }
+
+          // חישוב סכומים
+          const total = parseFloat(fullDoc.total || fullDoc.amount || 0)
+          const subtotal = parseFloat(fullDoc.subtotal || fullDoc.sum_no_vat || fullDoc.sum_before_vat || (total / 1.18))
+          const vat = parseFloat(fullDoc.vat_amount || fullDoc.sum_vat || (total - subtotal))
+
+          // מידע לקוח
+          const clientID = fullDoc.client_id || fullDoc.clientid
+          let clientName = fullDoc.client_name || fullDoc.clientname || fullDoc.customer_name
+          let clientPhone = fullDoc.client_phone || fullDoc.phone || ''
+          let clientEmail = fullDoc.client_email || fullDoc.email || ''
+
+          console.log(`👤 Customer info - ID: ${clientID}, Name: ${clientName}, Phone: ${clientPhone}`)
+          
+          // תמיד נסה למצוא את הלקוח האמיתי מ-iCount
+          if (clientID && (!clientName || clientName.includes('ICOUNT') || /^\d+$/.test(clientName.trim()))) {
+            console.log(`🔍 Trying to find real customer name for ID: ${clientID}`)
+            
+            // נסה לקבל מידע מלא על הלקוח
+            try {
+              const customerResponse = await this.iCountClient.request('customer/get', {
+                customer_id: clientID
+              })
+              
+              console.log(`👤 Customer response:`, JSON.stringify(customerResponse, null, 2))
+              
+              if (customerResponse && customerResponse.name) {
+                clientName = customerResponse.name
+                clientPhone = customerResponse.phone || clientPhone
+                clientEmail = customerResponse.email || clientEmail
+                console.log(`✅ Found real customer: ${clientName}`)
+              } else {
+                console.log(`⚠️ No customer name found in response`)
+              }
+            } catch (customerError) {
+              console.warn(`⚠️ Could not fetch customer ${clientID}:`, customerError.message)
+              
+              // נסה שיטה חלופית - חיפוש לקוחות
+              try {
+                console.log(`🔍 Trying alternative customer search...`)
+                const searchResponse = await this.iCountClient.request('customer/search', {
+                  customer_id: clientID,
+                  limit: 10
+                })
+                
+                console.log(`🔍 Customer search response:`, JSON.stringify(searchResponse, null, 2))
+                
+                if (searchResponse && searchResponse.data && searchResponse.data.length > 0) {
+                  const foundCustomer = searchResponse.data[0]
+                  if (foundCustomer.name) {
+                    clientName = foundCustomer.name
+                    clientPhone = foundCustomer.phone || clientPhone
+                    clientEmail = foundCustomer.email || clientEmail
+                    console.log(`✅ Found customer via search: ${clientName}`)
+                  }
+                }
+              } catch (searchError) {
+                console.warn(`⚠️ Customer search also failed:`, searchError.message)
+              }
+            }
+          }
+
+          // אם עדיין אין שם לקוח, תן שם ברירת מחדל
+          if (!clientName) {
+            clientName = `לקוח iCount (${clientID || '?'})`
+          }
+
+          // בדוק אם הזמנה כבר קיימת
+          const { data: existingOrder } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('icount_doc_number', docNum)
+            .single()
+
+          if (existingOrder) {
+            console.log(`📋 Order IC-${docNum} already exists, updating customer name and type...`)
+            
+            // עדכן את שם הלקוח והערות אם צריך
+            const updateData = {
+              customer_name: clientName,
+              notes: `סונכרן מ-iCount | סוג: ${this.translateDocType(docType)} | מספר מקורי: ${docNum}` + (fullDoc.description ? `\n${fullDoc.description}` : '')
+            }
+            
+            // עדכן גם את הטלפון אם היה ריק
+            if (!existingOrder.customer_phone || existingOrder.customer_phone.includes('IC-')) {
+              updateData.customer_phone = clientPhone || `11-${docNum}`
+            }
+            
+            const { error: updateError } = await supabase
+              .from('orders')
+              .update(updateData)
+              .eq('id', existingOrder.id)
+            
+            if (updateError) {
+              console.error(`❌ Error updating order ${docNum}:`, updateError)
+              errors++
+            } else {
+              console.log(`✅ Updated order IC-${docNum} with customer: ${clientName}`)
+              updated++
+            }
+            continue
+          }
+
+          // צור או מצא לקוח
+          debugLog.push(`Looking for customer with phone: ${clientPhone}`)
+          let customerId = null
+          if (clientPhone) {
+            const { data: existingCustomer } = await supabase
+              .from('customers')
+              .select('id')
+              .eq('phone', clientPhone)
+              .single()
+            
+            if (existingCustomer) {
+              customerId = existingCustomer.id
+              debugLog.push(`Found existing customer: ${customerId}`)
+            }
+          }
+
+          if (!customerId) {
+            debugLog.push(`Creating new customer: ${clientName}`)
+            // אם אין טלפון, נשתמש במספר הלקוח מ-iCount
+            const customerPhone = clientPhone || `11-${docNum}` // השתמש במספר לקוח במקום IC-
+            
+            const { data: newCustomer, error: customerError } = await supabase
+              .from('customers')
+              .insert({
+                name: clientName,
+                phone: customerPhone,
+                email: clientEmail
+              })
+              .select()
+              .single()
+            
+            if (customerError) {
+              debugLog.push(`ERROR creating customer: ${customerError.message}`)
+              throw customerError
+            }
+            customerId = newCustomer.id
+            debugLog.push(`Created new customer: ${customerId} with phone: ${customerPhone}`)
+          }
+
+          // צור הזמנה
+          const orderData = {
+            // order_number will be auto-generated by SERIAL
+            customer_id: customerId,
+            customer_name: clientName,
+            customer_phone: clientPhone || `11-${docNum}`,
+            contact_person: fullDoc.contact_person || '',
+            id_number: fullDoc.client_taxid || '',
+            total: subtotal,
+            vat: vat,
+            total_with_vat: total,
+            status: this.mapICountStatusToOrderStatus(fullDoc.is_cancelled, fullDoc.balance, total),
+            notes: `סונכרן מ-iCount | סוג: ${this.translateDocType(docType)} | מספר מקורי: ${docNum}` + (fullDoc.description ? `\n${fullDoc.description}` : ''),
+            icount_doc_number: docNum, // Store the original iCount document number
+            created_at: fullDoc.dateissued || fullDoc.date || new Date().toISOString()
+          }
+
+          console.log(`💾 Creating order IC-${docNum} for: ${clientName}`)
+          debugLog.push(`Creating order IC-${docNum} with data: ${JSON.stringify(orderData, null, 2)}`)
+
+          const { data: savedOrder, error: orderError } = await supabase
+            .from('orders')
+            .insert(orderData)
+            .select()
+            .single()
+
+          if (orderError) {
+            console.error(`❌ Error creating order ${docNum}:`, orderError)
+            debugLog.push(`ERROR creating order: ${orderError.message}`)
+            errors++
+            continue
+          }
+
+          debugLog.push(`Successfully created order: ${savedOrder.id} with order_number: ${savedOrder.order_number}`)
+
+          // צור פריטי הזמנה
+          const items = fullDoc.items || fullDoc.lines || []
+          if (items.length > 0) {
+            console.log(`📦 Creating ${items.length} items for order IC-${docNum}`)
+
+            const orderItems = items.map((item, index) => ({
+              order_id: savedOrder.id,
+              description: item.description || item.name || 'פריט כללי',
+              quantity: parseFloat(item.quantity || 1),
+              unit_price: parseFloat(item.unit_price || item.price || 0),
+              price: parseFloat(item.total || item.sum || 0),
+              notes: item.notes || ''
+            }))
+
+            const { error: itemsError } = await supabase
+              .from('order_items')
+              .insert(orderItems)
+
+            if (itemsError) {
+              console.error(`❌ Error creating items for IC-${docNum}:`, itemsError)
+            } else {
+              console.log(`✅ Created ${orderItems.length} items for order IC-${docNum}`)
+            }
+          }
+
+          // צור משימה בלוח (אם יש מחלקות)
+          const { data: firstColumn } = await supabase
+            .from('columns')
+            .select('id, department_id')
+            .order('position', { ascending: true })
+            .limit(1)
+            .single()
+
+          if (firstColumn) {
+            await supabase
+              .from('tasks')
+              .insert({
+                order_id: savedOrder.id,
+                column_id: firstColumn.id,
+                department_id: firstColumn.department_id,
+                position: 0,
+                title: `הזמנה IC-${docNum}`
+              })
+          }
+
+          created++
+
+          await this.logSync({
+            entity_type: 'order',
+            entity_id: savedOrder.id,
+            operation: 'create',
+            direction: 'from_icount',
+            status: 'success',
+            response_data: fullDoc
+          })
+
+        } catch (docError) {
+          console.error(`❌ Error processing order document ${docNum}:`, docError)
+          const errorDetails = {
+            docNum,
+            docType,
+            docID,
+            clientName,
+            clientPhone,
+            error: docError.message,
+            stack: docError.stack
+          }
+          console.error(`❌ Full error details:`, errorDetails)
+          debugLog.push(`ERROR: ${JSON.stringify(errorDetails)}`)
+          errors++
+        }
+      }
+
+      return {
+        synced: documents.length,
+        created,
+        updated,
+        errors,
+        message: documents.length === 0 
+          ? 'לא נמצאו מסמכים ב-iCount. יש לבדוק את החיבור ואת הרשאות המשתמש.'
+          : `סונכרנו ${created} הזמנות חדשות ועדכנו ${updated} הזמנות קיימות מ-${documents.length} מסמכים שנמצאו ב-iCount`,
+        debugLog: debugLog // Include debug info in response
+      }
+    } catch (error) {
+      console.error('Error syncing orders:', error)
+      throw error
+    } finally {
+      console.log('🏁 ===== SYNC ORDERS END =====')
+    }
+  }
+
+  /**
+   * ממיר סוג מסמך לעברית
+   */
+  translateDocType(docType) {
+    const translations = {
+      'order': 'הזמנת עבודה',
+      'deal': 'הזמנת עבודה',
+      'proposal': 'הזמנת עבודה' // גם הצעות מחיר הופכות להזמנות עבודה
+    }
+    return translations[docType] || docType
+  }
+
+  /**
+   * ממיר סטטוס מ-iCount לסטטוס הזמנה
+   */
+  mapICountStatusToOrderStatus(isCancelled, balance, total) {
+    if (isCancelled) return 'cancelled'
+    if (balance <= 0) return 'completed'  // שולם
+    if (balance === total) return 'new'   // לא שולם כלל
+    return 'in_progress'  // תשלום חלקי
+  }
   async syncInvoices() {
     await this.initializeICountClient()
     console.log('📄 Syncing invoices from iCount...')

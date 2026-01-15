@@ -33,7 +33,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { order_id, invoice_type } = body
+    const { order_id, invoice_type, sync_to_icount } = body
 
     if (!order_id) {
       return NextResponse.json(
@@ -49,6 +49,23 @@ export async function POST(request) {
 
     if (!result.success) {
       return NextResponse.json(result, { status: 400 })
+    }
+
+    // אם יש צורך בסנכרון ל-iCount
+    if (sync_to_icount && result.invoice) {
+      try {
+        const { syncService } = await import('@/lib/icount/syncService')
+        const syncResult = await syncService.pushInvoiceToICount(result.invoice.id)
+        
+        if (syncResult.success) {
+          console.log('✅ Invoice synced to iCount successfully')
+        } else {
+          console.warn('⚠️ Failed to sync invoice to iCount:', syncResult.message)
+        }
+      } catch (syncError) {
+        console.error('❌ Error syncing to iCount:', syncError)
+        // לא מכשיל את התהליך אם הסנכרון נכשל
+      }
     }
 
     return NextResponse.json(result)

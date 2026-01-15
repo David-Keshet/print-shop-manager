@@ -18,10 +18,31 @@ export default function Home() {
   const [fromCache, setFromCache] = useState(false)
   const [greeting, setGreeting] = useState('')
 
+  // Calculate greeting and date on every render to avoid hydration mismatch
+  const getGreeting = () => {
+    if (!mounted) return '' // Return empty string on server
+    const hour = new Date().getHours()
+    if (hour >= 5 && hour < 12) return 'בוקר טוב! ☀️'
+    if (hour >= 12 && hour < 17) return 'צהריים טובים! 🌤️'
+    if (hour >= 17 && hour < 21) return 'ערב טוב! 🌆'
+    return 'לילה טוב! 🌙'
+  }
+
+  const getCurrentDate = () => {
+    if (!mounted) return '' // Return empty string on server
+    const date = new Date()
+    return date.toLocaleDateString('he-IL', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
   useEffect(() => {
     setMounted(true)
     
-    // Set greeting based on time of day
+    // Set greeting and date in state
     const hour = new Date().getHours()
     if (hour >= 5 && hour < 12) {
       setGreeting('בוקר טוב! ☀️')
@@ -122,15 +143,13 @@ export default function Home() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
                 <h1 className="text-3xl lg:text-4xl text-white mb-2">
-                  {mounted && greeting}
+                  {mounted ? greeting : getGreeting()}
                 </h1>
                 <p className="text-slate-400 text-xl">ברוכים הבאים למערכת ניהול דפוס קשת</p>
-                {mounted && currentDateDisplay && (
-                  <div className="flex items-center gap-2 mt-3 text-slate-500">
-                    <Calendar size={16} />
-                    <span>{currentDateDisplay}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 mt-3 text-slate-500">
+                  <Calendar size={16} />
+                  <span>{mounted ? currentDateDisplay : getCurrentDate()}</span>
+                </div>
               </div>
 
               <div className="flex items-center gap-3">

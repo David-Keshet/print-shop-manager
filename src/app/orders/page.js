@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Plus, Search, Edit2, Trash2, FileText, Download, MessageSquare, Receipt } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, FileText, Download, MessageSquare, Receipt, RefreshCw, Cloud, CheckCircle, AlertCircle } from 'lucide-react'
 import Layout from '@/components/Layout'
 import OrderPDF from '@/components/OrderPDF'
 import { formatWhatsAppUrl, formatTemplate } from '@/lib/utils'
@@ -34,9 +34,16 @@ export default function Orders() {
   const [creatingInvoice, setCreatingInvoice] = useState(false)
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null)
 
+  // iCount Sync State
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState(null)
+  const [syncError, setSyncError] = useState(null)
+  const [lastSync, setLastSync] = useState(null)
+
   // טעינת הזמנות
   useEffect(() => {
     fetchOrders()
+    fetchLastSyncStatus()
   }, [])
 
   const fetchOrders = async () => {
@@ -52,6 +59,80 @@ export default function Orders() {
       console.error('שגיאה בטעינת הזמנות:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchLastSyncStatus = async () => {
+    try {
+      const { data: settings } = await supabase
+        .from('icount_settings')
+        .select('last_sync')
+        .eq('is_active', true)
+        .single()
+      
+      setLastSync(settings?.last_sync)
+    } catch (error) {
+      console.error('שגיאה בטעינת סטטוס סנכרון:', error)
+    }
+  }
+
+  const handleSyncFromICount = async () => {
+    setSyncing(true)
+    setSyncMessage(null)
+    setSyncError(null)
+
+    try {
+      const response = await fetch('/api/icount/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'all' })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setSyncMessage('✅ סנכרון הושלם בהצלחה!')
+        await fetchLastSyncStatus()
+        await fetchOrders()
+      } else {
+        setSyncError(data.message || 'שגיאה בסנכרון')
+      }
+    } catch (err) {
+      console.error('Sync error:', err)
+      setSyncError('שגיאה בסנכרון עם iCount')
+    } finally {
+      setSyncing(false)
+      setTimeout(() => {
+        setSyncMessage(null)
+        setSyncError(null)
+      }, 5000)
+    }
+  }
+
+  const handleSyncOrderToICount = async (order) => {
+    try {
+      // Create invoice in iCount from order
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: order.id,
+          invoice_type: 'invoice',
+          sync_to_icount: true
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert(`הזמנה ${order.order_number} סונכרנה ל-iCount בהצלחה!`)
+        fetchOrders()
+      } else {
+        alert(`שגיאה בסנכרון ל-iCount: ${data.error}`)
+      }
+    } catch (err) {
+      console.error('Error syncing order to iCount:', err)
+      alert('שגיאה בסנכרון ל-iCount')
     }
   }
 
@@ -299,20 +380,59 @@ export default function Orders() {
         <div>
 
           <div className="card">
-            {/* כותרת וכפתור הזמנה חדשה */}
+            {/* כותרת וכפתורי פעולה */}
             <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <span>📦</span>
-                הזמנות
-              </h1>
-              <button
-                onClick={() => setShowSearchModal(true)}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus size={20} />
-                הזמנה חדשה
-              </button>
+              <div className="flex items-center gap-4">
+                <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                  <span>📦</span>
+                  הזמנות
+                </h1>
+                
+                {/* סטטוס סנכרון */}
+                {lastSync && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Cloud size={16} />
+                    <span>סונכרן לאחרונה: {new Date(lastSync).toLocaleDateString('he-IL')} {new Date(lastSync).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {/* כפתור סנכרון מ-iCount */}
+                <button
+                  onClick={handleSyncFromICount}
+                  disabled={syncing}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors"
+                >
+                  <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+                  {syncing ? 'מסנכרן...' : 'סנכרון iCount'}
+                </button>
+                
+                {/* כפתור הזמנה חדשה */}
+                <button
+                  onClick={() => setShowSearchModal(true)}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Plus size={20} />
+                  הזמנה חדשה
+                </button>
+              </div>
             </div>
+
+            {/* הודעות סנכרון */}
+            {syncMessage && (
+              <div className="mb-4 flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 px-4 py-3 rounded-lg">
+                <CheckCircle size={16} />
+                {syncMessage}
+              </div>
+            )}
+
+            {syncError && (
+              <div className="mb-4 flex items-center gap-2 text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
+                <AlertCircle size={16} />
+                {syncError}
+              </div>
+            )}
 
             {showSearchModal && (
               <CustomerSearchModal
@@ -416,6 +536,17 @@ export default function Orders() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <div className="flex gap-2 justify-center">
+                            {/* כפתור סנכרון ל-iCount */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSyncOrderToICount(order)
+                              }}
+                              className="text-indigo-600 hover:text-indigo-800"
+                              title="סנכרן ל-iCount"
+                            >
+                              <Cloud size={20} />
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -982,6 +1113,28 @@ function OrderForm({ onClose, initialCustomer, editData }) {
 
       // שליחת הודעת WhatsApp
       await sendWhatsAppNotification(order.order_number, customerName, customerPhone)
+
+      // סנכרון אוטומטי ל-iCount
+      try {
+        const syncResponse = await fetch('/api/invoices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: order.id,
+            invoice_type: 'invoice',
+            sync_to_icount: true
+          })
+        })
+        
+        const syncData = await syncResponse.json()
+        if (syncData.success) {
+          console.log(`✅ הזמנה ${order.order_number} סונכרנה ל-iCount`)
+        } else {
+          console.warn(`⚠️ סנכרון ל-iCount נכשל: ${syncData.error}`)
+        }
+      } catch (syncError) {
+        console.warn('⚠️ שגיאה בסנכרון אוטומטי ל-iCount:', syncError)
+      }
 
       alert(`הזמנה ${order.order_number} נשמרה בהצלחה!`)
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, Home } from 'lucide-react'
+import { Menu, Home, Package, ClipboardList, Users, FileText, BarChart3, UserCog, Database, Settings } from 'lucide-react'
 import SyncIndicator from './SyncIndicator'
 
 export default function Layout({ children }) {
@@ -20,123 +20,100 @@ export default function Layout({ children }) {
     return pathname.startsWith(path)
   }
 
+  const menuItems = [
+    { path: '/', icon: Home, label: 'דף הבית', color: 'indigo' },
+    { path: '/orders', icon: Package, label: 'הזמנות', color: 'blue' },
+    { path: '/tasks/board', icon: ClipboardList, label: 'לוח משימות', color: 'green' },
+    { path: '/customers', icon: Users, label: 'לקוחות', color: 'purple' },
+    { path: '/documents', icon: FileText, label: 'מסמכים', color: 'amber' },
+    { path: '/reports', icon: BarChart3, label: 'דוחות', color: 'orange' },
+    { path: '/users', icon: UserCog, label: 'ניהול משתמשים', color: 'pink' },
+    { path: '/cache', icon: Database, label: 'Cache', color: 'teal' },
+    { path: '/settings', icon: Settings, label: 'הגדרות מערכת', color: 'gray' },
+  ]
+
+  const handleLinkClick = () => {
+    setSidebarOpen(false)
+  }
+
   return (
     <div className="h-screen flex overflow-hidden">
       {/* Sync Status Indicator */}
       {mounted && <SyncIndicator />}
 
-      {/* Toggle Button - פינה ימנית תחתונה */}
-      {mounted && (
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="fixed bottom-6 right-6 z-50 p-4 bg-blue-600 hover:bg-blue-700 backdrop-blur-lg rounded-full text-gray-200 transition-all shadow-2xl hover:shadow-blue-500/50 hover:scale-110 group"
-        >
-          <Menu size={24} className="group-hover:rotate-90 transition-transform duration-300" />
-        </button>
+      {/* Overlay - appears when sidebar is open */}
+      {mounted && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
-      {/* Sidebar */}
+      {/* Clean Sidebar */}
       {mounted && (
-        <aside className={`${sidebarOpen ? 'w-22' : 'w-22'} bg-gray-800/20 backdrop-blur-lg border-l border-gray-700/30 shadow-2xl flex flex-col transition-all duration-300 overflow-hidden`}>
+        <aside 
+          className={`${
+            sidebarOpen ? 'w-64' : 'w-20'
+          } bg-gray-900/95 backdrop-blur-sm border-l border-gray-700/50 flex flex-col transition-all duration-300 ease-in-out relative z-50`}
+        >
+          {/* Toggle Button - Only show when closed */}
+          {!sidebarOpen && (
+            <div className="p-4 flex items-center justify-center border-b border-gray-700/30">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-3 rounded-lg hover:bg-gray-800/50 transition-all text-gray-300 hover:text-white"
+                aria-label="Open Sidebar"
+              >
+                <Menu size={24} />
+              </button>
+            </div>
+          )}
+
           {/* Menu Items */}
-          <nav className="flex-1 p-4 pt-4 overflow-y-auto">
-            <Link href="/" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/')
-                  ? 'bg-indigo-500/30 border-indigo-400/50 shadow-lg'
-                  : 'bg-gray-800/30 hover:bg-gray-700/40 border-gray-700/30 hover:border-gray-600/40'
-                }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">🏠</span>
-                {sidebarOpen && <span>דף הבית</span>}
-              </button>
-            </Link>
+          <nav className={`flex-1 p-4 overflow-y-auto custom-scrollbar space-y-2 ${!sidebarOpen ? 'pt-4' : 'pt-6'}`}>
+            {menuItems.map((item) => {
+              const active = isActive(item.path)
+              const IconComponent = item.icon
+              
+              return (
+                <Link key={item.path} href={item.path} onClick={handleLinkClick}>
+                  <button
+                    className={`w-full rounded-lg transition-all flex items-center gap-3 group/item relative overflow-hidden
+                      ${sidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'}
+                      ${active 
+                        ? `bg-${item.color}-500/20 hover:bg-${item.color}-500/30 text-white` 
+                        : 'bg-gray-800/30 hover:bg-gray-800/50 text-gray-400 hover:text-gray-200'
+                      }
+                    `}
+                  >
+                    {/* Icon */}
+                    <IconComponent size={20} className="flex-shrink-0" />
+                    
+                    {/* Text Label */}
+                    {sidebarOpen && (
+                      <span className="font-medium text-sm whitespace-nowrap">
+                        {item.label}
+                      </span>
+                    )}
 
-            <Link href="/orders" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/orders')
-                  ? 'bg-blue-500/30 border-blue-400/50 shadow-lg'
-                  : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
-                }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">📦</span>
-                {sidebarOpen && <span>הזמנות</span>}
-              </button>
-            </Link>
-
-            <Link href="/tasks/board" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/tasks')
-                  ? 'bg-green-500/30 border-green-400/50 shadow-lg'
-                  : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
-                }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">📌</span>
-                {sidebarOpen && <span>לוח משימות</span>}
-              </button>
-            </Link>
-
-            <Link href="/customers" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/customers')
-                  ? 'bg-purple-500/30 border-purple-400/50 shadow-lg'
-                  : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
-                }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">👥</span>
-                {sidebarOpen && <span>לקוחות</span>}
-              </button>
-            </Link>
-
-            <Link href="/documents" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/documents')
-                  ? 'bg-amber-500/30 border-amber-400/50 shadow-lg'
-                  : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
-                }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">📄</span>
-                {sidebarOpen && <span>מסמכים</span>}
-              </button>
-            </Link>
-
-            <Link href="/reports" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/reports')
-                  ? 'bg-orange-500/30 border-orange-400/50 shadow-lg'
-                  : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
-                }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">📊</span>
-                {sidebarOpen && <span>דוחות</span>}
-              </button>
-            </Link>
-
-            <Link href="/users" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/users')
-                  ? 'bg-pink-500/30 border-pink-400/50 shadow-lg'
-                  : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
-                }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">👨‍💼</span>
-                {sidebarOpen && <span>ניהול משתמשים</span>}
-              </button>
-            </Link>
-
-            <Link href="/cache" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium mb-6 ${isActive('/cache')
-                  ? 'bg-teal-500/30 border-teal-400/50 shadow-lg'
-                  : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
-                }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">💾</span>
-                {sidebarOpen && <span>Cache</span>}
-              </button>
-            </Link>
-
-            <Link href="/settings" onClick={() => setSidebarOpen(false)}>
-              <button className={`w-full ${sidebarOpen ? 'px-5 py-4' : 'aspect-square'} rounded-xl text-gray-200 border-2 transition-all flex items-center ${sidebarOpen ? 'gap-4' : 'justify-center'} group text-base font-medium ${isActive('/settings')
-                  ? 'bg-gray-500/30 border-gray-400/50 shadow-lg'
-                  : 'bg-white/5 hover:bg-gray-800/20 border-white/10 hover:border-gray-700/30'
-                }`}>
-                <span className="text-2xl group-hover:scale-110 transition-transform">⚙️</span>
-                {sidebarOpen && <span>הגדרות מערכת</span>}
-              </button>
-            </Link>
+                    {/* Active Indicator */}
+                    {active && (
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-full"></div>
+                    )}
+                  </button>
+                </Link>
+              )
+            })}
           </nav>
 
           {/* Footer */}
-          <div className={`p-6 border-t border-gray-700/30 ${!sidebarOpen && 'justify-center text-center'}`}>
-            <p className={`text-sm text-gray-200/60 font-medium ${sidebarOpen ? 'text-center' : 'text-xs'}`}>
-              {sidebarOpen ? '© 2026 דפוס קשת' : '©'}
-            </p>
-          </div>
+          {sidebarOpen && (
+            <div className="p-4 border-t border-gray-700/30 text-center">
+              <p className="text-xs text-gray-400">
+                © 2026 דפוס קשת
+              </p>
+            </div>
+          )}
         </aside>
       )}
 

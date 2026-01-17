@@ -39,11 +39,13 @@ export default function Invoices() {
 
   // סינון חשבוניות לפי חיפוש וסטטוס
   const filteredInvoices = invoices.filter(invoice => {
+    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter
+    
+    // סינון לפי סטטוס מתורגם
     const matchesSearch = invoice.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.invoice_type.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter
+                         invoice.invoice_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         translateStatus(invoice.status).toLowerCase().includes(searchTerm.toLowerCase())
     
     return matchesSearch && matchesStatus
   })
@@ -66,7 +68,34 @@ export default function Invoices() {
     }
   }
 
-  // פונקציית צבע
+  // פונקציית תרגום סוג מסמך
+  const translateInvoiceType = (type) => {
+    const translations = {
+      'invoice': 'חשבונית',
+      'invoice_receipt': 'חשבונית מס קבלה',
+      'receipt': 'קבלה',
+      'credit': 'חשבונית זיכוי',
+      'quote': 'הצעת מחיר',
+      'delivery_note': 'תעודת משלוח',
+      'return': 'החזרה',
+      'purchase': 'חשבונית קניה'
+    }
+    return translations[type] || type
+  }
+
+  // פונקציית תרגום סטטוס
+  const translateStatus = (status) => {
+    const translations = {
+      'open': 'פתוח',
+      'paid': 'שולם',
+      'overdue': 'איחור',
+      'cancelled': 'בוטל',
+      'draft': 'טיוטה',
+      'pending': 'ממתין',
+      'sent': 'נשלח'
+    }
+    return translations[status] || status
+  }
   const getStatusColor = (status) => {
     if (!status) return 'bg-gray-100 text-gray-700'
     
@@ -134,11 +163,12 @@ export default function Invoices() {
                 </div>
                 <div>
                   <h3 className="font-bold mb-2">פרטי חשבונית</h3>
+                  <p><strong>סוג מסמך:</strong> {translateInvoiceType(selectedInvoice.invoice_type)}</p>
                   <p><strong>תאריך הנפקה:</strong> {new Date(selectedInvoice.issue_date).toLocaleDateString('he-IL')}</p>
                   <p><strong>תאריך פרעון:</strong> {new Date(selectedInvoice.due_date).toLocaleDateString('he-IL')}</p>
                   <p><strong>סטטוס:</strong> 
                     <span className={`mr-2 px-2 py-1 rounded text-sm ${getStatusColor(selectedInvoice.status)}`}>
-                      {selectedInvoice.status}
+                      {translateStatus(selectedInvoice.status)}
                     </span>
                   </p>
                 </div>
@@ -297,7 +327,7 @@ export default function Invoices() {
                         onClick={() => viewInvoice(invoice)}
                       >
                         <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                          {invoice.invoice_type}
+                          {translateInvoiceType(invoice.invoice_type)}
                         </span>
                       </td>
                       <td
@@ -323,7 +353,7 @@ export default function Invoices() {
                         onClick={() => viewInvoice(invoice)}
                       >
                         <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(invoice.status)}`}>
-                          {invoice.status}
+                          {translateStatus(invoice.status)}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-center border border-gray-200">

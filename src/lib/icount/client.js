@@ -9,10 +9,23 @@ import { rateLimiter } from './rateLimiter.js'
 
 export class ICountClient {
   constructor(credentials = null) {
-    this.credentials = credentials || this.loadCredentials()
+    this.credentials = credentials
     this.offlineMode = ICOUNT_CONFIG.offlineMode
     this.sessionId = null // Store session ID for reuse
-    this.cacheKey = this.getCacheKey() // מפתח ייחודי ל-cache
+    this.cacheKey = 'default' // מפתח ייחודי ל-cache
+    this.credentialsLoaded = false
+  }
+
+  /**
+   * אתחול אסינכרוני של הפרטים
+   */
+  async init() {
+    if (!this.credentialsLoaded) {
+      this.credentials = this.credentials || await this.loadCredentials()
+      this.cacheKey = this.getCacheKey()
+      this.credentialsLoaded = true
+    }
+    return this.credentials
   }
 
   /**
@@ -28,7 +41,7 @@ export class ICountClient {
   /**
    * טעינת פרטי התחברות
    */
-  loadCredentials() {
+  async loadCredentials() {
     // ניסיון לטעון מ-localStorage
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('icount_credentials')
@@ -38,13 +51,41 @@ export class ICountClient {
     }
 
     // ניסיון לטעון ממשתני סביבה
-    const credentials = {
+    let credentials = {
       // Prefer SID/Token (recommended by iCount)
       sid: process.env.NEXT_PUBLIC_ICOUNT_SID || null,
       // Legacy credentials
       cid: process.env.NEXT_PUBLIC_ICOUNT_CID || null,
       user: process.env.NEXT_PUBLIC_ICOUNT_USER || null,
       pass: process.env.NEXT_PUBLIC_ICOUNT_PASS || null,
+    }
+
+    // אם אין פרטים במשתני סביבה, ננסה מ-Supabase
+    if (!credentials.cid && !credentials.sid) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        )
+
+        const { data: settings } = await supabase
+          .from('icount_settings')
+          .select('*')
+          .eq('is_active', true)
+          .single()
+
+        if (settings) {
+          const { decrypt } = await import('../encryption.js')
+          credentials = {
+            cid: settings.cid,
+            user: settings.user_name,
+            pass: decrypt(settings.encrypted_pass)
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load iCount settings from Supabase:', error.message)
+      }
     }
 
     return credentials
@@ -169,6 +210,9 @@ export class ICountClient {
    * שליחת בקשה ל-API של iCount
    */
   async request(method, params = {}) {
+    // ודא שהפרטים נטענו
+    await this.init()
+    
     if (!this.hasCredentials()) {
       throw new Error('חסרים פרטי התחברות ל-iCount')
     }
@@ -421,6 +465,10 @@ let icountClient = null
 export function getICountClient(credentials = null) {
   if (!icountClient || credentials) {
     icountClient = new ICountClient(credentials)
+    // אתחל אוטומטית את הפרטים אם לא סופקו
+    if (!credentials) {
+      icountClient.init().catch(console.error)
+    }
   }
   return icountClient
 }

@@ -33,6 +33,7 @@ export default function DocumentsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   useEffect(() => {
     fetchDocuments()
@@ -112,14 +113,15 @@ export default function DocumentsPage() {
   }
 
   const filteredDocuments = documents.filter(document => {
-    if (!searchTerm) return true
-
-    const search = searchTerm.toLowerCase()
-    return (
-      document.invoice_number?.toLowerCase().includes(search) ||
-      document.customers?.name?.toLowerCase().includes(search) ||
-      document.orders?.order_number?.toLowerCase().includes(search)
+    const matchesSearch = !searchTerm || (
+      document.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      document.customers?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      document.orders?.order_number?.toLowerCase().includes(searchTerm.toLowerCase())
     )
+    
+    const matchesStatus = statusFilter === 'all' || document.status === statusFilter
+    
+    return matchesSearch && matchesStatus
   })
 
   return (
@@ -128,34 +130,91 @@ export default function DocumentsPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                <FileText size={32} />
-                ניהול מסמכים
-              </h1>
-              <p className="text-gray-400 mt-1">
-                ניהול חשבוניות, קבלות, זיכויים ומסמכים נוספים עם סנכרון ל-iCount
-              </p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <span className="text-amber-500">📄</span>
+                  ניהול מסמכים
+                </h1>
+                <p className="text-gray-400 mt-1">
+                  ניהול חשבוניות, קבלות, זיכויים ומסמכים נוספים עם סנכרון ל-iCount
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Filters */}
-          <div className="flex gap-3 mb-4 flex-wrap">
+          <div className="flex gap-4 mb-6">
             <div className="flex-1 relative min-w-[250px]">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute right-3 top-3 text-gray-400" size={20} />
               <input
                 type="text"
                 placeholder="חיפוש לפי מספר, לקוח או הזמנה..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-gray-800 text-white rounded-lg px-4 py-2 pr-10 border border-gray-700 focus:border-blue-500 focus:outline-none"
+                className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 pr-10 border border-gray-700 focus:border-blue-500 focus:outline-none"
               />
             </div>
 
+            {/* מסנני סטטוס */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'all' 
+                    ? 'bg-gray-600 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                הכל
+              </button>
+              <button
+                onClick={() => setStatusFilter('draft')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'draft' 
+                    ? 'bg-gray-500 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                טיוטה
+              </button>
+              <button
+                onClick={() => setStatusFilter('sent')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'sent' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                נשלח
+              </button>
+              <button
+                onClick={() => setStatusFilter('paid')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'paid' 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                שולם
+              </button>
+              <button
+                onClick={() => setStatusFilter('cancelled')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'cancelled' 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                בוטל
+              </button>
+            </div>
+
+            {/* סינון סוג מסמך */}
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="bg-gray-800 text-white rounded-lg px-4 py-2 border border-gray-700 focus:border-blue-500 focus:outline-none"
+              className="bg-gray-800 text-white rounded-lg px-4 py-3 border border-gray-700 focus:border-blue-500 focus:outline-none"
             >
               <option value="all">כל המסמכים</option>
               <optgroup label="סוג מסמך">
@@ -167,12 +226,6 @@ export default function DocumentsPage() {
                 <option value="delivery_note">תעודת משלוח</option>
                 <option value="return">החזרה</option>
                 <option value="purchase">חשבונית קניה</option>
-              </optgroup>
-              <optgroup label="סטטוס">
-                <option value="draft">טיוטות</option>
-                <option value="sent">נשלחו</option>
-                <option value="paid">שולמו</option>
-                <option value="cancelled">בוטלו</option>
               </optgroup>
               <optgroup label="תשלום">
                 <option value="unpaid">ממתינים לתשלום</option>
@@ -193,19 +246,19 @@ export default function DocumentsPage() {
           </div>
         ) : (
           <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-800">
+            <table className="w-full border-collapse">
+              <thead className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
                 <tr>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">מספר</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">לקוח</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">סוג מסמך</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">תאריך הנפקה</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">תאריך תשלום</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">סכום</th>
-                  <th className="text-right px-6 py-4 text-gray-300 font-semibold">סטטוס</th>
-                  <th className="text-center px-6 py-4 text-gray-300 font-semibold">תשלום</th>
-                  <th className="text-center px-6 py-4 text-gray-300 font-semibold">סנכרון</th>
-                  <th className="text-center px-6 py-4 text-gray-300 font-semibold">פעולות</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">מספר</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">לקוח</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">סוג מסמך</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">תאריך הנפקה</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">תאריך תשלום</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">סכום</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">סטטוס</th>
+                  <th className="text-center px-6 py-4 font-semibold border border-gray-300">תשלום</th>
+                  <th className="text-center px-6 py-4 font-semibold border border-gray-300">סנכרון</th>
+                  <th className="text-center px-6 py-4 font-semibold border border-gray-300">פעולות</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">

@@ -19,6 +19,7 @@ export default function Orders() {
   const [orderItems, setOrderItems] = useState([])
   const [editingOrder, setEditingOrder] = useState(null)
   const [prefilledCustomer, setPrefilledCustomer] = useState(null) // State for new order customer
+  const [statusFilter, setStatusFilter] = useState('all')
 
   // WhatsApp Modal State
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
@@ -208,12 +209,16 @@ export default function Orders() {
     }
   }
 
-  // סינון הזמנות לפי חיפוש
-  const filteredOrders = orders.filter(order =>
-    order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer_phone.includes(searchTerm) ||
-    order.order_number.toString().includes(searchTerm)
-  )
+  // סינון הזמנות לפי חיפוש וסטטוס
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.customer_phone.includes(searchTerm) ||
+                         order.order_number.toString().includes(searchTerm)
+    
+    const matchesStatus = statusFilter === 'all' || order.status === statusFilter
+    
+    return matchesSearch && matchesStatus
+  })
 
 
   // הפקת חשבונית
@@ -384,7 +389,7 @@ export default function Orders() {
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-4">
                 <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                  <span>📦</span>
+                  <span className="text-blue-600">📦</span>
                   הזמנות
                 </h1>
                 
@@ -445,9 +450,9 @@ export default function Orders() {
               />
             )}
 
-            {/* חיפוש */}
-            <div className="mb-6">
-              <div className="relative">
+            {/* מסננים */}
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1 relative">
                 <Search className="absolute right-3 top-3 text-gray-400" size={20} />
                 <input
                   type="text"
@@ -456,6 +461,60 @@ export default function Orders() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+              </div>
+              
+              {/* מסנני סטטוס */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setStatusFilter('all')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'all' 
+                      ? 'bg-gray-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  הכל
+                </button>
+                <button
+                  onClick={() => setStatusFilter('חדש')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'חדש' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  חדש
+                </button>
+                <button
+                  onClick={() => setStatusFilter('בתהליך')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'בתהליך' 
+                      ? 'bg-yellow-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  בתהליך
+                </button>
+                <button
+                  onClick={() => setStatusFilter('הושלם')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'הושלם' 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  הושלם
+                </button>
+                <button
+                  onClick={() => setStatusFilter('בוטל')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'בוטל' 
+                      ? 'bg-red-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  בוטל
+                </button>
               </div>
             </div>
 
@@ -481,47 +540,47 @@ export default function Orders() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-sky-200">
+                <table className="w-full border-collapse">
+                  <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
                     <tr>
-                      <th className="px-4 py-3 text-right font-bold">מספר הזמנה</th>
-                      <th className="px-4 py-3 text-right font-bold">שם לקוח</th>
-                      <th className="px-4 py-3 text-right font-bold">טלפון</th>
-                      <th className="px-4 py-3 text-right font-bold">סכום</th>
-                      <th className="px-4 py-3 text-right font-bold">סטטוס</th>
-                      <th className="px-4 py-3 text-right font-bold">תאריך</th>
-                      <th className="px-4 py-3 text-center font-bold">פעולות</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">מספר הזמנה</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">שם לקוח</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">טלפון</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">סכום</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">סטטוס</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">תאריך</th>
+                      <th className="px-4 py-4 text-center font-bold border border-gray-300">פעולות</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredOrders.map((order) => (
-                      <tr key={order.id} className="border-b hover:bg-sky-50 cursor-pointer">
+                      <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
                         <td
-                          className="px-4 py-3 font-bold text-blue-600"
+                          className="px-4 py-4 font-bold text-blue-600 border border-gray-200"
                           onClick={() => viewOrder(order)}
                         >
                           #{order.order_number}
                         </td>
                         <td
-                          className="px-4 py-3"
+                          className="px-4 py-4 border border-gray-200"
                           onClick={() => viewOrder(order)}
                         >
                           {order.customer_name}
                         </td>
                         <td
-                          className="px-4 py-3 text-gray-600"
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
                           onClick={() => viewOrder(order)}
                         >
                           {order.customer_phone}
                         </td>
                         <td
-                          className="px-4 py-3 font-bold"
+                          className="px-4 py-4 font-bold border border-gray-200"
                           onClick={() => viewOrder(order)}
                         >
                           ₪{order.total_with_vat.toFixed(2)}
                         </td>
                         <td
-                          className="px-4 py-3"
+                          className="px-4 py-4 border border-gray-200"
                           onClick={() => viewOrder(order)}
                         >
                           <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
@@ -529,12 +588,12 @@ export default function Orders() {
                           </span>
                         </td>
                         <td
-                          className="px-4 py-3 text-gray-600"
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
                           onClick={() => viewOrder(order)}
                         >
                           {new Date(order.created_at).toLocaleDateString('he-IL')}
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-4 text-center border border-gray-200">
                           <div className="flex gap-2 justify-center">
                             {/* כפתור סנכרון ל-iCount */}
                             <button
@@ -542,49 +601,32 @@ export default function Orders() {
                                 e.stopPropagation()
                                 handleSyncOrderToICount(order)
                               }}
-                              className="text-indigo-600 hover:text-indigo-800"
-                              title="סנכרן ל-iCount"
+                              className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 transition-colors"
+                              title="סנכרון ל-iCount"
                             >
-                              <Cloud size={20} />
+                              <Cloud size={18} />
                             </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleWhatsAppClick(order, 'new_order')
-                              }}
-                              className="text-green-600 hover:text-green-800"
-                              title="שלח WhatsApp"
-                            >
-                              <MessageSquare size={20} />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleCreateInvoice(order)
-                              }}
-                              className={`${order.invoiced ? 'text-purple-600' : 'text-orange-600'} hover:opacity-70`}
-                              title={order.invoiced ? 'צפה בחשבונית' : 'הפק חשבונית'}
-                            >
-                              <Receipt size={20} />
-                            </button>
+                            {/* כפתור צפייה */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 viewOrder(order)
                               }}
-                              className="text-blue-600 hover:text-blue-800"
+                              className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
                               title="צפה בהזמנה"
                             >
-                              <FileText size={20} />
+                              <Eye size={18} />
                             </button>
+                            {/* כפתור עריכה */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 editOrder(order)
                               }}
-                              className="text-green-600 hover:text-green-800"
+                              className="text-yellow-600 hover:text-yellow-800 p-1 rounded hover:bg-yellow-50 transition-colors"
                               title="ערוך הזמנה"
                             >
+                              <Edit2 size={18} />
                               <Edit2 size={20} />
                             </button>
                             <button

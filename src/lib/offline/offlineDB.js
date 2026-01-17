@@ -24,7 +24,13 @@ class OfflineDB {
    * Initialize IndexedDB
    */
   async init() {
-    if (this.isInitialized && this.db) {
+    // Check if we're in browser environment
+    if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
+      console.warn('IndexedDB not available in this environment')
+      return null
+    }
+
+    if (this.isInitialized && this.db && !this.db.closed) {
       return this.db
     }
 
@@ -90,16 +96,39 @@ class OfflineDB {
    * Add or update item in store
    */
   async put(storeName, data) {
-    await this.init()
+    try {
+      const db = await this.init()
+      if (!db) {
+        console.warn('IndexedDB not available, skipping put operation')
+        return null
+      }
 
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readwrite')
-      const store = transaction.objectStore(storeName)
-      const request = store.put(data)
+      // בדוק אם החיבור עדיין פתוח
+      if (!this.db || this.db.closed) {
+        console.warn('Database connection closed, reinitializing...')
+        this.db = null
+        this.isInitialized = false
+        const newDb = await this.init()
+        if (!newDb) return null
+      }
 
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
-    })
+      return new Promise((resolve, reject) => {
+        try {
+          const transaction = this.db.transaction([storeName], 'readwrite')
+          const store = transaction.objectStore(storeName)
+          const request = store.put(data)
+
+          request.onsuccess = () => resolve(request.result)
+          request.onerror = () => reject(request.error)
+        } catch (error) {
+          console.error('Transaction error in put:', error)
+          reject(error)
+        }
+      })
+    } catch (error) {
+      console.error('Put error:', error)
+      return null
+    }
   }
 
   /**
@@ -139,12 +168,19 @@ class OfflineDB {
    */
   async getByIndex(storeName, indexName, value) {
     try {
-      await this.init()
+      const db = await this.init()
+      if (!db) {
+        console.warn('IndexedDB not available, returning empty array')
+        return []
+      }
 
       // בדוק אם החיבור עדיין פתוח
       if (!this.db || this.db.closed) {
         console.warn('Database connection closed, reinitializing...')
-        await this.init()
+        this.db = null
+        this.isInitialized = false
+        const newDb = await this.init()
+        if (!newDb) return []
       }
 
       return new Promise((resolve, reject) => {
@@ -231,17 +267,36 @@ class OfflineDB {
    * Get all pending items across all stores
    */
   async getAllPendingSync() {
-    const [orders, customers, invoices] = await Promise.all([
-      this.getPendingSync(STORES.ORDERS),
-      this.getPendingSync(STORES.CUSTOMERS),
-      this.getPendingSync(STORES.INVOICES),
-    ])
+    try {
+      const [orders, customers, invoices] = await Promise.all([
+        this.getPendingSync(STORES.ORDERS).catch(err => {
+          console.error('Failed to get pending sync for orders:', err)
+          return []
+        }),
+        this.getPendingSync(STORES.CUSTOMERS).catch(err => {
+          console.error('Failed to get pending sync for customers:', err)
+          return []
+        }),
+        this.getPendingSync(STORES.INVOICES).catch(err => {
+          console.error('Failed to get pending sync for invoices:', err)
+          return []
+        }),
+      ])
 
-    return {
-      orders: orders || [],
-      customers: customers || [],
-      invoices: invoices || [],
-      total: (orders?.length || 0) + (customers?.length || 0) + (invoices?.length || 0)
+      return {
+        orders: orders || [],
+        customers: customers || [],
+        invoices: invoices || [],
+        total: (orders?.length || 0) + (customers?.length || 0) + (invoices?.length || 0)
+      }
+    } catch (error) {
+      console.error('getAllPendingSync error:', error)
+      return {
+        orders: [],
+        customers: [],
+        invoices: [],
+        total: 0
+      }
     }
   }
 

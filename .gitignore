@@ -88,3 +88,4 @@ ntuser.*
 ../.trae/
 ../.windsurf/
 ../.antigravity/
+.env*.local

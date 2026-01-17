@@ -20,6 +20,9 @@ class SyncService {
   async initializeICountClient() {
     if (this.iCountClient) return this.iCountClient
 
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
     // טען הגדרות מ-Supabase
     const { data: settings } = await supabase
       .from('icount_settings')
@@ -38,6 +41,73 @@ class SyncService {
       pass: decrypt(settings.encrypted_pass),
     })
 
+=======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
+    try {
+      // נסה לטען הגדרות מ-Supabase
+      const { data: settings } = await supabase
+        .from('icount_settings')
+        .select('*')
+        .eq('is_active', true)
+        .single()
+
+      if (settings) {
+        // צור client עם הגדרות מ-Supabase
+        this.iCountClient = new ICountClient({
+          cid: settings.cid,
+          user: settings.user_name,
+          pass: decrypt(settings.encrypted_pass),
+        })
+        console.log('✅ Using iCount settings from Supabase')
+      } else {
+        // נסה לטעון ממשתני סביבה או מהמערכת העצמאית
+        const fs = require('fs')
+        const path = require('path')
+        const credentialsFile = path.join(__dirname, '../../.icount-standalone.json')
+        
+        if (fs.existsSync(credentialsFile)) {
+          const credentials = JSON.parse(fs.readFileSync(credentialsFile, 'utf8'))
+          this.iCountClient = new ICountClient({
+            cid: credentials.cid,
+            user: credentials.user,
+            pass: credentials.pass,
+          })
+          console.log('✅ Using iCount settings from standalone file')
+        } else {
+          // נסה ממשתני סביבה
+          const cid = process.env.NEXT_PUBLIC_ICOUNT_CID
+          const user = process.env.NEXT_PUBLIC_ICOUNT_USER
+          const pass = process.env.NEXT_PUBLIC_ICOUNT_PASS
+          const sid = process.env.NEXT_PUBLIC_ICOUNT_SID
+          
+          if (cid && user && pass) {
+            this.iCountClient = new ICountClient({
+              cid: cid,
+              user: user,
+              pass: pass,
+              sid: sid
+            })
+            console.log('✅ Using iCount settings from environment')
+          } else {
+            throw new Error('No iCount settings found - check Supabase, standalone file, or environment variables')
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to load iCount settings:', error.message)
+      throw new Error('No active iCount settings found')
+    }
+
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
     return this.iCountClient
   }
 
@@ -250,6 +320,8 @@ class SyncService {
         try {
           console.log(`📡 Fetching ${type} documents...`)
           const response = await this.iCountClient.request('doc/search', {
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
             from_date: fromDate,
             to_date: toDate,
             date_from: fromDate,
@@ -260,6 +332,26 @@ class SyncService {
             limit: 100
           })
           
+=======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
+            doctype: type,
+            limit: 100
+          })
+          
+          console.log(`📊 ${type} response:`, response)
+          
+          if (response && response.status === true && response.results_list) {
+            console.log(`✅ Found ${response.results_count} ${type} documents`)
+            documents = documents.concat(response.results_list)
+          } else {
+            console.log(`❌ No ${type} documents found`)
+          }
+          
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
           console.log(`📥 Response for ${type}:`, JSON.stringify(response, null, 2))
           
           const batch = (response?.results_list || response?.data || response || []).map(d => ({ 
@@ -405,11 +497,12 @@ class SyncService {
           const subtotal = parseFloat(fullDoc.subtotal || fullDoc.sum_no_vat || fullDoc.sum_before_vat || (total / 1.18))
           const vat = parseFloat(fullDoc.vat_amount || fullDoc.sum_vat || (total - subtotal))
 
-          // מידע לקוח - בדוק את כל השדות האפשריים
+          // מידע לקוח - עדיפות לשדות הנפוצים ביותר ב-iCount
           const clientID = fullDoc.client_id || fullDoc.clientid || fullDoc.customer_id
-          let clientName = fullDoc.client_name || fullDoc.clientname || fullDoc.customer_name || 
-                          fullDoc.contact_name || fullDoc.name || fullDoc.full_name ||
-                          fullDoc.customer || fullDoc.client || fullDoc.recipient_name
+          let clientName = fullDoc.client_name || fullDoc.customer_name || fullDoc.clientname ||
+                          fullDoc.name || fullDoc.contact_name || fullDoc.full_name ||
+                          fullDoc.customer || fullDoc.client || fullDoc.recipient_name ||
+                          fullDoc.company_name || fullDoc.business_name || fullDoc.organization_name
           let clientPhone = fullDoc.client_phone || fullDoc.phone || fullDoc.telephone || 
                            fullDoc.mobile || fullDoc.cellular || fullDoc.contact_phone
           let clientEmail = fullDoc.client_email || fullDoc.email || fullDoc.mail
@@ -429,7 +522,14 @@ class SyncService {
           
           // תמיד נסה למצוא את הלקוח האמיתי מ-iCount - רק אם אין לנו שם סביר
           debugLog.push(`Checking if customer lookup needed: clientID=${clientID}, clientName=${clientName}`)
-          const needsLookup = clientID && (!clientName || clientName.includes('ICOUNT') || /^\d+$/.test(clientName.trim()))
+          const needsLookup = clientID && (
+            !clientName || 
+            clientName.includes('ICOUNT') || 
+            /^\d+$/.test(clientName.trim()) ||
+            clientName.includes('לקוח מספר') ||
+            clientName === clientID ||
+            clientName.length < 2
+          )
           debugLog.push(`Customer lookup needed: ${needsLookup}`)
           
           if (needsLookup) {
@@ -894,13 +994,18 @@ class SyncService {
             vat = total - subtotal
           }
 
-          // מיפוי שמות לקוחות ידועים אם ה-API מחזיר רק מזהה
-          const clientID = fullDoc.client_id || fullDoc.clientid
-          let clientName = fullDoc.client_name || fullDoc.clientname || fullDoc.customer_name
+          // מיפוי שמות לקוחות - אותו מיפוי מלא כמו בסנכרון הזמנות
+          const clientID = fullDoc.client_id || fullDoc.clientid || fullDoc.customer_id
+          let clientName = fullDoc.client_name || fullDoc.customer_name || fullDoc.clientname ||
+                          fullDoc.name || fullDoc.contact_name || fullDoc.full_name ||
+                          fullDoc.customer || fullDoc.client || fullDoc.recipient_name ||
+                          fullDoc.company_name || fullDoc.business_name || fullDoc.organization_name
 
-          if (!clientName || clientName === clientID) {
+          if (!clientName || clientName === clientID || clientName.includes('ICOUNT') || 
+              /^\d+$/.test(clientName.trim()) || clientName.includes('לקוח מספר') ||
+              clientName.length < 2) {
             if (clientID === '6') clientName = 'משרד ראש הממשלה'
-            else clientName = clientName || `לקוח iCount (${clientID || '?'})`
+            else clientName = `לקוח iCount (${clientID || '?'})`
           }
 
           const invoiceData = {

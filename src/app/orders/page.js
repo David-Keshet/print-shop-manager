@@ -19,6 +19,14 @@ export default function Orders() {
   const [orderItems, setOrderItems] = useState([])
   const [editingOrder, setEditingOrder] = useState(null)
   const [prefilledCustomer, setPrefilledCustomer] = useState(null) // State for new order customer
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+=======
+  const [statusFilter, setStatusFilter] = useState('all')
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+  const [statusFilter, setStatusFilter] = useState('all')
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 
   // WhatsApp Modal State
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
@@ -39,6 +47,13 @@ export default function Orders() {
   const [syncMessage, setSyncMessage] = useState(null)
   const [syncError, setSyncError] = useState(null)
   const [lastSync, setLastSync] = useState(null)
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+  const [statusFilter, setStatusFilter] = useState('all') // all, new, in_progress, completed, cancelled
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 
   // טעינת הזמנות
   useEffect(() => {
@@ -208,14 +223,63 @@ export default function Orders() {
     }
   }
 
-  // סינון הזמנות לפי חיפוש
-  const filteredOrders = orders.filter(order =>
-    order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer_phone.includes(searchTerm) ||
-    order.order_number.toString().includes(searchTerm)
-  )
+  // סינון הזמנות לפי חיפוש וסטטוס
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+                          order.customer_phone.includes(searchTerm) ||
+                          order.order_number.toString().includes(searchTerm)
+    
+    if (!matchesSearch) return false
+    
+    if (statusFilter === 'all') return true
+    
+    const statusLower = (order.status || '').toLowerCase()
+    
+    switch (statusFilter) {
+      case 'new':
+        return statusLower.includes('חדש') || statusLower.includes('ממתין') || statusLower === 'new'
+      case 'in_progress':
+        return !statusLower.includes('חדש') && 
+               !statusLower.includes('ממתין') && 
+               !statusLower.includes('בוטל') && 
+               !statusLower.includes('ביטול') && 
+               !statusLower.includes('מוכן') && 
+               !statusLower.includes('הושלם') && 
+               !statusLower.includes('נמסר') && 
+               statusLower !== 'completed' && 
+               statusLower !== 'cancelled'
+      case 'completed':
+        return statusLower.includes('מוכן') || 
+               statusLower.includes('הושלם') || 
+               statusLower.includes('נמסר') || 
+               statusLower === 'completed'
+      case 'cancelled':
+        return statusLower.includes('בוטל') || 
+               statusLower.includes('ביטול') || 
+               statusLower === 'cancelled'
+      default:
+        return true
+    }
+  })
+
+=======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+                         order.customer_phone.includes(searchTerm) ||
+                         order.order_number.toString().includes(searchTerm)
+    
+    const matchesStatus = statusFilter === 'all' || order.status === statusFilter
+    
+    return matchesSearch && matchesStatus
+  })
 
 
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
   // הפקת חשבונית
   const handleCreateInvoice = async (order) => {
     if (order.invoiced) {
@@ -384,10 +448,92 @@ export default function Orders() {
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-4">
                 <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                  <span>📦</span>
+                  <span className="text-blue-600">📦</span>
                   הזמנות
                 </h1>
                 
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+                {/* מצבים - כפתורי סינון */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      statusFilter === 'all' 
+                        ? 'bg-gray-600 text-white' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-current"></span>
+                    כל המצבים
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('new')}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      statusFilter === 'new' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-current"></span>
+                    חדש
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('in_progress')}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      statusFilter === 'in_progress' 
+                        ? 'bg-yellow-600 text-white' 
+                        : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-current"></span>
+                    בתהליך
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('completed')}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      statusFilter === 'completed' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-current"></span>
+                    הושלם
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('cancelled')}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                      statusFilter === 'cancelled' 
+                        ? 'bg-red-600 text-white' 
+                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-current"></span>
+                    בוטל
+                  </button>
+                </div>
+                
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                {/* מצבים */}
+                <div className="flex gap-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span className="w-3 h-3 bg-blue-100 rounded-full border-2 border-blue-300"></span>
+                    <span>חדש</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span className="w-3 h-3 bg-yellow-100 rounded-full border-2 border-yellow-300"></span>
+                    <span>בתהליך</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span className="w-3 h-3 bg-green-100 rounded-full border-2 border-green-300"></span>
+                    <span>הושלם</span>
+                  </div>
+                </div>
+                
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                 {/* סטטוס סנכרון */}
                 {lastSync && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -445,9 +591,15 @@ export default function Orders() {
               />
             )}
 
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
             {/* חיפוש */}
             <div className="mb-6">
               <div className="relative">
+=======
+            {/* מסננים */}
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1 relative">
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                 <Search className="absolute right-3 top-3 text-gray-400" size={20} />
                 <input
                   type="text"
@@ -457,6 +609,63 @@ export default function Orders() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+=======
+              
+              {/* מסנני סטטוס */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setStatusFilter('all')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'all' 
+                      ? 'bg-gray-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  הכל
+                </button>
+                <button
+                  onClick={() => setStatusFilter('חדש')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'חדש' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  חדש
+                </button>
+                <button
+                  onClick={() => setStatusFilter('בתהליך')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'בתהליך' 
+                      ? 'bg-yellow-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  בתהליך
+                </button>
+                <button
+                  onClick={() => setStatusFilter('הושלם')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'הושלם' 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  הושלם
+                </button>
+                <button
+                  onClick={() => setStatusFilter('בוטל')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    statusFilter === 'בוטל' 
+                      ? 'bg-red-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  בוטל
+                </button>
+              </div>
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
             </div>
 
             {/* טבלת הזמנות */}
@@ -481,6 +690,10 @@ export default function Orders() {
               </div>
             ) : (
               <div className="overflow-x-auto">
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                 <table className="w-full">
                   <thead className="bg-sky-200">
                     <tr>
@@ -491,37 +704,152 @@ export default function Orders() {
                       <th className="px-4 py-3 text-right font-bold">סטטוס</th>
                       <th className="px-4 py-3 text-right font-bold">תאריך</th>
                       <th className="px-4 py-3 text-center font-bold">פעולות</th>
+=======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+                <table className="w-full border-collapse">
+                  <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                    <tr>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">מספר הזמנה</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">שם לקוח</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">טלפון</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">סכום</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">סטטוס</th>
+                      <th className="px-4 py-4 text-right font-bold border border-gray-300">תאריך</th>
+                      <th className="px-4 py-4 text-center font-bold border border-gray-300">פעולות</th>
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                     </tr>
                   </thead>
                   <tbody>
                     {filteredOrders.map((order) => (
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                       <tr key={order.id} className="border-b hover:bg-sky-50 cursor-pointer">
                         <td
                           className="px-4 py-3 font-bold text-blue-600"
+=======
+                      <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
+                        <td
+                          className="px-4 py-4 font-bold text-blue-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                      <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
+                        <td
+                          className="px-4 py-4 font-bold text-blue-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                      <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
+                        <td
+                          className="px-4 py-4 font-bold text-blue-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                      <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
+                        <td
+                          className="px-4 py-4 font-bold text-blue-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                           onClick={() => viewOrder(order)}
                         >
                           #{order.order_number}
                         </td>
                         <td
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3"
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                           onClick={() => viewOrder(order)}
                         >
                           {order.customer_name}
                         </td>
                         <td
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3 text-gray-600"
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                           onClick={() => viewOrder(order)}
                         >
                           {order.customer_phone}
                         </td>
                         <td
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3 font-bold"
+=======
+                          className="px-4 py-4 font-bold border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 font-bold border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 font-bold border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 font-bold border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                           onClick={() => viewOrder(order)}
                         >
                           ₪{order.total_with_vat.toFixed(2)}
                         </td>
                         <td
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3"
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                           onClick={() => viewOrder(order)}
                         >
                           <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
@@ -529,12 +857,44 @@ export default function Orders() {
                           </span>
                         </td>
                         <td
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3 text-gray-600"
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                           onClick={() => viewOrder(order)}
                         >
                           {new Date(order.created_at).toLocaleDateString('he-IL')}
                         </td>
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                         <td className="px-4 py-3 text-center">
+=======
+                        <td className="px-4 py-4 text-center border border-gray-200">
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                        <td className="px-4 py-4 text-center border border-gray-200">
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                        <td className="px-4 py-4 text-center border border-gray-200">
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+                        <td className="px-4 py-4 text-center border border-gray-200">
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                           <div className="flex gap-2 justify-center">
                             {/* כפתור סנכרון ל-iCount */}
                             <button
@@ -542,6 +902,10 @@ export default function Orders() {
                                 e.stopPropagation()
                                 handleSyncOrderToICount(order)
                               }}
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                               className="text-indigo-600 hover:text-indigo-800"
                               title="סנכרן ל-iCount"
                             >
@@ -567,24 +931,99 @@ export default function Orders() {
                             >
                               <Receipt size={20} />
                             </button>
+=======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+                              className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 transition-colors"
+                              title="סנכרון ל-iCount"
+                            >
+                              <Cloud size={18} />
+                            </button>
+                            {/* כפתור צפייה */}
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 viewOrder(order)
                               }}
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                               className="text-blue-600 hover:text-blue-800"
                               title="צפה בהזמנה"
                             >
                               <FileText size={20} />
                             </button>
+=======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+                              className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
+                              title="צפה בהזמנה"
+                            >
+                              <Eye size={18} />
+                            </button>
+                            {/* כפתור עריכה */}
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
                                 editOrder(order)
                               }}
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                               className="text-green-600 hover:text-green-800"
                               title="ערוך הזמנה"
                             >
+=======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+                              className="text-yellow-600 hover:text-yellow-800 p-1 rounded hover:bg-yellow-50 transition-colors"
+                              title="ערוך הזמנה"
+                            >
+                              <Edit2 size={18} />
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                               <Edit2 size={20} />
                             </button>
                             <button

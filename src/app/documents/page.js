@@ -33,6 +33,10 @@ export default function DocumentsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+=======
+  const [statusFilter, setStatusFilter] = useState('all')
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
 
   useEffect(() => {
     fetchDocuments()
@@ -112,6 +116,7 @@ export default function DocumentsPage() {
   }
 
   const filteredDocuments = documents.filter(document => {
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
     if (!searchTerm) return true
 
     const search = searchTerm.toLowerCase()
@@ -120,6 +125,17 @@ export default function DocumentsPage() {
       document.customers?.name?.toLowerCase().includes(search) ||
       document.orders?.order_number?.toLowerCase().includes(search)
     )
+=======
+    const matchesSearch = !searchTerm || (
+      document.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      document.customers?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      document.orders?.order_number?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    
+    const matchesStatus = statusFilter === 'all' || document.status === statusFilter
+    
+    return matchesSearch && matchesStatus
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
   })
 
   return (
@@ -128,6 +144,9 @@ export default function DocumentsPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="mb-4">
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
             <div>
               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                 <FileText size={32} />
@@ -136,18 +155,67 @@ export default function DocumentsPage() {
               <p className="text-gray-400 mt-1">
                 ניהול חשבוניות, קבלות, זיכויים ומסמכים נוספים עם סנכרון ל-iCount
               </p>
+=======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <span className="text-amber-500">📄</span>
+                  ניהול מסמכים
+                </h1>
+                <p className="text-gray-400 mt-1">
+                  ניהול חשבוניות, קבלות, זיכויים ומסמכים נוספים עם סנכרון ל-iCount
+                </p>
+              </div>
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+              
+              {/* מצבים */}
+              <div className="flex gap-3">
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <span className="w-3 h-3 bg-gray-500 rounded-full border-2 border-gray-400"></span>
+                  <span>טיוטה</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <span className="w-3 h-3 bg-blue-500 rounded-full border-2 border-blue-400"></span>
+                  <span>נשלח</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <span className="w-3 h-3 bg-green-500 rounded-full border-2 border-green-400"></span>
+                  <span>שולם</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <span className="w-3 h-3 bg-red-500 rounded-full border-2 border-red-400"></span>
+                  <span>בוטל</span>
+                </div>
+              </div>
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
             </div>
           </div>
 
           {/* Filters */}
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
           <div className="flex gap-3 mb-4 flex-wrap">
             <div className="flex-1 relative min-w-[250px]">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+=======
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1 relative min-w-[250px]">
+              <Search className="absolute right-3 top-3 text-gray-400" size={20} />
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
               <input
                 type="text"
                 placeholder="חיפוש לפי מספר, לקוח או הזמנה..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
                 className="w-full bg-gray-800 text-white rounded-lg px-4 py-2 pr-10 border border-gray-700 focus:border-blue-500 focus:outline-none"
               />
             </div>
@@ -156,6 +224,71 @@ export default function DocumentsPage() {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="bg-gray-800 text-white rounded-lg px-4 py-2 border border-gray-700 focus:border-blue-500 focus:outline-none"
+=======
+                className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 pr-10 border border-gray-700 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            {/* מסנני סטטוס */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'all' 
+                    ? 'bg-gray-600 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                הכל
+              </button>
+              <button
+                onClick={() => setStatusFilter('draft')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'draft' 
+                    ? 'bg-gray-500 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                טיוטה
+              </button>
+              <button
+                onClick={() => setStatusFilter('sent')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'sent' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                נשלח
+              </button>
+              <button
+                onClick={() => setStatusFilter('paid')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'paid' 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                שולם
+              </button>
+              <button
+                onClick={() => setStatusFilter('cancelled')}
+                className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                  statusFilter === 'cancelled' 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                בוטל
+              </button>
+            </div>
+
+            {/* סינון סוג מסמך */}
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="bg-gray-800 text-white rounded-lg px-4 py-3 border border-gray-700 focus:border-blue-500 focus:outline-none"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
             >
               <option value="all">כל המסמכים</option>
               <optgroup label="סוג מסמך">
@@ -168,12 +301,15 @@ export default function DocumentsPage() {
                 <option value="return">החזרה</option>
                 <option value="purchase">חשבונית קניה</option>
               </optgroup>
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
               <optgroup label="סטטוס">
                 <option value="draft">טיוטות</option>
                 <option value="sent">נשלחו</option>
                 <option value="paid">שולמו</option>
                 <option value="cancelled">בוטלו</option>
               </optgroup>
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
               <optgroup label="תשלום">
                 <option value="unpaid">ממתינים לתשלום</option>
                 <option value="partially_paid">שולם חלקית</option>
@@ -193,6 +329,9 @@ export default function DocumentsPage() {
           </div>
         ) : (
           <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
             <table className="w-full">
               <thead className="bg-gray-800">
                 <tr>
@@ -206,6 +345,31 @@ export default function DocumentsPage() {
                   <th className="text-center px-6 py-4 text-gray-300 font-semibold">תשלום</th>
                   <th className="text-center px-6 py-4 text-gray-300 font-semibold">סנכרון</th>
                   <th className="text-center px-6 py-4 text-gray-300 font-semibold">פעולות</th>
+=======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+            <table className="w-full border-collapse">
+              <thead className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
+                <tr>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">מספר</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">לקוח</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">סוג מסמך</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">תאריך הנפקה</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">תאריך תשלום</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">סכום</th>
+                  <th className="text-right px-6 py-4 font-semibold border border-gray-300">סטטוס</th>
+                  <th className="text-center px-6 py-4 font-semibold border border-gray-300">תשלום</th>
+                  <th className="text-center px-6 py-4 font-semibold border border-gray-300">סנכרון</th>
+                  <th className="text-center px-6 py-4 font-semibold border border-gray-300">פעולות</th>
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">

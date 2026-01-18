@@ -348,6 +348,22 @@ export class InvoiceService {
   }
 
   /**
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\invoiceService.js
+=======
+   * קבלת פריטי חשבונית בלבד
+   */
+  async getInvoiceItems(invoiceId) {
+    const { data, error } = await supabase
+      .from('invoice_items')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\invoiceService.js
    * עדכון חשבונית
    */
   async updateInvoice(invoiceId, updates) {

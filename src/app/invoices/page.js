@@ -17,21 +17,53 @@ export default function Invoices() {
 
   // טעינת חשבוניות
   useEffect(() => {
-    fetchInvoices()
+    let isMounted = true
+    
+    const fetchData = async () => {
+      if (!isMounted) return
+      await fetchInvoices()
+    }
+    
+    // הוספתי הפעלה הראשונית
+    const timeoutId = setTimeout(fetchData, 100)
+    
+    return () => {
+      isMounted = false
+      clearTimeout(timeoutId)
+    }
   }, [])
 
   const fetchInvoices = async () => {
     try {
-      const response = await fetch('/api/invoices')
+      // הוספת קאשים כדי למנוע redirect loops
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 שניות timeout
+      
+      const response = await fetch('/api/invoices', {
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      })
+      
+      clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data = await response.json()
       
       if (data.success) {
         setInvoices(data.invoices || [])
       } else {
         console.error('Failed to fetch invoices:', data.error)
+        setInvoices([]) // Set empty array on error
       }
     } catch (error) {
       console.error('Error fetching invoices:', error)
+      setInvoices([]) // Set empty array on error
     } finally {
       setLoading(false)
     }
@@ -115,16 +147,14 @@ export default function Invoices() {
 
   // תצוגת PDF לחשבונית
   const downloadPDF = (invoice) => {
-    // יצירת חלון PDF זמני
-    const printWindow = window.open(`/invoices/${invoice.id}/pdf`, '_blank')
+    // פתיחת חלון PDF חדש עם כל הפרטים
+    const pdfUrl = `${window.location.origin}/invoices/${invoice.id}/pdf`
+    const printWindow = window.open(pdfUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes')
     if (!printWindow) {
-      alert('נא לאפשר חוסמיון חלונים')
+      alert('נא לאפשר חוסמיון חלונות')
       return
     }
-    printWindow.onload = () => {
-      printWindow.print()
-      printWindow.close()
-    }
+    printWindow.focus()
   }
 
   // תצוגת חשבונית נבחרת

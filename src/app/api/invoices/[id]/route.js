@@ -9,10 +9,12 @@ export async function GET(request, { params }) {
   try {
     const { id } = await params
     const invoice = await invoiceService.getInvoice(parseInt(id))
+    const items = await invoiceService.getInvoiceItems(parseInt(id))
 
     return NextResponse.json({
       success: true,
-      invoice
+      invoice,
+      items: items || []
     })
 
   } catch (error) {

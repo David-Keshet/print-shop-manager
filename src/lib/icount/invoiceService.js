@@ -348,6 +348,19 @@ export class InvoiceService {
   }
 
   /**
+   * קבלת פריטי חשבונית בלבד
+   */
+  async getInvoiceItems(invoiceId) {
+    const { data, error } = await supabase
+      .from('invoice_items')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
    * עדכון חשבונית
    */
   async updateInvoice(invoiceId, updates) {

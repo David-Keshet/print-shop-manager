@@ -8,58 +8,6 @@ import { invoiceService } from '@/lib/icount/invoiceService'
 export async function GET(request, { params }) {
   try {
     const { id } = await params
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\[id]\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\[id]\route.js
-    const invoice = await invoiceService.getInvoice(parseInt(id))
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\[id]\route.js
-
-    return NextResponse.json({
-      success: true,
-      invoice
-=======
-    const items = await invoiceService.getInvoiceItems(parseInt(id))
-=======
-    
-    // נסה לקבל מה-service אבל עם fallback ל-mock data
-    let invoice, items
-    
-    try {
-      invoice = await invoiceService.getInvoice(parseInt(id))
-      items = await invoiceService.getInvoiceItems(parseInt(id))
-    } catch (serviceError) {
-      console.warn('Service error, using mock data:', serviceError)
-      
-      // Mock data fallback
-      const mockInvoices = [
-        {
-          id: 1,
-          invoice_number: 'INV-001',
-          customer_name: 'משרד ראש הממשלה',
-          customer_id: 'CUST-001',
-          invoice_type: 'invoice',
-          status: 'open',
-          issue_date: '2024-01-15',
-          due_date: '2024-02-15',
-          subtotal: 1000,
-          vat_amount: 170,
-          total_with_vat: 1170,
-          notes: 'תשלומים עבור שירותי הדפסה',
-          items: [
-            {
-              id: 1,
-              description: 'הדפסת חוברות',
-              quantity: 500,
-              unit_price: 2,
-              total: 1000
-            }
-          ]
-        }
-      ]
-      
-      invoice = mockInvoices.find(inv => inv.id === parseInt(id))
-      items = invoice ? invoice.items : []
-    }
-=======
     
     // השתמש רק ב-mock data ללא תלות ל-service
     const mockInvoices = [
@@ -90,7 +38,6 @@ export async function GET(request, { params }) {
     
     const invoice = mockInvoices.find(inv => inv.id === parseInt(id))
     const items = invoice ? invoice.items : []
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\[id]\route.js
     
     if (!invoice) {
       return NextResponse.json(
@@ -98,26 +45,12 @@ export async function GET(request, { params }) {
         { status: 404 }
       )
     }
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\[id]\route.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\[id]\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\[id]\route.js
 
     return NextResponse.json({
       success: true,
       invoice,
       items: items || []
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\[id]\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\[id]\route.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\[id]\route.js
     })
-
-=======
-    })
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\[id]\route.js
-=======
-    })
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\[id]\route.js
   } catch (error) {
     console.error('Error fetching invoice:', error)
     return NextResponse.json(

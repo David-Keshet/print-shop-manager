@@ -20,35 +20,6 @@ class SyncService {
   async initializeICountClient() {
     if (this.iCountClient) return this.iCountClient
 
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-    // טען הגדרות מ-Supabase
-    const { data: settings } = await supabase
-      .from('icount_settings')
-      .select('*')
-      .eq('is_active', true)
-      .single()
-
-    if (!settings) {
-      throw new Error('No active iCount settings found')
-    }
-
-    // צור client עם הגדרות
-    this.iCountClient = new ICountClient({
-      cid: settings.cid,
-      user: settings.user_name,
-      pass: decrypt(settings.encrypted_pass),
-    })
-
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
     try {
       // נסה לטען הגדרות מ-Supabase
       const { data: settings } = await supabase
@@ -104,16 +75,6 @@ class SyncService {
       throw new Error('No active iCount settings found')
     }
 
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
     return this.iCountClient
   }
 
@@ -326,24 +287,6 @@ class SyncService {
         try {
           console.log(`📡 Fetching ${type} documents...`)
           const response = await this.iCountClient.request('doc/search', {
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-            from_date: fromDate,
-            to_date: toDate,
-            date_from: fromDate,
-            date_to: toDate,
-            doc_type: type,
-            doctype: type,
-            free_text: ' ',
-            limit: 100
-          })
-          
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
             doctype: type,
             limit: 100
           })
@@ -357,13 +300,6 @@ class SyncService {
             console.log(`❌ No ${type} documents found`)
           }
           
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
           console.log(`📥 Response for ${type}:`, JSON.stringify(response, null, 2))
           
           const batch = (response?.results_list || response?.data || response || []).map(d => ({ 

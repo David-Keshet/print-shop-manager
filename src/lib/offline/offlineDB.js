@@ -24,12 +24,6 @@ class OfflineDB {
    * Initialize IndexedDB
    */
   async init() {
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-    if (this.isInitialized && this.db) {
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
     // Check if we're in browser environment
     if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
       console.warn('IndexedDB not available in this environment')
@@ -37,10 +31,6 @@ class OfflineDB {
     }
 
     if (this.isInitialized && this.db && !this.db.closed) {
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
       return this.db
     }
 
@@ -106,44 +96,20 @@ class OfflineDB {
    * Add or update item in store
    */
   async put(storeName, data) {
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-    await this.init()
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction([storeName], 'readwrite')
-      const store = transaction.objectStore(storeName)
-      const request = store.put(data)
-
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
-    })
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-    try {
-      await this.init()
-=======
     try {
       const db = await this.init()
       if (!db) {
         console.warn('IndexedDB not available, skipping put operation')
         return null
       }
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
 
       // בדוק אם החיבור עדיין פתוח
       if (!this.db || this.db.closed) {
         console.warn('Database connection closed, reinitializing...')
         this.db = null
         this.isInitialized = false
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-        await this.init()
-=======
         const newDb = await this.init()
         if (!newDb) return null
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
       }
 
       return new Promise((resolve, reject) => {
@@ -161,17 +127,8 @@ class OfflineDB {
       })
     } catch (error) {
       console.error('Put error:', error)
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-      throw error
-    }
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-=======
       return null
     }
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
   }
 
   /**
@@ -211,44 +168,19 @@ class OfflineDB {
    */
   async getByIndex(storeName, indexName, value) {
     try {
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-      await this.init()
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
       const db = await this.init()
       if (!db) {
         console.warn('IndexedDB not available, returning empty array')
         return []
       }
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
 
       // בדוק אם החיבור עדיין פתוח
       if (!this.db || this.db.closed) {
         console.warn('Database connection closed, reinitializing...')
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-=======
-        this.db = null
-        this.isInitialized = false
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-        await this.init()
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
         this.db = null
         this.isInitialized = false
         const newDb = await this.init()
         if (!newDb) return []
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
       }
 
       return new Promise((resolve, reject) => {
@@ -335,25 +267,6 @@ class OfflineDB {
    * Get all pending items across all stores
    */
   async getAllPendingSync() {
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-    const [orders, customers, invoices] = await Promise.all([
-      this.getPendingSync(STORES.ORDERS),
-      this.getPendingSync(STORES.CUSTOMERS),
-      this.getPendingSync(STORES.INVOICES),
-    ])
-
-    return {
-      orders: orders || [],
-      customers: customers || [],
-      invoices: invoices || [],
-      total: (orders?.length || 0) + (customers?.length || 0) + (invoices?.length || 0)
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
     try {
       const [orders, customers, invoices] = await Promise.all([
         this.getPendingSync(STORES.ORDERS).catch(err => {
@@ -384,13 +297,6 @@ class OfflineDB {
         invoices: [],
         total: 0
       }
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
-<<<<<<< C:\Users\print\print-shop-manager\src\lib\offline\offlineDB.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\offline\offlineDB.js
     }
   }
 

@@ -1,18 +1,4 @@
 import { NextResponse } from 'next/server'
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-import { invoiceService } from '@/lib/icount/invoiceService'
-
-// קבלת רשימת חשבוניות
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 
 // קבלת רשימת חשבוניות זמנית
 const mockInvoices = [
@@ -70,59 +56,6 @@ const mockOrders = [
   }
 ];
 
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-export async function GET(request) {
-  try {
-    const { searchParams } = new URL(request.url)
-
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-    const filters = {}
-    if (searchParams.get('status')) {
-      filters.status = searchParams.get('status')
-    }
-    if (searchParams.get('customer_id')) {
-      filters.customer_id = parseInt(searchParams.get('customer_id'))
-    }
-    if (searchParams.get('payment_status')) {
-      filters.payment_status = searchParams.get('payment_status')
-    }
-
-    const invoices = await invoiceService.getInvoices(filters)
-
-    return NextResponse.json({ success: true, invoices })
-  } catch (error) {
-    console.error('Error fetching invoices:', error)
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-    // החזר פילטרים
-    let filteredInvoices = [...mockInvoices];
-    
-    if (searchParams.get('status')) {
-      const status = searchParams.get('status');
-      filteredInvoices = filteredInvoices.filter(inv => inv.status === status);
-    }
-    
-    if (searchParams.get('customer_id')) {
-      const customerId = parseInt(searchParams.get('customer_id'));
-      filteredInvoices = filteredInvoices.filter(inv => inv.customer_id === customerId);
-    }
-    
-    if (searchParams.get('payment_status')) {
-      const paymentStatus = searchParams.get('payment_status');
-      filteredInvoices = filteredInvoices.filter(inv => inv.payment_status === paymentStatus);
-=======
 export async function GET(request) {
   try {
     // החזר את פרמטרים מה-URL
@@ -152,7 +85,6 @@ export async function GET(request) {
     // סינון לפי סוג חשבונית
     if (invoice_type) {
       filteredInvoices = filteredInvoices.filter(inv => inv.invoice_type === invoice_type)
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
     }
 
     return NextResponse.json({ 
@@ -161,16 +93,6 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('Error fetching invoices:', error);
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -178,19 +100,6 @@ export async function GET(request) {
   }
 }
 
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-// יצירת חשבונית חדשה
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 export async function POST(request) {
   try {
     const body = await request.json()
@@ -203,46 +112,6 @@ export async function POST(request) {
       )
     }
 
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-    const result = await invoiceService.createInvoiceFromOrder(
-      order_id,
-      invoice_type
-    )
-
-    if (!result.success) {
-      return NextResponse.json(result, { status: 400 })
-    }
-
-    // אם יש צורך בסנכרון ל-iCount
-    if (sync_to_icount && result.invoice) {
-      try {
-        const { syncService } = await import('@/lib/icount/syncService')
-        const syncResult = await syncService.pushInvoiceToICount(result.invoice.id)
-        
-        if (syncResult.success) {
-          console.log('✅ Invoice synced to iCount successfully')
-        } else {
-          console.warn('⚠️ Failed to sync invoice to iCount:', syncResult.message)
-        }
-      } catch (syncError) {
-        console.error('❌ Error syncing to iCount:', syncError)
-        // לא מכשיל את התהליך אם הסנכרון נכשל
-      }
-    }
-
-    return NextResponse.json(result)
-  } catch (error) {
-    console.error('Error creating invoice:', error)
-=======
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
     // מצא את ההזמנה
     const order = mockOrders.find(o => o.id === order_id);
     if (!order) {
@@ -268,11 +137,7 @@ export async function POST(request) {
       customer_id: order.customer_id,
       customer_name: customer.name,
       invoice_type: invoice_type || 'invoice',
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-      invoice_number: `INV-${Date.now()}`,
-=======
       invoice_number: `INV-${mockInvoices.length + 1}`,
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
       issue_date: new Date().toISOString().split('T')[0],
       due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       subtotal: order.total_with_vat / 1.17,
@@ -293,16 +158,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Error creating invoice:', error);
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
-=======
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

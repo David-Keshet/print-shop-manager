@@ -218,10 +218,10 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
         <div class="invoice-container">
           <div class="header">
             <div class="logo-section">
-              <h1>בית דפוס דוד קשת</h1>
-              <p>רח' הדפוס 1, תל אביב</p>
-              <p>טל: 03-1234567 | פקס: 03-1234568</p>
-              <p>ע"מ: 123456789 | חשבונית מס/קבלה: 555555555</p>
+              <h1>דפוס קשת - ד.ע קשת הדפסות בע"מ</h1>
+              <p>רח' מורדי הגטאות 15 (הרצל 7 לשעבר) בית שמש (מתחם השוקניון)</p>
+              <p>ת.ד. 176 | טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
+              <p>אתר: WWW.dfus-keshet.com | ח.פ 514325299</p>
             </div>
             <div class="invoice-number-section">
               <h2>חשבונית מס/קבלה</h2>
@@ -282,8 +282,10 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
 
           <div class="payment-info">
             <p><strong>אמצעי תשלום:</strong> העברה בנקאית</p>
-            <p><strong>בנק:</strong> הפועלים סניף 123</p>
-            <p><strong>חשבון:</strong> 12-345-678901</p>
+            <p><strong>בנק דיסקונט (11)</strong></p>
+            <p><strong>סניף 167 (בית שמש)</strong></p>
+            <p><strong>מספר חשבון: 023756</strong></p>
+            <p><strong>ע"ש ד.ע.קשת הדפסות בע"מ</strong></p>
           </div>
 
           ${invoice.notes ? `
@@ -294,9 +296,10 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
           ` : ''}
 
           <div class="footer">
-            <p><strong>בית דפוס דוד קשת</strong> | רח' הדפוס 1, תל אביב</p>
-            <p>טל: 03-1234567 | פקס: 03-1234568 | דוא"ל: info@printshop.co.il</p>
-            <p>ע"מ: 123456789 | חשבונית מס/קבלה: 555555555</p>
+            <p><strong>דפוס קשת - ד.ע קשת הדפסות בע"מ</strong></p>
+            <p>רח' מורדי הגטאות 15 (הרצל 7 לשעבר) בית שמש (מתחם השוקניון)</p>
+            <p>ת.ד. 176 | טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
+            <p>אתר: WWW.dfus-keshet.com | ח.פ 514325299</p>
             <p>תודה על עסקתך!</p>
           </div>
         </div>
@@ -364,10 +367,10 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
           <div class="invoice-container">
             <div class="header">
               <div class="logo-section">
-                <h1>בית דפוס דוד קשת</h1>
-                <p>רח' הדפוס 1, תל אביב</p>
-                <p>טל: 03-1234567 | פקס: 03-1234568</p>
-                <p>ע"מ: 123456789 | חשבונית מס/קבלה: 555555555</p>
+                <h1>דפוס קשת - ד.ע קשת הדפסות בע"מ</h1>
+                <p>רח' מורדי הגטאות 15 (הרצל 7 לשעבר) בית שמש (מתחם השוקניון)</p>
+                <p>ת.ד. 176 | טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
+                <p>אתר: WWW.dfus-keshet.com | ח.פ 514325299</p>
               </div>
               <div class="invoice-number-section">
                 <h2>חשבונית מס/קבלה</h2>
@@ -402,8 +405,10 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
             </div>
             <div class="payment-info">
               <p><strong>אמצעי תשלום:</strong> העברה בנקאית</p>
-              <p><strong>בנק:</strong> הפועלים סניף 123</p>
-              <p><strong>חשבון:</strong> 12-345-678901</p>
+              <p><strong>בנק דיסקונט (11)</strong></p>
+              <p><strong>סניף 167 (בית שמש)</strong></p>
+              <p><strong>מספר חשבון: 023756</strong></p>
+              <p><strong>ע"ש ד.ע.קשת הדפסות בע"מ</strong></p>
             </div>
             ${invoice.notes ? `
             <div style="margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
@@ -412,9 +417,10 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
             </div>
             ` : ''}
             <div class="footer">
-              <p><strong>בית דפוס דוד קשת</strong> | רח' הדפוס 1, תל אביב</p>
-              <p>טל: 03-1234567 | פקס: 03-1234568 | דוא"ל: info@printshop.co.il</p>
-              <p>ע"מ: 123456789 | חשבונית מס/קבלה: 555555555</p>
+              <p><strong>דפוס קשת - ד.ע קשת הדפסות בע"מ</strong></p>
+              <p>רח' מורדי הגטאות 15 (הרצל 7 לשעבר) בית שמש (מתחם השוקניון)</p>
+              <p>ת.ד. 176 | טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
+              <p>אתר: WWW.dfus-keshet.com | ח.פ 514325299</p>
               <p>תודה על עסקתך!</p>
             </div>
           </div>

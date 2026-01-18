@@ -10,7 +10,8 @@
     "lint": "eslint",
     "clean": "if (Test-Path .next) { Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue }; if (Test-Path node_modules\\.cache) { Remove-Item -Recurse -Force node_modules\\.cache -ErrorAction SilentlyContinue }",
     "clean:full": "if (Test-Path .next) { Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue }; if (Test-Path node_modules\\.cache) { Remove-Item -Recurse -Force node_modules\\.cache -ErrorAction SilentlyContinue }; npm run build; npm run start",
-    "clean:deploy": "if (Test-Path .next) { Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue }; if (Test-Path node_modules\\.cache) { Remove-Item -Recurse -Force node_modules\\.cache -ErrorAction SilentlyContinue }; npm run build"
+    "clean:deploy": "if (Test-Path .vercel) { Remove-Item -Recurse -Force .vercel -ErrorAction SilentlyContinue }; if (Test-Path vercel.json) { Remove-Item vercel.json -ErrorAction SilentlyContinue }; if (Test-Path .next) { Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue }; if (Test-Path node_modules\\.cache) { Remove-Item -Recurse -Force node_modules\\.cache -ErrorAction SilentlyContinue }; npm cache clean --force; npm install; npm run build",
+    "deploy:clean": "npm run clean:deploy && echo '🚀 מוכן לדיפלוי נקי ל-Vercel!'"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

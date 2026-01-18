@@ -5,6 +5,11 @@ import { useParams } from 'next/navigation'
 import InvoicePDF from '@/components/InvoicePDF'
 import Layout from '@/components/Layout'
 
+// Generate static params for dynamic routes
+export async function generateStaticParams() {
+  return []
+}
+
 export default function InvoicePDFPage() {
   const params = useParams()
   const [invoice, setInvoice] = useState(null)

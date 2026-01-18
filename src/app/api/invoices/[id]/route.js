@@ -16,22 +16,16 @@ export async function GET(request, { params }) {
         invoice_number: '2000',
         customer_name: 'משרד ראש הממשלה',
         customer_id: 'CUST-001',
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\[id]\route.js
-=======
         customer_phone: '03-1234567',
         customer_email: 'office@pmo.gov.il',
-        customer_address: 'רח' הקפלן 3, ירושלים',
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\[id]\route.js
+        customer_address: 'רח\' הקפלן 3, ירושלים',
         invoice_type: 'invoice',
         status: 'open',
         issue_date: '2024-01-15',
         due_date: '2024-02-15',
         subtotal: 1000,
         vat_amount: 170,
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\[id]\route.js
-=======
         vat_rate: 17,
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\[id]\route.js
         total_with_vat: 1170,
         notes: 'תשלומים עבור שירותי הדפסה',
         items: [
@@ -43,8 +37,6 @@ export async function GET(request, { params }) {
             total: 1000
           }
         ]
-<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\[id]\route.js
-=======
       },
       {
         id: 2,
@@ -53,7 +45,7 @@ export async function GET(request, { params }) {
         customer_id: 'CUST-002',
         customer_phone: '03-9211111',
         customer_email: 'info@tel-aviv.gov.il',
-        customer_address: 'רח' איבן גבירול 69, תל אביב',
+        customer_address: 'רח\' איבן גבירול 69, תל אביב',
         invoice_type: 'invoice',
         status: 'paid',
         issue_date: '2024-01-20',
@@ -87,7 +79,7 @@ export async function GET(request, { params }) {
         customer_id: 'CUST-003',
         customer_phone: '03-6234234',
         customer_email: 'service@leumi.co.il',
-        customer_address: 'רח' הרצל 21, תל אביב',
+        customer_address: 'רח\' הרצל 21, תל אביב',
         invoice_type: 'receipt',
         status: 'open',
         issue_date: '2024-01-25',
@@ -106,7 +98,6 @@ export async function GET(request, { params }) {
             total: 800
           }
         ]
->>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\[id]\route.js
       }
     ]
     

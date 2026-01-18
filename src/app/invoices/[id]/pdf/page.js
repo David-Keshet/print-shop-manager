@@ -25,17 +25,7 @@ async function InvoicePDFContent({ params }) {
     notFound()
   }
 
-  return (
-    <div className="min-h-screen bg-white">
-      <InvoicePDF invoice={invoice} items={items || []} standalone={true} />
-    </div>
-  )
+  return <InvoicePDF invoice={invoice} items={items || []} standalone={true} />
 }
 
-export default function InvoicePDFPage({ params }) {
-  return (
-    <div className="min-h-screen bg-white">
-      <InvoicePDFContent {...params} />
-    </div>
-  )
-}
+export default InvoicePDFContent

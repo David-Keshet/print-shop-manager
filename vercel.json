@@ -1,9 +1,0 @@
-{
-  "version": 2,
-  "name": "print-shop-manager",
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install",
-  "framework": "nextjs",
-  "regions": ["hnd1"]
-}

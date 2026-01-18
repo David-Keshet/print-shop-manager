@@ -105,7 +105,6 @@ class SyncService {
       console.log('✅ Found order:', existingOrder)
       
       // השתמש ב-service role key לעדכונים
-      const { createClient } = require('@supabase/supabase-js')
       const supabaseAdmin = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -226,13 +225,65 @@ class SyncService {
     console.log('👥 Syncing customers from iCount...')
 
     try {
-      // TODO: בדוק איזה endpoint נכון ב-iCount API למשיכת לקוחות
-      // לעת עתה, נחזיר placeholder
+      // Get customers from iCount API
+      const customersResponse = await this.iCountClient.request('customer/list', {
+        limit: 1000
+      })
+      
+      let customers = []
+      if (customersResponse && customersResponse.data) {
+        customers = customersResponse.data
+      } else if (Array.isArray(customersResponse)) {
+        customers = customersResponse
+      }
+
+      console.log(`📥 Found ${customers.length} customers in iCount`)
+
+      let created = 0
+      let updated = 0
+
+      for (const customer of customers) {
+        try {
+          const customerData = {
+            id: customer.id || customer.customer_id,
+            name: customer.name || customer.customer_name || customer.client_name,
+            phone: customer.phone || customer.mobile || customer.telephone,
+            email: customer.email || customer.mail,
+            address: customer.address || customer.street,
+            city: customer.city,
+            created_at: new Date().toISOString()
+          }
+
+          // Check if customer exists
+          const { data: existing } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('id', customerData.id)
+            .single()
+
+          if (existing) {
+            // Update existing customer
+            await supabase
+              .from('customers')
+              .update(customerData)
+              .eq('id', customerData.id)
+            updated++
+          } else {
+            // Create new customer
+            await supabase
+              .from('customers')
+              .insert(customerData)
+            created++
+          }
+        } catch (error) {
+          console.error('Failed to sync customer:', error)
+        }
+      }
+
       return {
-        synced: 0,
-        created: 0,
-        updated: 0,
-        message: 'Customer sync not yet implemented - waiting for correct iCount API endpoint',
+        synced: customers.length,
+        created,
+        updated
       }
     } catch (error) {
       console.error('Error syncing customers:', error)

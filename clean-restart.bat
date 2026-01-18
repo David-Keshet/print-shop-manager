@@ -8,6 +8,9 @@ REM Delete cache directories
 if exist .next rmdir /s /q .next
 if exist node_modules\.cache rmdir /s /q node_modules\.cache
 
+REM Clean npm cache
+npm cache clean --force
+
 echo ✅ Cache cleaned!
 echo 🚀 Starting dev server...
 

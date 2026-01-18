@@ -8,102 +8,16 @@ import { invoiceService } from '@/lib/icount/invoiceService'
 export async function GET(request, { params }) {
   try {
     const { id } = await params
-    
-    // השתמש רק ב-mock data ללא תלות ל-service
-    const mockInvoices = [
-      {
-        id: 1,
-        invoice_number: '2000',
-        customer_name: 'משרד ראש הממשלה',
-        customer_id: 'CUST-001',
-        customer_phone: '03-1234567',
-        customer_email: 'office@pmo.gov.il',
-        customer_address: 'רח\' הקפלן 3, ירושלים',
-        invoice_type: 'invoice',
-        status: 'open',
-        issue_date: '2024-01-15',
-        due_date: '2024-02-15',
-        subtotal: 1000,
-        vat_amount: 180,
-        vat_rate: 18,
-        total_with_vat: 1180,
-        notes: 'תשלומים עבור שירותי הדפסה',
-        items: [
-          {
-            id: 1,
-            description: 'הדפסת חוברות',
-            quantity: 500,
-            unit_price: 2,
-            total: 1000
-          }
-        ]
-      },
-      {
-        id: 2,
-        invoice_number: '2001',
-        customer_name: 'עיריית תל אביב',
-        customer_id: 'CUST-002',
-        customer_phone: '03-9211111',
-        customer_email: 'info@tel-aviv.gov.il',
-        customer_address: 'רח\' איבן גבירול 69, תל אביב',
-        invoice_type: 'invoice',
-        status: 'paid',
-        issue_date: '2024-01-20',
-        due_date: '2024-02-20',
-        subtotal: 2500,
-        vat_amount: 450,
-        vat_rate: 18,
-        total_with_vat: 2950,
-        notes: 'הדפסת כרזות וחוברות לעירייה',
-        items: [
-          {
-            id: 1,
-            description: 'הדפסת כרזות',
-            quantity: 100,
-            unit_price: 15,
-            total: 1500
-          },
-          {
-            id: 2,
-            description: 'הדפסת חוברות',
-            quantity: 200,
-            unit_price: 5,
-            total: 1000
-          }
-        ]
-      },
-      {
-        id: 3,
-        invoice_number: '2002',
-        customer_name: 'בנק לאומי',
-        customer_id: 'CUST-003',
-        customer_phone: '03-6234234',
-        customer_email: 'service@leumi.co.il',
-        customer_address: 'רח\' הרצל 21, תל אביב',
-        invoice_type: 'receipt',
-        status: 'open',
-        issue_date: '2024-01-25',
-        due_date: '2024-02-25',
-        subtotal: 800,
-        vat_amount: 144,
-        vat_rate: 18,
-        total_with_vat: 944,
-        notes: 'הדפסת טפסים ומסמכים פנימיים',
-        items: [
-          {
-            id: 1,
-            description: 'הדפסת טפסים',
-            quantity: 1000,
-            unit_price: 0.8,
-            total: 800
-          }
-        ]
-      }
-    ]
-    
-    const invoice = mockInvoices.find(inv => inv.id === parseInt(id))
-    const items = invoice ? invoice.items : []
-    
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'ID is required' },
+        { status: 400 }
+      )
+    }
+
+    const invoice = await invoiceService.getInvoice(id)
+
     if (!invoice) {
       return NextResponse.json(
         { success: false, error: 'חשבונית לא נמצאה' },
@@ -114,7 +28,7 @@ export async function GET(request, { params }) {
     return NextResponse.json({
       success: true,
       invoice,
-      items: items || []
+      items: invoice.invoice_items || []
     })
   } catch (error) {
     console.error('Error fetching invoice:', error)
@@ -134,7 +48,7 @@ export async function PUT(request, { params }) {
     const { id } = await params
     const body = await request.json()
 
-    const invoice = await invoiceService.updateInvoice(parseInt(id), body)
+    const invoice = await invoiceService.updateInvoice(id, body)
 
     return NextResponse.json({
       success: true,
@@ -160,7 +74,7 @@ export async function DELETE(request, { params }) {
     const { searchParams } = new URL(request.url)
     const reason = searchParams.get('reason') || 'בוטל ע"י משתמש'
 
-    const invoice = await invoiceService.cancelInvoice(parseInt(id), reason)
+    const invoice = await invoiceService.cancelInvoice(id, reason)
 
     return NextResponse.json({
       success: true,
@@ -175,3 +89,4 @@ export async function DELETE(request, { params }) {
     )
   }
 }
+

@@ -1,445 +1,448 @@
 'use client'
 
-import { FileDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Printer, Download, FileDown } from 'lucide-react'
 
 export default function InvoicePDF({ invoice, items, standalone = false }) {
-  const generatePDF = () => {
-    // יצירת חלון חדש עם תוכן ה-PDF
-    const printWindow = window.open('', '_blank')
+  const [isClient, setIsClient] = useState(false)
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html dir="rtl">
-      <head>
-        <meta charset="UTF-8">
-        <title>חשבונית ${invoice.invoice_number}</title>
-        <style>
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          body {
-            font-family: 'Arial', 'Helvetica', sans-serif;
-            padding: 10mm;
-            direction: rtl;
-            background: white;
-            color: #333;
-            margin: 0;
-          }
-          .invoice-container {
-            max-width: 210mm;
-            margin: 0 auto;
-            border: 2px solid #333;
-            padding: 15mm;
-            background: white;
-            box-sizing: border-box;
-            min-height: 297mm;
-          }
-          .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-          }
-          .logo-section {
-            text-align: right;
-          }
-          .logo-section h1 {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-          }
-          .logo-section p {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 3px;
-          }
-          .invoice-number-section {
-            text-align: left;
-            background: #f8f8f8;
-            padding: 15px;
-            border: 1px solid #ddd;
-            min-width: 200px;
-          }
-          .invoice-number-section h2 {
-            font-size: 16px;
-            color: #333;
-            margin-bottom: 8px;
-            font-weight: normal;
-          }
-          .invoice-number-section .number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-          }
-          .invoice-number-section .date {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-          }
-          .customer-section {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            gap: 20px;
-          }
-          .customer-info {
-            flex: 1;
-            background: #f9f9f9;
-            padding: 20px;
-            border: 1px solid #ddd;
-          }
-          .customer-info h3 {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #333;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 8px;
-          }
-          .customer-info p {
-            font-size: 14px;
-            margin-bottom: 8px;
-            line-height: 1.4;
-          }
-          .invoice-details {
-            flex: 1;
-            background: #f9f9f9;
-            padding: 20px;
-            border: 1px solid #ddd;
-          }
-          .invoice-details h3 {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #333;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 8px;
-          }
-          .invoice-details p {
-            font-size: 14px;
-            margin-bottom: 8px;
-            line-height: 1.4;
-          }
-          .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            border: 1px solid #333;
-          }
-          .items-table th {
-            background: #333;
-            color: white;
-            padding: 12px 8px;
-            text-align: right;
-            font-size: 14px;
-            font-weight: bold;
-            border: 1px solid #333;
-          }
-          .items-table td {
-            padding: 12px 8px;
-            border: 1px solid #333;
-            text-align: right;
-            font-size: 13px;
-            vertical-align: top;
-          }
-          .items-table .description {
-            text-align: right;
-            font-weight: 500;
-          }
-          .items-table .quantity {
-            text-align: center;
-            width: 80px;
-          }
-          .items-table .unit-price {
-            text-align: left;
-            width: 100px;
-          }
-          .items-table .total {
-            text-align: left;
-            width: 100px;
-            font-weight: bold;
-          }
-          .totals-section {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 30px;
-          }
-          .totals-box {
-            background: #f8f8f8;
-            border: 2px solid #333;
-            padding: 20px;
-            min-width: 250px;
-            text-align: left;
-          }
-          .totals-box p {
-            font-size: 14px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-          }
-          .totals-box .total-row {
-            font-size: 16px;
-            font-weight: bold;
-            border-top: 2px solid #333;
-            padding-top: 10px;
-            margin-top: 10px;
-          }
-          .payment-info {
-            background: #e8f4e8;
-            border: 1px solid #4caf50;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-          }
-          .payment-info p {
-            font-size: 14px;
-            margin-bottom: 5px;
-            color: #2e7d32;
-          }
-          .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            color: #666;
-            font-size: 12px;
-          }
-          .footer p {
-            margin-bottom: 5px;
-          }
-          @media print {
-            body { 
-              padding: 0; 
-              margin: 0;
-            }
-            .invoice-container { 
-              border: none; 
-              box-shadow: none; 
-              margin: 0;
-              padding: 10mm;
-              max-width: 210mm;
-              width: 210mm;
-            }
-            .no-print { display: none; }
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  const generatePDF = async () => {
+    if (!isClient) return
+
+    try {
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) {
+        alert('נא לאפשר חלונות קופצים כדי להדפיס את החשבונית')
+        return
+      }
+
+      const getDocumentTypeLabel = (type) => {
+        const types = {
+          invoice: 'חשבונית מס',
+          invoice_receipt: 'חשבונית מס קבלה',
+          receipt: 'קבלה',
+          credit: 'חשבונית זיכוי',
+          quote: 'הצעת מחיר',
+          delivery_note: 'תעודת משלוח',
+          return: 'החזרה',
+          purchase: 'חשבונית קניה'
+        }
+        return types[type] || 'חשבונית מס'
+      }
+
+      const docType = getDocumentTypeLabel(invoice.invoice_type)
+      const subtotal = parseFloat(invoice.subtotal || 0)
+      const vatAmount = parseFloat(invoice.vat_amount || 0)
+      const totalAmount = parseFloat(invoice.total_amount || invoice.total_with_vat || (subtotal + vatAmount))
+      const customerName = invoice.customers?.name || invoice.customer_name || 'לקוח כללי'
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="he">
+        <head>
+          <meta charset="UTF-8">
+          <title>${docType} ${invoice.invoice_number || ''}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+          <style>
             @page {
               size: A4;
               margin: 10mm;
             }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="invoice-container">
-          <div class="header">
-            <div class="logo-section">
-              <h1>דפוס קשת - ד.ע קשת הדפסות בע"מ</h1>
-              <p>רח' מורדי הגטאות 15 (הרצל 7 לשעבר) בית שמש (מתחם השוקניון)</p>
-              <p>ת.ד. 176 | טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
-              <p>אתר: WWW.dfus-keshet.com | ח.פ 514325299</p>
+            body {
+              font-family: 'Assistant', sans-serif;
+              margin: 0;
+              padding: 0;
+              background-color: white;
+              color: #1a1a1a;
+              direction: rtl;
+            }
+              .page {
+                width: 190mm;
+              margin: 0 auto;
+              padding: 5mm;
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+              min-height: 277mm;
+            }
+
+            .header-top {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 10px;
+            }
+            .business-details {
+              text-align: right;
+            }
+            .business-details h1 {
+              margin: 0;
+              color: #000;
+              font-size: 28px;
+              font-weight: 800;
+            }
+            .business-details p {
+              margin: 3px 0;
+              font-size: 15px;
+              color: #333;
+              font-weight: 600;
+            }
+            .logo-container {
+              text-align: left;
+            }
+            .logo-container img {
+              height: 120px;
+              width: auto;
+            }
+
+            .doc-title {
+              text-align: center;
+              margin: 5px 0;
+            }
+            .doc-title h2 {
+              margin: 0;
+              font-size: 28px;
+              font-weight: 900;
+              color: #E53E3E;
+              letter-spacing: 1px;
+            }
+
+            .dividing-line {
+              border-top: 2px solid #000;
+              margin: 5px 0 20px 0;
+            }
+
+              /* Info Cubes */
+              .info-grid {
+                display: grid;
+              grid-template-columns: 1.5fr 1fr;
+              gap: 20px;
+              margin-bottom: 25px;
+            }
+              .cube {
+                border: 1.5px solid #000;
+              padding: 15px;
+              border-radius: 0; /* Rectangular as requested */
+              background-color: #fff;
+            }
+              .cube h3 {
+                margin: 0 0 10px 0;
+              font-size: 16px;
+              font-weight: 800;
+              border-bottom: 1.5px solid #000;
+              padding-bottom: 5px;
+              display: inline-block;
+            }
+              .cube p {
+                margin: 5px 0;
+              font-size: 14px;
+              font-weight: 600;
+              line-height: 1.4;
+            }
+
+              /* Table */
+              table {
+                width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 25px;
+            }
+              th {
+              background-color: #f3f4f6;
+              border: 1.5px solid #000;
+              text-align: right;
+              padding: 12px;
+              font-size: 14px;
+              font-weight: 800;
+            }
+            td {
+              padding: 12px;
+              border: 1.5px solid #000;
+              font-size: 14px;
+              font-weight: 600;
+            }
+            .text-center { text-align: center; }
+            .text-left { text-align: left; }
+
+            /* Bottom Cubes */
+            .bottom-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .summary-cube {
+              background-color: #fff;
+            }
+            .summary-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 5px 0;
+              font-size: 15px;
+              font-weight: 600;
+            }
+            .total-row {
+              border-top: 2px solid #000;
+              margin-top: 10px;
+              padding-top: 10px;
+              font-size: 20px;
+              font-weight: 900;
+              color: #2e7d32;
+            }
+
+            /* Footer - Left Corner */
+            .footer-section {
+              margin-top: auto;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-start; /* Left side in RTL */
+              padding-bottom: 10px;
+              width: 100%;
+            }
+            .signature-box {
+              text-align: center;
+              width: 250px;
+            }
+            .signature-box img {
+              height: 90px;
+              width: auto;
+              margin-bottom: 5px;
+            }
+            .signature-box p {
+              margin: 0;
+              font-size: 14px;
+              font-weight: 700;
+            }
+            .thank-you {
+              margin-bottom: 15px;
+              font-size: 20px;
+              font-weight: 800;
+              color: #1a1a1a;
+            }
+
+            @media print {
+              .no-print { display: none !important; }
+              body { background-color: white; }
+              .page { margin: 0; width: 100%; padding: 5mm 10mm; }
+            }
+            </style>
+          </head>
+          <body>
+            <div class="page">
+              <div class="header-top">
+                <div class="business-details">
+                  <h1>דפוס קשת - ד.ע קשת הדפסות בע"מ</h1>
+                  <p>רח' מורדי הגטאות 15, בית שמש</p>
+                  <p>טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
+                  <p>ח.פ 514325299</p>
+                </div>
+                <div class="logo-container">
+                  <img src="/Logo .png" alt="לוגו דפוס קשת" />
+                </div>
+              </div>
+
+              <div class="doc-title">
+                <h2>${docType}</h2>
+              </div>
+
+              <div class="dividing-line"></div>
+
+              <div class="info-grid">
+                <div class="cube">
+                  <h3>לכבוד</h3>
+                  <p style="font-size: 16px;"><strong>${customerName}</strong></p>
+                  <p>כתובת: ${invoice.customers?.billing_address || invoice.customer_address || '-'}</p>
+                  <p>טלפון: ${invoice.customers?.phone || invoice.customer_phone || '-'}</p>
+                  <p>דוא"ל: ${invoice.customers?.email || invoice.customer_email || '-'}</p>
+                </div>
+                <div class="cube">
+                  <h3>פרטי מסמך</h3>
+                  <p>מספר מסמך: <strong>${invoice.invoice_number || invoice.id}</strong></p>
+                  <p>תאריך הוצאה: ${new Date(invoice.issue_date || invoice.created_at).toLocaleDateString('he-IL')}</p>
+                  <p>תאריך פירעון: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('he-IL') : 'מיידי'}</p>
+                </div>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>תיאור השירות / מוצר</th>
+                    <th class="text-center" style="width: 80px;">כמות</th>
+                    <th class="text-left" style="width: 120px;">מחיר יחידה</th>
+                    <th class="text-left" style="width: 120px;">סה"כ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${items.map(item => `
+                  <tr>
+                    <td>${item.description || 'מוצר/שירות'}</td>
+                    <td class="text-center">${parseFloat(item.quantity).toLocaleString()}</td>
+                    <td class="text-left">₪${parseFloat(item.unit_price).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</td>
+                    <td class="text-left">₪${parseFloat(item.total).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                `).join('')}
+                </tbody>
+              </table>
+
+              <div class="bottom-grid">
+                <div class="cube">
+                  <h3>להעברה בנקאית</h3>
+                  <p>בנק: דיסקונט (11), סניף 167</p>
+                  <p>חשבון: 023756</p>
+                  <p>ע"ש: ד.ע.קשת הדפסות בע"מ</p>
+                </div>
+                <div class="cube summary-cube">
+                  <h3>סיכום כספי</h3>
+                  <div class="summary-row">
+                    <span>סכום בסיס:</span>
+                    <span>₪${subtotal.toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div class="summary-row">
+                    <span>מע"מ (${invoice.vat_rate || 18}%):</span>
+                    <span>₪${vatAmount.toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div class="summary-row total-row">
+                    <span>סה"כ לתשלום:</span>
+                    <span>₪${totalAmount.toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="footer-section">
+                <div class="thank-you">תודה על העסקתך!</div>
+                <div class="signature-box">
+                  <img src="/Signature .png" alt="חתימה דיגיטלית" />
+                  <p>דפוס קשת - ד.ע קשת הדפסות בע"מ</p>
+                </div>
+              </div>
             </div>
-            <div class="invoice-number-section">
-              <h2>חשבונית מס/קבלה</h2>
-              <div class="number">${invoice.invoice_number}</div>
-              <div class="date">תאריך: ${new Date(invoice.issue_date).toLocaleDateString('he-IL')}</div>
-            </div>
-          </div>
 
-          <div class="customer-section">
-            <div class="customer-info">
-              <h3>פרטי לקוח</h3>
-              <p><strong>${invoice.customer_name}</strong></p>
-              <p>טלפון: ${invoice.customer_phone || 'N/A'}</p>
-            </div>
-            <div class="invoice-details">
-              <h3>פרטי חשבונית</h3>
-              <p><strong>מספר חשבונית:</strong> ${invoice.invoice_number}</p>
-              <p><strong>תאריך הנפקה:</strong> ${new Date(invoice.issue_date).toLocaleDateString('he-IL')}</p>
-              <p><strong>תאריך פרעון:</strong> ${new Date(invoice.due_date).toLocaleDateString('he-IL')}</p>
-              <p><strong>סטטוס:</strong> <span style="color: ${invoice.status === 'paid' ? '#4caf50' : invoice.status === 'open' ? '#ff9800' : '#f44336'}; font-weight: bold;">${invoice.status === 'paid' ? 'שולם' : invoice.status === 'open' ? 'פתוח' : invoice.status}</span></p>
-              <p><strong>סוג מסמך:</strong> ${invoice.invoice_type === 'invoice' ? 'חשבונית מס' : 'קבלה'}</p>
-            </div>
-          </div>
+            <script>
+              window.onload = function() {
+                setTimeout(function () {
+                  window.print();
+                }, 500);
+            }
+            </script>
+          </body>
+        </html>
+        `
 
-          ${items && items.length > 0 ? `
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th class="description">תיאור השירות/מוצר</th>
-                <th class="quantity">כמות</th>
-                <th class="unit-price">מחיר יחידה</th>
-                <th class="total">סה"כ</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${items.map(item => `
-                <tr>
-                  <td class="description">${item.description || 'מוצר'}</td>
-                  <td class="quantity">${item.quantity || 1}</td>
-                  <td class="unit-price">₪${parseFloat(item.unit_price || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</td>
-                  <td class="total">₪${parseFloat(item.total || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          ` : ''}
-
-          <div class="totals-section">
-            <div class="totals-box">
-              <p><span>סכום בסיס:</span> <span>₪${parseFloat(invoice.subtotal || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
-              <p><span>מע"מ (${invoice.vat_rate || 18}%):</span> <span>₪${parseFloat(invoice.vat_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
-              <p class="total-row"><span>סך הכל לתשלום:</span> <span style="color: #4caf50; font-size: 18px;">₪${parseFloat(invoice.total_with_vat || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
-              ${invoice.status === 'paid' ? '<p style="color: #4caf50; font-weight: bold; text-align: center; margin-top: 10px;">✓ החשבונית שולמה</p>' : invoice.status === 'open' ? '<p style="color: #ff9800; font-weight: bold; text-align: center; margin-top: 10px;">⏳ ממתין לתשלום</p>' : ''}
-            </div>
-          </div>
-
-          <div class="payment-info">
-            <p><strong>אמצעי תשלום:</strong> העברה בנקאית</p>
-            <p><strong>בנק דיסקונט (11)</strong></p>
-            <p><strong>סניף 167 (בית שמש)</strong></p>
-            <p><strong>מספר חשבון: 023756</strong></p>
-            <p><strong>ע"ש ד.ע.קשת הדפסות בע"מ</strong></p>
-          </div>
-
-          ${invoice.notes ? `
-          <div style="margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
-            <h3 style="font-size: 16px; margin-bottom: 10px; color: #333;">הערות</h3>
-            <p style="font-size: 13px; line-height: 1.4;">${invoice.notes}</p>
-          </div>
-          ` : ''}
-
-          <div class="footer">
-            <p><strong>דפוס קשת - ד.ע קשת הדפסות בע"מ</strong></p>
-            <p>רח' מורדי הגטאות 15 (הרצל 7 לשעבר) בית שמש (מתחם השוקניון)</p>
-            <p>ת.ד. 176 | טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
-            <p>אתר: WWW.dfus-keshet.com | ח.פ 514325299</p>
-            <p>תודה על עסקתך!</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `
-
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-    
-    printWindow.onload = () => {
-      printWindow.print()
-      printWindow.close()
+      printWindow.document.write(htmlContent)
+      printWindow.document.close()
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert('שגיאה בהפקת המסמך')
     }
   }
 
   if (standalone) {
     return (
-      <div className="p-8">
-        <div className="no-print mb-4">
+      <div className="bg-[#0f1117] min-h-screen p-8 flex flex-col items-center gap-8">
+        <div className="flex gap-4">
           <button
             onClick={generatePDF}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-2xl font-black text-xl flex items-center gap-3 transition-all shadow-xl shadow-amber-500/20"
           >
-            <FileDown size={20} />
-            הדפס חשבונית
+            <Printer size={28} />
+            הדפסה עכשיו
           </button>
         </div>
-        <div className="invoice-container bg-white border-2 border-gray-800 p-8" style={{ maxWidth: '210mm', minHeight: '297mm' }}>
-          <div className="header flex justify-between items-center border-b-4 border-gray-800 pb-5 mb-8">
-            <div className="logo-section text-right">
-              <h1 className="text-lg font-bold mb-1">דפוס קשת - ד.ע קשת הדפסות בע"מ</h1>
-              <p className="text-sm text-gray-600 mb-1">רח' מורדי הגטאות 15 (הרצל 7 לשעבר) בית שמש (מתחם השוקניון)</p>
-              <p className="text-sm text-gray-600 mb-1">ת.ד. 176 | טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
-              <p className="text-sm text-gray-600">אתר: WWW.dfus-keshet.com | ח.פ 514325299</p>
+
+        <div className="bg-white p-12 w-[210mm] min-h-[297mm] shadow-2xl relative" dir="rtl">
+          {/* Top Header */}
+          <div className="flex justify-between items-start mb-6">
+            <div className="text-right">
+              <h1 className="text-3xl font-black text-gray-900 m-0">דפוס קשת - ד.ע קשת הדפסות בע"מ</h1>
+              <p className="text-gray-600 font-bold m-0 mt-1">רח' מורדי הגטאות 15, בית שמש</p>
+              <p className="text-gray-600 font-bold m-0">טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
+              <p className="text-gray-600 font-bold m-0 text-sm">ח.פ 514325299</p>
             </div>
-            <div className="invoice-number-section text-left bg-gray-100 p-4 border border-gray-300" style={{ minWidth: '200px' }}>
-              <h2 className="text-base text-gray-800 mb-2 font-normal">חשבונית מס/קבלה</h2>
-              <div className="number text-2xl font-bold text-gray-800">{invoice.invoice_number}</div>
-              <div className="date text-sm text-gray-600 mt-1">תאריך: {new Date(invoice.issue_date).toLocaleDateString('he-IL')}</div>
+            <div className="text-left">
+              <img src="/Logo .png" alt="לוגו" className="h-32 object-contain" />
             </div>
           </div>
 
-          <div className="customer-section flex justify-between mb-8 gap-5">
-            <div className="customer-info flex-1 bg-gray-50 p-5 border border-gray-300">
-              <h3 className="text-lg mb-4 text-gray-800 border-b border-gray-300 pb-2">פרטי לקוח</h3>
-              <p className="text-sm mb-2 leading-relaxed"><strong>{invoice.customer_name}</strong></p>
-              <p className="text-sm mb-2 leading-relaxed">טלפון: {invoice.customer_phone || 'N/A'}</p>
+          <div className="text-center my-6">
+            <h2 className="text-3xl font-black text-red-600 tracking-widest uppercase">{getDocumentTypeLabel(invoice.invoice_type)}</h2>
+          </div>
+
+          <div className="border-t-4 border-gray-900 my-6"></div>
+
+          {/* Info Cubes */}
+          <div className="grid grid-cols-2 gap-8 mb-10">
+            <div className="border-2 border-gray-900 p-6">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 border-b-2 border-gray-900 pb-2 inline-block">לכבוד</h3>
+              <p className="text-xl font-black text-gray-900 mb-1">{customerName}</p>
+              <p className="text-gray-600 font-bold">{invoice.customers?.billing_address || invoice.customer_address || '-'}</p>
+              <p className="text-gray-600 font-bold">{invoice.customers?.phone || invoice.customer_phone || '-'}</p>
             </div>
-            <div className="invoice-details flex-1 bg-gray-50 p-5 border border-gray-300">
-              <h3 className="text-lg mb-4 text-gray-800 border-b border-gray-300 pb-2">פרטי חשבונית</h3>
-              <p className="text-sm mb-2 leading-relaxed"><strong>מספר חשבונית:</strong> {invoice.invoice_number}</p>
-              <p className="text-sm mb-2 leading-relaxed"><strong>תאריך הנפקה:</strong> {new Date(invoice.issue_date).toLocaleDateString('he-IL')}</p>
-              <p className="text-sm mb-2 leading-relaxed"><strong>תאריך פרעון:</strong> {new Date(invoice.due_date).toLocaleDateString('he-IL')}</p>
-              <p className="text-sm mb-2 leading-relaxed">
-                <strong>סטטוס:</strong> 
-                <span style={{ color: invoice.status === 'paid' ? '#4caf50' : invoice.status === 'open' ? '#ff9800' : '#f44336', fontWeight: 'bold' }}>
-                  {invoice.status === 'paid' ? 'שולם' : invoice.status === 'open' ? 'פתוח' : invoice.status}
-                </span>
-              </p>
-              <p className="text-sm mb-2 leading-relaxed"><strong>סוג מסמך:</strong> {invoice.invoice_type === 'invoice' ? 'חשבונית מס' : 'קבלה'}</p>
+            <div className="border-2 border-gray-900 p-6">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 border-b-2 border-gray-900 pb-2 inline-block">פרטי מסמך</h3>
+              <p className="text-gray-600 font-bold">מספר מסמך: <span className="text-gray-900 font-black">{invoice.invoice_number || invoice.id}</span></p>
+              <p className="text-gray-600 font-bold">תאריך: <span className="text-gray-900 font-black">{new Date(invoice.issue_date).toLocaleDateString('he-IL')}</span></p>
+              <p className="text-gray-600 font-bold">פירעון: <span className="text-gray-900 font-black">{invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('he-IL') : 'מיידי'}</span></p>
             </div>
           </div>
 
-          {items && items.length > 0 && (
-            <table className="items-table w-full border-collapse mb-5 border border-gray-800">
-              <thead>
-                <tr>
-                  <th className="description text-right p-3 text-sm font-bold border border-gray-800">תיאור השירות/מוצר</th>
-                  <th className="quantity text-center p-3 text-sm font-bold border border-gray-800" style={{ width: '80px' }}>כמות</th>
-                  <th className="unit-price text-left p-3 text-sm font-bold border border-gray-800" style={{ width: '100px' }}>מחיר יחידה</th>
-                  <th className="total text-left p-3 text-sm font-bold border border-gray-800" style={{ width: '100px' }}>סה"כ</th>
+          {/* Items Table */}
+          <table className="w-full border-collapse mb-10">
+            <thead>
+              <tr className="bg-gray-100 uppercase text-sm">
+                <th className="border-2 border-gray-900 p-4 font-black">תיאור השירות / מוצר</th>
+                <th className="border-2 border-gray-900 p-4 font-black text-center w-20">כמות</th>
+                <th className="border-2 border-gray-900 p-4 font-black text-left w-32">מחיר</th>
+                <th className="border-2 border-gray-900 p-4 font-black text-left w-32">סה"כ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, idx) => (
+                <tr key={idx}>
+                  <td className="border-2 border-gray-900 p-4 font-bold text-gray-800">{item.description}</td>
+                  <td className="border-2 border-gray-900 p-4 text-center font-black text-gray-900">{parseFloat(item.quantity).toLocaleString()}</td>
+                  <td className="border-2 border-gray-900 p-4 text-left font-bold text-gray-700">₪{parseFloat(item.unit_price).toLocaleString()}</td>
+                  <td className="border-2 border-gray-900 p-4 text-left font-black text-gray-900">₪{parseFloat(item.total).toLocaleString()}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {items.map((item, index) => (
-                  <tr key={index}>
-                    <td className="description text-right p-3 text-xs leading-relaxed font-medium border border-gray-800">{item.description || 'מוצר'}</td>
-                    <td className="quantity text-center p-3 text-xs border border-gray-800">{item.quantity || 1}</td>
-                    <td className="unit-price text-left p-3 text-xs border border-gray-800">₪{parseFloat(item.unit_price || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</td>
-                    <td className="total text-left p-3 text-xs font-bold border border-gray-800">₪{parseFloat(item.total || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+              ))}
+            </tbody>
+          </table>
 
-          <div className="totals-section flex justify-end mb-8">
-            <div className="totals-box bg-gray-100 border-2 border-gray-800 p-5" style={{ minWidth: '250px', textAlign: 'left' }}>
-              <p className="text-sm mb-2 flex justify-between"><span>סכום בסיס:</span> <span>₪{parseFloat(invoice.subtotal || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
-              <p className="text-sm mb-2 flex justify-between"><span>מע"מ ({invoice.vat_rate || 18}%):</span> <span>₪{parseFloat(invoice.vat_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
-              <p className="total-row text-base font-bold border-t-2 border-gray-800 pt-2 mt-2">
-                <span>סך הכל לתשלום:</span> 
-                <span style={{ color: '#4caf50', fontSize: '18px' }}>₪{parseFloat(invoice.total_with_vat || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span>
-              </p>
-              {invoice.status === 'paid' && (
-                <p style={{ color: '#4caf50', fontWeight: 'bold', textAlign: 'center', marginTop: '10px' }}>✓ החשבונית שולמה</p>
-              )}
-              {invoice.status === 'open' && (
-                <p style={{ color: '#ff9800', fontWeight: 'bold', textAlign: 'center', marginTop: '10px' }}>⏳ ממתין לתשלום</p>
-              )}
+          {/* Bottom Cubes */}
+          <div className="grid grid-cols-2 gap-8 mb-10">
+            <div className="border-2 border-gray-900 p-6">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 border-b-2 border-gray-900 pb-2 inline-block">פרטים להעברה</h3>
+              <p className="text-gray-700 font-bold mb-1">בנק דיסקונט (11), סניף 167</p>
+              <p className="text-gray-700 font-bold mb-1">מספר חשבון: 023756</p>
+              <p className="text-gray-700 font-bold">ע"ש ד.ע.קשת הדפסות בע"מ</p>
+            </div>
+            <div className="border-2 border-gray-900 p-6">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 border-b-2 border-gray-900 pb-2 inline-block">סיכום כספי</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-gray-600 font-bold">
+                  <span>סכום בסיס</span>
+                  <span>₪{subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-gray-600 font-bold border-b-2 border-gray-200 pb-2">
+                  <span>מע"מ ({invoice.vat_rate || 18}%)</span>
+                  <span>₪{vatAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-2xl font-black text-green-700 pt-2">
+                  <span>סה"כ לתשלום</span>
+                  <span>₪{totalAmount.toLocaleString()}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="payment-info bg-green-50 border border-green-600 p-4 mb-5 text-center">
-            <p className="text-sm mb-1 text-green-800"><strong>אמצעי תשלום:</strong> העברה בנקאית</p>
-            <p className="text-sm mb-1 text-green-800"><strong>בנק דיסקונט (11)</strong></p>
-            <p className="text-sm mb-1 text-green-800"><strong>סניף 167 (בית שמש)</strong></p>
-            <p className="text-sm mb-1 text-green-800"><strong>מספר חשבון: 023756</strong></p>
-            <p className="text-sm mb-1 text-green-800"><strong>ע"ש ד.ע.קשת הדפסות בע"מ</strong></p>
-          </div>
-
-          {invoice.notes && (
-            <div style={{ margin: '20px 0', padding: '15px', background: '#f9f9f9', border: '1px solid #ddd' }}>
-              <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#333' }}>הערות</h3>
-              <p style={{ fontSize: '13px', lineHeight: '1.4' }}>{invoice.notes}</p>
+          <div className="mt-auto pt-10 flex flex-col items-start">
+            <p className="text-2xl font-black text-gray-800 mb-4">תודה על העסקתך!</p>
+            <div className="text-center w-64">
+              <img src="/Signature .png" alt="חתימה" className="h-24 mx-auto mb-2" />
+              <p className="font-black text-gray-900">דפוס קשת - ד.ע קשת הדפסות בע"מ</p>
             </div>
-          )}
-
-          <div className="footer text-center mt-8 pt-5 border-t border-gray-300 text-gray-600 text-xs">
-            <p className="mb-1"><strong>דפוס קשת - ד.ע קשת הדפסות בע"מ</strong></p>
-            <p className="mb-1">רח' מורדי הגטאות 15 (הרצל 7 לשעבר) בית שמש (מתחם השוקניון)</p>
-            <p className="mb-1">ת.ד. 176 | טל: 077-5120070 | דוא"ל: print@dfus-keshet.com</p>
-            <p className="mb-1">אתר: WWW.dfus-keshet.com | ח.פ 514325299</p>
-            <p className="mb-1">תודה על העסקתך!</p>
           </div>
         </div>
       </div>

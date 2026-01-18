@@ -23,8 +23,7 @@ export default function Layout({ children }) {
   const menuItems = [
     { path: '/', icon: Home, label: 'עמוד הבית', color: 'indigo' },
     { path: '/orders', icon: Package, label: 'הזמנות', color: 'blue' },
-    { path: '/invoices', icon: Receipt, label: 'חשבוניות', color: 'green' },
-    { path: '/documents', icon: FileText, label: 'מסמכים', color: 'amber' },
+    { path: '/documents', icon: FileText, label: 'חשבונית ומסמכים', color: 'amber' },
     { path: '/reports', icon: BarChart3, label: 'דוחות', color: 'orange' },
     { path: '/customers', icon: Users, label: 'לקוחות', color: 'purple' },
     { path: '/tasks/board', icon: ClipboardList, label: 'לוח המשימות', color: 'green' },
@@ -44,7 +43,7 @@ export default function Layout({ children }) {
 
       {/* Overlay - appears when sidebar is open */}
       {mounted && sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           onClick={() => setSidebarOpen(false)}
         />
@@ -52,10 +51,9 @@ export default function Layout({ children }) {
 
       {/* Clean Sidebar */}
       {mounted && (
-        <aside 
-          className={`${
-            sidebarOpen ? 'w-64' : 'w-20'
-          } bg-gray-900/95 backdrop-blur-sm border-l border-gray-700/50 flex flex-col transition-all duration-300 ease-in-out relative z-50`}
+        <aside
+          className={`${sidebarOpen ? 'w-64' : 'w-20'
+            } bg-gray-900/95 backdrop-blur-sm border-l border-gray-700/50 flex flex-col transition-all duration-300 ease-in-out relative z-50`}
         >
           {/* Toggle Button - Only show when closed */}
           {!sidebarOpen && (
@@ -75,21 +73,21 @@ export default function Layout({ children }) {
             {menuItems.map((item) => {
               const active = isActive(item.path)
               const IconComponent = item.icon
-              
+
               return (
                 <Link key={item.path} href={item.path} onClick={handleLinkClick}>
                   <button
                     className={`w-full rounded-lg transition-all flex items-center gap-3 group/item relative overflow-hidden
                       ${sidebarOpen ? 'px-4 py-3' : 'p-3 justify-center'}
-                      ${active 
-                        ? `bg-${item.color}-500/20 hover:bg-${item.color}-500/30 text-white` 
+                      ${active
+                        ? `bg-${item.color}-500/20 hover:bg-${item.color}-500/30 text-white`
                         : 'bg-gray-800/30 hover:bg-gray-800/50 text-gray-400 hover:text-gray-200'
                       }
                     `}
                   >
                     {/* Icon */}
                     <IconComponent size={20} className="flex-shrink-0" />
-                    
+
                     {/* Text Label */}
                     {sidebarOpen && (
                       <span className="font-medium text-sm whitespace-nowrap">

@@ -85,13 +85,13 @@ export default function Invoices() {
   // צפייה בחשבונית
   const viewInvoice = async (invoice) => {
     try {
-      // נסה לקבל את פריטי החשבונית
+      // נסה לקבל את פרטי החשבונית
       const response = await fetch(`/api/invoices/${invoice.id}`)
       const data = await response.json()
       
       if (data.success) {
         setSelectedInvoice({
-          ...invoice,
+          ...data.invoice, // משתמש במידע המלא מה-API
           items: data.items || []
         })
       }
@@ -190,6 +190,9 @@ export default function Invoices() {
                   <h3 className="font-bold mb-2">פרטי לקוח</h3>
                   <p><strong>שם:</strong> {selectedInvoice.customer_name}</p>
                   <p><strong>מספר לקוח:</strong> {selectedInvoice.customer_id}</p>
+                  <p><strong>טלפון:</strong> {selectedInvoice.customer_phone || 'N/A'}</p>
+                  <p><strong>דוא"ל:</strong> {selectedInvoice.customer_email || 'N/A'}</p>
+                  <p><strong>כתובת:</strong> {selectedInvoice.customer_address || 'N/A'}</p>
                 </div>
                 <div>
                   <h3 className="font-bold mb-2">פרטי חשבונית</h3>

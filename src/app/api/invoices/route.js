@@ -58,24 +58,33 @@ const mockOrders = [
 
 export async function GET(request) {
   try {
+    // החזר את פרמטרים מה-URL
     const { searchParams } = new URL(request.url)
+    const status = searchParams.get('status')
+    const customer_id = searchParams.get('customer_id')
+    const payment_status = searchParams.get('payment_status')
+    const invoice_type = searchParams.get('invoice_type')
 
-    // החזר פילטרים
-    let filteredInvoices = [...mockInvoices];
-    
-    if (searchParams.get('status')) {
-      const status = searchParams.get('status');
-      filteredInvoices = filteredInvoices.filter(inv => inv.status === status);
+    let filteredInvoices = mockInvoices
+
+    // סינון לפי סטטוס
+    if (status) {
+      filteredInvoices = filteredInvoices.filter(inv => inv.status === status)
     }
-    
-    if (searchParams.get('customer_id')) {
-      const customerId = parseInt(searchParams.get('customer_id'));
-      filteredInvoices = filteredInvoices.filter(inv => inv.customer_id === customerId);
+
+    // סינון לפי לקוח
+    if (customer_id) {
+      filteredInvoices = filteredInvoices.filter(inv => inv.customer_id === parseInt(customer_id))
     }
-    
-    if (searchParams.get('payment_status')) {
-      const paymentStatus = searchParams.get('payment_status');
-      filteredInvoices = filteredInvoices.filter(inv => inv.payment_status === paymentStatus);
+
+    // סינון לפי סטטוס תשלום
+    if (payment_status) {
+      filteredInvoices = filteredInvoices.filter(inv => inv.payment_status === payment_status)
+    }
+
+    // סינון לפי סוג חשבונית
+    if (invoice_type) {
+      filteredInvoices = filteredInvoices.filter(inv => inv.invoice_type === invoice_type)
     }
 
     return NextResponse.json({ 
@@ -128,7 +137,7 @@ export async function POST(request) {
       customer_id: order.customer_id,
       customer_name: customer.name,
       invoice_type: invoice_type || 'invoice',
-      invoice_number: `INV-${Date.now()}`,
+      invoice_number: `INV-${mockInvoices.length + 1}`,
       issue_date: new Date().toISOString().split('T')[0],
       due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       subtotal: order.total_with_vat / 1.17,

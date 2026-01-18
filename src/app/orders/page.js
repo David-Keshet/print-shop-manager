@@ -21,6 +21,10 @@ export default function Orders() {
   const [prefilledCustomer, setPrefilledCustomer] = useState(null) // State for new order customer
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+=======
+  const [statusFilter, setStatusFilter] = useState('all')
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
   const [statusFilter, setStatusFilter] = useState('all')
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -49,7 +53,10 @@ export default function Orders() {
   const [lastSync, setLastSync] = useState(null)
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
   const [statusFilter, setStatusFilter] = useState('all') // all, new, in_progress, completed, cancelled
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
@@ -228,6 +235,7 @@ export default function Orders() {
     const matchesSearch = order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           order.customer_phone.includes(searchTerm) ||
                           order.order_number.toString().includes(searchTerm)
     
@@ -267,6 +275,8 @@ export default function Orders() {
 =======
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                          order.customer_phone.includes(searchTerm) ||
                          order.order_number.toString().includes(searchTerm)
     
@@ -277,6 +287,9 @@ export default function Orders() {
 
 
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -454,6 +467,7 @@ export default function Orders() {
                 
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                 {/* מצבים - כפתורי סינון */}
                 <div className="flex gap-3">
                   <button
@@ -534,6 +548,8 @@ export default function Orders() {
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                 {/* סטטוס סנכרון */}
                 {lastSync && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -592,9 +608,15 @@ export default function Orders() {
             )}
 
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
             {/* חיפוש */}
             <div className="mb-6">
               <div className="relative">
+=======
+            {/* מסננים */}
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1 relative">
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
             {/* מסננים */}
             <div className="flex gap-4 mb-6">
@@ -610,7 +632,10 @@ export default function Orders() {
                 />
               </div>
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
               
               {/* מסנני סטטוס */}
               <div className="flex gap-2">
@@ -665,6 +690,9 @@ export default function Orders() {
                   בוטל
                 </button>
               </div>
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
             </div>
 
@@ -694,6 +722,7 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                 <table className="w-full">
                   <thead className="bg-sky-200">
                     <tr>
@@ -705,6 +734,8 @@ export default function Orders() {
                       <th className="px-4 py-3 text-right font-bold">תאריך</th>
                       <th className="px-4 py-3 text-center font-bold">פעולות</th>
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
@@ -724,6 +755,9 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -739,9 +773,15 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                       <tr key={order.id} className="border-b hover:bg-sky-50 cursor-pointer">
                         <td
                           className="px-4 py-3 font-bold text-blue-600"
+=======
+                      <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
+                        <td
+                          className="px-4 py-4 font-bold text-blue-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
                       <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
                         <td
@@ -771,7 +811,11 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3"
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
                           className="px-4 py-4 border border-gray-200"
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -793,7 +837,11 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3 text-gray-600"
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
                           className="px-4 py-4 text-gray-600 border border-gray-200"
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -815,7 +863,11 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3 font-bold"
+=======
+                          className="px-4 py-4 font-bold border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
                           className="px-4 py-4 font-bold border border-gray-200"
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -837,7 +889,11 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3"
+=======
+                          className="px-4 py-4 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
                           className="px-4 py-4 border border-gray-200"
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -861,7 +917,11 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                           className="px-4 py-3 text-gray-600"
+=======
+                          className="px-4 py-4 text-gray-600 border border-gray-200"
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
                           className="px-4 py-4 text-gray-600 border border-gray-200"
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -882,7 +942,11 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                         <td className="px-4 py-3 text-center">
+=======
+                        <td className="px-4 py-4 text-center border border-gray-200">
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
                         <td className="px-4 py-4 text-center border border-gray-200">
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -902,6 +966,7 @@ export default function Orders() {
                                 e.stopPropagation()
                                 handleSyncOrderToICount(order)
                               }}
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
@@ -938,6 +1003,8 @@ export default function Orders() {
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
                               className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 transition-colors"
                               title="סנכרון ל-iCount"
                             >
@@ -947,6 +1014,9 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -963,12 +1033,15 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                               className="text-blue-600 hover:text-blue-800"
                               title="צפה בהזמנה"
                             >
                               <FileText size={20} />
                             </button>
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
@@ -984,6 +1057,9 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
@@ -1000,10 +1076,13 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
                               className="text-green-600 hover:text-green-800"
                               title="ערוך הזמנה"
                             >
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
@@ -1017,6 +1096,9 @@ export default function Orders() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\orders\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\orders\page.js

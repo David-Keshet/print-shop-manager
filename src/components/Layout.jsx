@@ -6,7 +6,11 @@ import { usePathname } from 'next/navigation'
 <<<<<<< C:\Users\print\print-shop-manager\src\components\Layout.jsx
 <<<<<<< C:\Users\print\print-shop-manager\src\components\Layout.jsx
 <<<<<<< C:\Users\print\print-shop-manager\src\components\Layout.jsx
+<<<<<<< C:\Users\print\print-shop-manager\src\components\Layout.jsx
 import { Menu, Home, Package, ClipboardList, Users, FileText, BarChart3, UserCog, Truck, Settings } from 'lucide-react'
+=======
+import { Menu, Home, Package, ClipboardList, Users, FileText, BarChart3, UserCog, Truck, Settings, Receipt } from 'lucide-react'
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\components\Layout.jsx
 =======
 import { Menu, Home, Package, ClipboardList, Users, FileText, BarChart3, UserCog, Truck, Settings, Receipt } from 'lucide-react'
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\components\Layout.jsx
@@ -37,6 +41,10 @@ export default function Layout({ children }) {
     { path: '/orders', icon: Package, label: 'הזמנות', color: 'blue' },
 <<<<<<< C:\Users\print\print-shop-manager\src\components\Layout.jsx
 <<<<<<< C:\Users\print\print-shop-manager\src\components\Layout.jsx
+<<<<<<< C:\Users\print\print-shop-manager\src\components\Layout.jsx
+=======
+    { path: '/invoices', icon: Receipt, label: 'חשבוניות', color: 'green' },
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\components\Layout.jsx
 =======
     { path: '/invoices', icon: Receipt, label: 'חשבוניות', color: 'green' },
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\components\Layout.jsx

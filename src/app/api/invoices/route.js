@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server'
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
 import { invoiceService } from '@/lib/icount/invoiceService'
 
 // קבלת רשימת חשבוניות
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 
@@ -65,6 +68,9 @@ const mockOrders = [
 ];
 
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
@@ -72,6 +78,7 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
 
+<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
     const filters = {}
@@ -91,6 +98,8 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error fetching invoices:', error)
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
     // החזר פילטרים
@@ -118,6 +127,9 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error fetching invoices:', error);
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
@@ -130,7 +142,10 @@ export async function GET(request) {
 
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
 // יצירת חשבונית חדשה
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 =======
@@ -147,6 +162,7 @@ export async function POST(request) {
       )
     }
 
+<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
     const result = await invoiceService.createInvoiceFromOrder(
@@ -179,6 +195,8 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error creating invoice:', error)
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
     // מצא את ההזמנה
@@ -228,6 +246,9 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error creating invoice:', error);
 <<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\api\invoices\route.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\api\invoices\route.js

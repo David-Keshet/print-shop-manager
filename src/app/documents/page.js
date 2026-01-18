@@ -34,6 +34,10 @@ export default function DocumentsPage() {
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+=======
+  const [statusFilter, setStatusFilter] = useState('all')
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
 =======
   const [statusFilter, setStatusFilter] = useState('all')
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
@@ -117,6 +121,7 @@ export default function DocumentsPage() {
 
   const filteredDocuments = documents.filter(document => {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
     if (!searchTerm) return true
 
     const search = searchTerm.toLowerCase()
@@ -126,6 +131,8 @@ export default function DocumentsPage() {
       document.orders?.order_number?.toLowerCase().includes(search)
     )
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
     const matchesSearch = !searchTerm || (
       document.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       document.customers?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -135,6 +142,9 @@ export default function DocumentsPage() {
     const matchesStatus = statusFilter === 'all' || document.status === statusFilter
     
     return matchesSearch && matchesStatus
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
   })
 
@@ -144,6 +154,7 @@ export default function DocumentsPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="mb-4">
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
@@ -160,6 +171,8 @@ export default function DocumentsPage() {
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold text-white flex items-center gap-3">
@@ -170,6 +183,7 @@ export default function DocumentsPage() {
                   ניהול חשבוניות, קבלות, זיכויים ומסמכים נוספים עם סנכרון ל-iCount
                 </p>
               </div>
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
               
               {/* מצבים */}
@@ -197,14 +211,22 @@ export default function DocumentsPage() {
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
             </div>
           </div>
 
           {/* Filters */}
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
           <div className="flex gap-3 mb-4 flex-wrap">
             <div className="flex-1 relative min-w-[250px]">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+=======
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1 relative min-w-[250px]">
+              <Search className="absolute right-3 top-3 text-gray-400" size={20} />
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
 =======
           <div className="flex gap-4 mb-6">
             <div className="flex-1 relative min-w-[250px]">
@@ -216,6 +238,7 @@ export default function DocumentsPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
                 className="w-full bg-gray-800 text-white rounded-lg px-4 py-2 pr-10 border border-gray-700 focus:border-blue-500 focus:outline-none"
               />
             </div>
@@ -225,6 +248,8 @@ export default function DocumentsPage() {
               onChange={(e) => setFilter(e.target.value)}
               className="bg-gray-800 text-white rounded-lg px-4 py-2 border border-gray-700 focus:border-blue-500 focus:outline-none"
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
                 className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 pr-10 border border-gray-700 focus:border-blue-500 focus:outline-none"
               />
             </div>
@@ -288,6 +313,9 @@ export default function DocumentsPage() {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="bg-gray-800 text-white rounded-lg px-4 py-3 border border-gray-700 focus:border-blue-500 focus:outline-none"
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
             >
               <option value="all">כל המסמכים</option>
@@ -302,12 +330,15 @@ export default function DocumentsPage() {
                 <option value="purchase">חשבונית קניה</option>
               </optgroup>
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
               <optgroup label="סטטוס">
                 <option value="draft">טיוטות</option>
                 <option value="sent">נשלחו</option>
                 <option value="paid">שולמו</option>
                 <option value="cancelled">בוטלו</option>
               </optgroup>
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
               <optgroup label="תשלום">
@@ -332,6 +363,7 @@ export default function DocumentsPage() {
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
             <table className="w-full">
               <thead className="bg-gray-800">
                 <tr>
@@ -346,6 +378,8 @@ export default function DocumentsPage() {
                   <th className="text-center px-6 py-4 text-gray-300 font-semibold">סנכרון</th>
                   <th className="text-center px-6 py-4 text-gray-300 font-semibold">פעולות</th>
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
 =======
@@ -365,6 +399,9 @@ export default function DocumentsPage() {
                   <th className="text-center px-6 py-4 font-semibold border border-gray-300">פעולות</th>
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
 <<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+<<<<<<< C:\Users\print\print-shop-manager\src\app\documents\page.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\app\documents\page.js

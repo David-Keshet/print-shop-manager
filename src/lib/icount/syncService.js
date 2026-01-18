@@ -23,6 +23,7 @@ class SyncService {
 <<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
 <<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
 <<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
     // טען הגדרות מ-Supabase
     const { data: settings } = await supabase
       .from('icount_settings')
@@ -42,6 +43,8 @@ class SyncService {
     })
 
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
 =======
@@ -103,6 +106,9 @@ class SyncService {
 
 <<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
 <<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
@@ -322,6 +328,7 @@ class SyncService {
           const response = await this.iCountClient.request('doc/search', {
 <<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
 <<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
             from_date: fromDate,
             to_date: toDate,
             date_from: fromDate,
@@ -333,6 +340,8 @@ class SyncService {
           })
           
 =======
+=======
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
             doctype: type,
@@ -349,6 +358,9 @@ class SyncService {
           }
           
 <<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+<<<<<<< C:\Users\print\print-shop-manager\src\lib\icount\syncService.js
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
+=======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js
 =======
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\src\lib\icount\syncService.js

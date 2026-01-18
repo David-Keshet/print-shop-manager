@@ -1,10 +1,9 @@
 {
-    "version": 2,
-    "name": "print-shop-manager",
-    "buildCommand": "next build",
-    "installCommand": "npm install",
-    "framework": "nextjs",
-    "regions": [
-        "iad1"
-    ]
+  "version": 2,
+  "name": "print-shop-manager",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1"]
 }

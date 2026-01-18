@@ -21,17 +21,20 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
           }
           body {
             font-family: 'Arial', 'Helvetica', sans-serif;
-            padding: 20px;
+            padding: 10mm;
             direction: rtl;
             background: white;
             color: #333;
+            margin: 0;
           }
           .invoice-container {
-            max-width: 800px;
+            max-width: 210mm;
             margin: 0 auto;
             border: 2px solid #333;
-            padding: 30px;
+            padding: 15mm;
             background: white;
+            box-sizing: border-box;
+            min-height: 297mm;
           }
           .header {
             display: flex;
@@ -208,9 +211,23 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
             margin-bottom: 5px;
           }
           @media print {
-            body { padding: 10px; }
-            .invoice-container { border: none; box-shadow: none; }
+            body { 
+              padding: 0; 
+              margin: 0;
+            }
+            .invoice-container { 
+              border: none; 
+              box-shadow: none; 
+              margin: 0;
+              padding: 10mm;
+              max-width: 210mm;
+              width: 210mm;
+            }
             .no-print { display: none; }
+            @page {
+              size: A4;
+              margin: 10mm;
+            }
           }
         </style>
       </head>
@@ -331,8 +348,8 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
         <div dangerouslySetInnerHTML={{ __html: `
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Arial', 'Helvetica', sans-serif; padding: 20px; direction: rtl; background: white; color: #333; }
-            .invoice-container { max-width: 800px; margin: 0 auto; border: 2px solid #333; padding: 30px; background: white; }
+            body { font-family: 'Arial', 'Helvetica', sans-serif; padding: 10mm; direction: rtl; background: white; color: #333; margin: 0; }
+            .invoice-container { max-width: 210mm; margin: 0 auto; border: 2px solid #333; padding: 15mm; background: white; box-sizing: border-box; min-height: 297mm; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
             .logo-section { text-align: right; }
             .logo-section h1 { font-size: 28px; font-weight: bold; color: #333; margin-bottom: 5px; }
@@ -363,6 +380,15 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
             .payment-info p { font-size: 14px; margin-bottom: 5px; color: #2e7d32; }
             .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }
             .footer p { margin-bottom: 5px; }
+            @media print {
+              body { padding: 0; margin: 0; }
+              .invoice-container { border: none; box-shadow: none; margin: 0; padding: 10mm; max-width: 210mm; width: 210mm; }
+              .no-print { display: none; }
+              @page {
+                size: A4;
+                margin: 10mm;
+              }
+            }
           </style>
           <div class="invoice-container">
             <div class="header">

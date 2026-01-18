@@ -115,16 +115,14 @@ export default function Invoices() {
 
   // תצוגת PDF לחשבונית
   const downloadPDF = (invoice) => {
-    // יצירת חלון PDF זמני
-    const printWindow = window.open(`/invoices/${invoice.id}/pdf`, '_blank')
+    // פתיחת חלון PDF חדש עם כל הפרטים
+    const pdfUrl = `${window.location.origin}/invoices/${invoice.id}/pdf`
+    const printWindow = window.open(pdfUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes')
     if (!printWindow) {
-      alert('נא לאפשר חוסמיון חלונים')
+      alert('נא לאפשר חוסמיון חלונות')
       return
     }
-    printWindow.onload = () => {
-      printWindow.print()
-      printWindow.close()
-    }
+    printWindow.focus()
   }
 
   // תצוגת חשבונית נבחרת

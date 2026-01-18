@@ -275,7 +275,7 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
           <div class="totals-section">
             <div class="totals-box">
               <p><span>סכום בסיס:</span> <span>₪${parseFloat(invoice.subtotal || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
-              <p><span>מע"מ (${invoice.vat_rate || 17}%):</span> <span>₪${parseFloat(invoice.vat_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
+              <p><span>מע"מ (${invoice.vat_rate || 18}%):</span> <span>₪${parseFloat(invoice.vat_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
               <p class="total-row"><span>סך הכל:</span> <span>₪${parseFloat(invoice.total_with_vat || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
             </div>
           </div>
@@ -399,7 +399,7 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
             <div class="totals-section">
               <div class="totals-box">
                 <p><span>סכום בסיס:</span> <span>₪${parseFloat(invoice.subtotal || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
-                <p><span>מע"מ (${invoice.vat_rate || 17}%):</span> <span>₪${parseFloat(invoice.vat_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
+                <p><span>מע"מ (${invoice.vat_rate || 18}%):</span> <span>₪${parseFloat(invoice.vat_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
                 <p class="total-row"><span>סך הכל:</span> <span>₪${parseFloat(invoice.total_with_vat || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
               </div>
             </div>

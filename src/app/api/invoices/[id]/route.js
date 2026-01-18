@@ -24,9 +24,9 @@ export async function GET(request, { params }) {
         issue_date: '2024-01-15',
         due_date: '2024-02-15',
         subtotal: 1000,
-        vat_amount: 170,
-        vat_rate: 17,
-        total_with_vat: 1170,
+        vat_amount: 180,
+        vat_rate: 18,
+        total_with_vat: 1180,
         notes: 'תשלומים עבור שירותי הדפסה',
         items: [
           {
@@ -51,9 +51,9 @@ export async function GET(request, { params }) {
         issue_date: '2024-01-20',
         due_date: '2024-02-20',
         subtotal: 2500,
-        vat_amount: 425,
-        vat_rate: 17,
-        total_with_vat: 2925,
+        vat_amount: 450,
+        vat_rate: 18,
+        total_with_vat: 2950,
         notes: 'הדפסת כרזות וחוברות לעירייה',
         items: [
           {
@@ -85,9 +85,9 @@ export async function GET(request, { params }) {
         issue_date: '2024-01-25',
         due_date: '2024-02-25',
         subtotal: 800,
-        vat_amount: 136,
-        vat_rate: 17,
-        total_with_vat: 936,
+        vat_amount: 144,
+        vat_rate: 18,
+        total_with_vat: 944,
         notes: 'הדפסת טפסים ומסמכים פנימיים',
         items: [
           {

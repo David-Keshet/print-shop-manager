@@ -2,18 +2,9 @@
     "version": 2,
     "name": "print-shop-manager",
     "buildCommand": "next build",
-    "outputDirectory": ".next",
     "installCommand": "npm install",
     "framework": "nextjs",
     "regions": [
         "iad1"
-    ],
-    "git": {
-        "deploymentEnabled": true
-    },
-    "build": {
-        "env": {
-            "NEXT_PUBLIC_VERCEL_ENV": "production"
-        }
-    }
+    ]
 }

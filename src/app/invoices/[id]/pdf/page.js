@@ -34,37 +34,8 @@ async function InvoicePDFContent({ params }) {
 
 export default function InvoicePDFPage({ params }) {
   return (
-    <html lang="he" dir="rtl">
-      <head>
-        <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>חשבונית PDF</title>
-        <style>
-          {`
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-            }
-            @media print {
-              body {
-                margin: 0;
-                padding: 0;
-              }
-              .no-print {
-                display: none !important;
-              }
-            }
-          `}
-        </style>
-      </head>
-      <body>
-        <InvoicePDFContent params={params} />
-      </body>
-    </html>
+    <div className="min-h-screen bg-white">
+      <InvoicePDFContent {...params} />
+    </div>
   )
 }

@@ -244,8 +244,8 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
               <p><strong>מספר חשבונית:</strong> ${invoice.invoice_number}</p>
               <p><strong>תאריך הנפקה:</strong> ${new Date(invoice.issue_date).toLocaleDateString('he-IL')}</p>
               <p><strong>תאריך פרעון:</strong> ${new Date(invoice.due_date).toLocaleDateString('he-IL')}</p>
-              <p><strong>סטטוס:</strong> ${invoice.status}</p>
-              <p><strong>סוג מסמך:</strong> ${invoice.invoice_type}</p>
+              <p><strong>סטטוס:</strong> <span style="color: ${invoice.status === 'paid' ? '#4caf50' : invoice.status === 'open' ? '#ff9800' : '#f44336'}; font-weight: bold;">${invoice.status === 'paid' ? 'שולם' : invoice.status === 'open' ? 'פתוח' : invoice.status}</span></p>
+              <p><strong>סוג מסמך:</strong> ${invoice.invoice_type === 'invoice' ? 'חשבונית מס' : 'קבלה'}</p>
             </div>
           </div>
 
@@ -276,7 +276,8 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
             <div class="totals-box">
               <p><span>סכום בסיס:</span> <span>₪${parseFloat(invoice.subtotal || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
               <p><span>מע"מ (${invoice.vat_rate || 17}%):</span> <span>₪${parseFloat(invoice.vat_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
-              <p class="total-row"><span>סך הכל:</span> <span>₪${parseFloat(invoice.total_with_vat || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
+              <p class="total-row"><span>סך הכל לתשלום:</span> <span style="color: #4caf50; font-size: 18px;">₪${parseFloat(invoice.total_with_vat || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
+              ${invoice.status === 'paid' ? '<p style="color: #4caf50; font-weight: bold; text-align: center; margin-top: 10px;">✓ החשבונית שולמה</p>' : invoice.status === 'open' ? '<p style="color: #ff9800; font-weight: bold; text-align: center; margin-top: 10px;">⏳ ממתין לתשלום</p>' : ''}
             </div>
           </div>
 
@@ -392,15 +393,16 @@ export default function InvoicePDF({ invoice, items, standalone = false }) {
                 <p><strong>מספר חשבונית:</strong> ${invoice.invoice_number}</p>
                 <p><strong>תאריך הנפקה:</strong> ${new Date(invoice.issue_date).toLocaleDateString('he-IL')}</p>
                 <p><strong>תאריך פרעון:</strong> ${new Date(invoice.due_date).toLocaleDateString('he-IL')}</p>
-                <p><strong>סטטוס:</strong> ${invoice.status}</p>
-                <p><strong>סוג מסמך:</strong> ${invoice.invoice_type}</p>
+                <p><strong>סטטוס:</strong> <span style="color: ${invoice.status === 'paid' ? '#4caf50' : invoice.status === 'open' ? '#ff9800' : '#f44336'}; font-weight: bold;">${invoice.status === 'paid' ? 'שולם' : invoice.status === 'open' ? 'פתוח' : invoice.status}</span></p>
+                <p><strong>סוג מסמך:</strong> ${invoice.invoice_type === 'invoice' ? 'חשבונית מס' : 'קבלה'}</p>
               </div>
             </div>
             <div class="totals-section">
               <div class="totals-box">
                 <p><span>סכום בסיס:</span> <span>₪${parseFloat(invoice.subtotal || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
                 <p><span>מע"מ (${invoice.vat_rate || 17}%):</span> <span>₪${parseFloat(invoice.vat_amount || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
-                <p class="total-row"><span>סך הכל:</span> <span>₪${parseFloat(invoice.total_with_vat || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
+                <p class="total-row"><span>סך הכל לתשלום:</span> <span style="color: #4caf50; font-size: 18px;">₪${parseFloat(invoice.total_with_vat || 0).toLocaleString('he-IL', { minimumFractionDigits: 2 })}</span></p>
+                ${invoice.status === 'paid' ? '<p style="color: #4caf50; font-weight: bold; text-align: center; margin-top: 10px;">✓ החשבונית שולמה</p>' : invoice.status === 'open' ? '<p style="color: #ff9800; font-weight: bold; text-align: center; margin-top: 10px;">⏳ ממתין לתשלום</p>' : ''}
               </div>
             </div>
             <div class="payment-info">

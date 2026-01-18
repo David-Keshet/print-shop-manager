@@ -1,5 +1,22 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## 🖨️ Print Shop Manager
+
+מערכת ניהול מתקדמת לבית דפוס - דפוס קשת
+
+## 🚀 Clean Deploy System
+
+לפני כל דיפלוי הרץ:
+```bash
+npm run deploy:clean
+```
+
+## 📋 Features
+
+- 📊 ניהול הזמנות
+- 📋 ניהול הזמנות
+- 📋 ניהול הזמנות
+
 ## Getting Started
 
 First, run the development server:

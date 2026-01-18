@@ -1,4 +1,5 @@
 {
+<<<<<<< C:\Users\print\print-shop-manager\vercel.json
     "version": 2,
     "name": "print-shop-manager",
     "buildCommand": "next build",
@@ -26,5 +27,14 @@
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\vercel.json
 =======
     ]
+>>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\vercel.json
+=======
+  "version": 2,
+  "name": "print-shop-manager",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1"]
 >>>>>>> c:\Users\print\.windsurf\worktrees\print-shop-manager\print-shop-manager-7ac386d5\vercel.json
 }
